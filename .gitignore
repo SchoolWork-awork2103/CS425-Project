@@ -217,5 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+.vscode/**
+diss_poem_project/**
 
+*.bak
+*.zip
 .DS_Store
