@@ -1,0 +1,9 @@
+# Shared paths and settings. Paths are relative to the project root.
+
+seed: 42
+
+paths:
+  traits: data/traits.json
+  eval_prompts: eval/prompts.json
+  checkpoints: checkpoints        # mirrored to the shared Drive folder
+  # checkpoint names: gen_{system}_stage{1|2}_best.pt, e.g. gen_A_stage2_best.pt

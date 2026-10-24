@@ -221,3 +221,9 @@ __marimo__/
 diss_poem_project/**
 *.bak
 .DS_Store
+
+# model checkpoints (kept in the shared Drive folder instead)
+checkpoints/
+*.pt
+*.bin
+*.safetensors
