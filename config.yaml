@@ -7,3 +7,24 @@ paths:
   eval_prompts: eval/prompts.json
   checkpoints: checkpoints        # mirrored to the shared Drive folder
   # checkpoint names: gen_{system}_stage{1|2}_best.pt, e.g. gen_A_stage2_best.pt
+  disses_raw: data/disses/llm_out/disses.jsonl   # raw output of diss_gen.ipynb
+  blocklist: data/disses/blocklist.txt
+  diss_dir: data/disses/corpus     # filtered, reviewed and split disses
+
+data:
+  diss_split: [0.8, 0.1, 0.1]     # held-out-trait disses go to test only
+  rouge_dedup: 0.7
+  reviewers: 3                    # manual review sheets for the disses
+
+diss_form:                        # follows diss_style_examples.csv (median 14 syllables); same values as diss_gen.ipynb
+  syl_min: 6
+  syl_max: 18
+  pair_diff: 5
+
+toxicity:                         # Detoxify "original" scores; a diss is dropped if any score reaches its limit
+  # "toxicity" and "insult" are left out on purpose: they rise with any hard-hitting roast.
+  # What is filtered: vulgarity (obscene), hate (identity_attack), threats and extreme toxicity.
+  severe_toxicity: 0.1
+  obscene: 0.5
+  threat: 0.3
+  identity_attack: 0.2

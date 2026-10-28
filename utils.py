@@ -1,4 +1,4 @@
-import os, random
+import os, random, re, unicodedata
 from pathlib import Path
 
 import numpy as np
@@ -14,6 +14,20 @@ def load_config(path=ROOT / "config.yaml"):
 
 def project_path(rel):
     return ROOT / rel
+
+
+# Shared by the quatrain corpus and the diss data, so both reach the tokenizer in the same form.
+PUNCT_MAP = str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"',
+                           "—": " - ", "–": " - ", "…": "...", "*": ""})
+
+
+def normalize_text(text):
+    """Lowercase, straight quotes, spaced dashes, no markdown asterisks, accents folded (café -> cafe)."""
+    text = unicodedata.normalize("NFKD", text.translate(PUNCT_MAP))
+    text = text.encode("ascii", "ignore").decode()
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\s+-$", "", text)            # a dash left dangling at the end of a line
+    return text.lower()
 
 
 def set_seed(seed=None):

@@ -1,2 +1,5 @@
 pyyaml
 numpy
+pronouncing
+wordfreq
+detoxify

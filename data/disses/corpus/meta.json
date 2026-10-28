@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-28",
+  "manual_review": false,
+  "reviewed": 0,
+  "decisions": {
+    "keep": 4374
+  },
+  "kept": 4374,
+  "splits": {
+    "train": 3382,
+    "val": 423,
+    "test": 569
+  },
+  "test_heldout": 146,
+  "by_kind": {
+    "single": 958,
+    "heldout": 146,
+    "pair": 2551,
+    "fallback": 191,
+    "triple": 528
+  },
+  "by_intensity": {
+    "mild": 2217,
+    "harsh": 2157
+  },
+  "drop_reasons": {}
+}
