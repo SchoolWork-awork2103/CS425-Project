@@ -1,0 +1,69 @@
+{
+  "name": "gen_A_rev",
+  "reverse": true,
+  "model": {
+    "emb_dim": 300,
+    "hidden": 512,
+    "layers": 2,
+    "dropout": 0.3
+  },
+  "batch_size": 64,
+  "lr": [
+    0.002,
+    0.0004
+  ],
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "stage1": {
+    "epochs": 40,
+    "best_val_loss": 3.485003784406631,
+    "samples": {
+      "samples": 200,
+      "four_lines": 1.0,
+      "end_word_hit": 1.0,
+      "couplets_rhyme": 1.0,
+      "aabb": 1.0
+    }
+  },
+  "stage2": {
+    "epochs": 49,
+    "best_val_loss": 2.7119292467236784,
+    "samples": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 1.0,
+      "couplets_rhyme": 1.0,
+      "aabb": 1.0
+    },
+    "samples_heldout": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 1.0,
+      "couplets_rhyme": 1.0,
+      "aabb": 1.0
+    }
+  },
+  "test_loss": {
+    "seen_traits": 2.7077140186638435,
+    "heldout_traits": 3.7020773536165326
+  },
+  "comparison": {
+    "baseline": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.2734375,
+      "couplets_rhyme": 0.3125,
+      "aabb": 0.05625
+    },
+    "reversed": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 1.0,
+      "couplets_rhyme": 1.0,
+      "aabb": 1.0
+    }
+  }
+}
