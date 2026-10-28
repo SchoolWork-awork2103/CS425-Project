@@ -6,6 +6,10 @@ Stage 1 quatrains have an empty <traits> field and intensity "none". Each segmen
 are joined, because encoding the whole string puts a stray "▁" token before every special token.
 The loss mask covers the poem only (everything after <poem>, including <eos>).
 
+With reverse=True each line is written word-reversed ("heart, the near love keep ..."), so it starts with its rhyme
+word and generation can force that word; decode_lines turns the lines back. Reversing whitespace-separated words
+is lossless.
+
 Check the data from the project root:  python generation/sequences.py
 """
 import json, sys
@@ -23,15 +27,20 @@ STAGE_FILES = {                     # stage -> split -> (config path key, file n
 }
 
 
+def reverse_words(line):
+    return " ".join(reversed(line.split()))
+
+
 class PoemCodec:
     """Encodes the conditioning prefix and the poem, and decodes generated ids back to four lines."""
 
-    def __init__(self, cfg=None):
+    def __init__(self, cfg=None, reverse=False):
         cfg = cfg or load_config()
         self.sp = spm.SentencePieceProcessor(model_file=str(project_path(cfg["paths"]["tokenizer"])) + ".model")
         self.id = {s: self.sp.piece_to_id(s) for s in cfg["tokenizer"]["special"]}
         self.pad, self.eos = self.sp.pad_id(), self.sp.eos_id()
         self.vocab_size = self.sp.get_piece_size()
+        self.reverse = reverse
 
     def words(self, words):
         return self.sp.encode(" ".join(words)) if words else []
@@ -44,7 +53,8 @@ class PoemCodec:
     def poem(self, lines):
         ids = []
         for i, line in enumerate(lines):
-            ids += self.sp.encode(line) + [self.id["<nl>"] if i < len(lines) - 1 else self.eos]
+            text = reverse_words(line) if self.reverse else line
+            ids += self.sp.encode(text) + [self.id["<nl>"] if i < len(lines) - 1 else self.eos]
         return ids
 
     def example(self, lines, end_words, traits=(), intensity="none"):
@@ -64,7 +74,8 @@ class PoemCodec:
                 cur.append(i)
         if cur or not lines:                  # a trailing <nl> (generation stopped at a 4th one) adds no line
             lines.append(cur)
-        return [self.sp.decode(l) for l in lines]
+        lines = [self.sp.decode(l) for l in lines]
+        return [reverse_words(l) for l in lines] if self.reverse else lines
 
 
 def read_jsonl(path):
@@ -110,21 +121,23 @@ def make_collate(pad_id):
 def main():
     """Builds every split and checks that the sequences decode back to the original poems."""
     cfg = load_config()
-    codec = PoemCodec(cfg)
-    stray = codec.sp.piece_to_id("▁")
-    for stage, splits in STAGE_FILES.items():
-        for split in splits:
-            key, name = STAGE_FILES[stage][split]
-            rows = read_jsonl(project_path(cfg["paths"][key]) / name)
-            ex = load_split(codec, stage, split, cfg)
-            ok = sum(codec.decode_lines(e["ids"][e["mask"].index(1):]) == r["lines"] for e, r in zip(ex, rows))
-            lens = sorted(len(e["ids"]) for e in ex)
-            print(f"stage {stage} {split:5s} {len(ex):>6} examples | decode ok {ok}/{len(ex)} | "
-                  f"length median {lens[len(lens) // 2]} max {lens[-1]} | "
-                  f"poem tokens {sum(sum(e['mask']) for e in ex):,} | stray '▁' {sum(e['ids'].count(stray) for e in ex)}")
+    for codec in (PoemCodec(cfg), PoemCodec(cfg, reverse=True)):
+        print("reversed lines" if codec.reverse else "forward lines")
+        stray = codec.sp.piece_to_id("▁")
+        for stage, splits in STAGE_FILES.items():
+            for split in splits:
+                key, name = STAGE_FILES[stage][split]
+                rows = read_jsonl(project_path(cfg["paths"][key]) / name)
+                ex = load_split(codec, stage, split, cfg)
+                ok = sum(codec.decode_lines(e["ids"][e["mask"].index(1):]) == r["lines"] for e, r in zip(ex, rows))
+                lens = sorted(len(e["ids"]) for e in ex)
+                print(f"  stage {stage} {split:5s} {len(ex):>6} examples | decode ok {ok}/{len(ex)} | "
+                      f"length median {lens[len(lens) // 2]} max {lens[-1]} | "
+                      f"poem tokens {sum(sum(e['mask']) for e in ex):,} | stray '▁' "
+                      f"{sum(e['ids'].count(stray) for e in ex)}")
+        e = load_split(codec, 2, "train", cfg)[0]
+        print("  example:", " ".join(codec.sp.id_to_piece(i) for i in e["ids"]))
 
-    e = load_split(codec, 2, "train", cfg)[0]
-    print("\nexample:", " ".join(codec.sp.id_to_piece(i) for i in e["ids"]))
     batch = make_collate(codec.pad)(load_split(codec, 1, "val", cfg)[:4])
     print("batch shapes:", {k: tuple(v.shape) for k, v in batch.items()})
 

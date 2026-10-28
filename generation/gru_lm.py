@@ -1,16 +1,16 @@
 """System A: GRU language model with the traits, intensity and rhyme words as a prefix (Week 4).
 
 Training (both stages), checkpoints and sampling. Driven by generation/train_gru.ipynb; the app and the
-reranker load a trained model with load_model() and sample with generate().
+reranker load a trained model with load_generator() and sample with generate().
 """
-import json, math, random, re, time
+import json, math, random, re, sys, time
 from pathlib import Path
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from sequences import SequenceDataset, make_collate
+from sequences import PoemCodec, SequenceDataset, make_collate
 
 WORD_RE = re.compile(r"[a-z]+(?:'[a-z]+)?")
 
@@ -66,13 +66,21 @@ def load_model(path, device="cpu"):
     return model.eval(), ck
 
 
+def load_generator(path, cfg=None, device="cpu"):
+    """A trained model and the codec for its sequence format (checkpoints without "reverse" are forward)."""
+    model, ck = load_model(path, device)
+    return model, PoemCodec(cfg, reverse=ck.get("reverse", False))
+
+
 def train_stage(model, train_ex, val_ex, pad_id, device, ckpt_dir, name, lr, max_epochs, patience=3,
-                batch_size=64, weight_decay=0.01, clip=1.0, seed=42, max_batches=None, resume=True, log=print):
+                batch_size=64, weight_decay=0.01, clip=1.0, seed=42, max_batches=None, resume=True, extra=None,
+                log=print):
     """Trains until validation loss stops improving (patience epochs), keeping the best checkpoint.
 
     Writes <name>_best.pt (best weights) and <name>_last.pt (everything needed to resume after a disconnect).
-    Returns the history and leaves the best weights loaded in the model.
+    extra (e.g. {"reverse": True}) is stored in both. Returns the history and leaves the best weights loaded.
     """
+    extra = extra or {}
     ckpt_dir = Path(ckpt_dir)
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     best_path, last_path = ckpt_dir / f"{name}_best.pt", ckpt_dir / f"{name}_last.pt"
@@ -104,7 +112,7 @@ def train_stage(model, train_ex, val_ex, pad_id, device, ckpt_dir, name, lr, max
         improved = va < best
         if improved:
             best, bad = va, 0
-            save_checkpoint(best_path, model, name=name, epoch=epoch, val_loss=va)
+            save_checkpoint(best_path, model, name=name, epoch=epoch, val_loss=va, **extra)
         else:
             bad += 1
         history.append({"epoch": epoch, "train_loss": tr, "val_loss": va, "val_ppl": math.exp(va),
@@ -112,7 +120,7 @@ def train_stage(model, train_ex, val_ex, pad_id, device, ckpt_dir, name, lr, max
         log(f"{name} epoch {epoch:2d} | train {tr:.4f} | val {va:.4f} (ppl {math.exp(va):6.2f}) | "
             f"lr {opt.param_groups[0]['lr']:.1e} | {time.time() - t:5.1f}s{'  *best' if improved else ''}")
         save_checkpoint(last_path, model, name=name, epoch=epoch, best=best, bad=bad, history=history,
-                        opt_state=opt.state_dict(), sched_state=sched.state_dict(), rng_state=g.get_state())
+                        opt_state=opt.state_dict(), sched_state=sched.state_dict(), rng_state=g.get_state(), **extra)
 
     model.load_state_dict(torch.load(best_path, map_location=device)["model_state"])
     json.dump(history, open(ckpt_dir / f"{name}_history.json", "w"), indent=2)
@@ -122,37 +130,69 @@ def train_stage(model, train_ex, val_ex, pad_id, device, ckpt_dir, name, lr, max
 
 @torch.no_grad()
 def generate(model, codec, traits, intensity, end_words, n=10, temperature=0.8, top_p=0.9,
-             rep_penalty=1.2, max_len=100, device="cpu"):
-    """Samples n poems in one batch. Each result has its lines and the length-normalized log-probability
-    of its tokens under the model (temperature 1, no penalty), for the reranker."""
+             rep_penalty=1.2, max_len=120, min_line_tokens=3, max_line_tokens=30, device="cpu"):
+    """Samples n poems in one batch, always exactly four lines (no <eos> before line 4, no fifth line, lines of
+    min_line_tokens to max_line_tokens). With a reversed-line codec the first word of each line is forced to its
+    rhyme word and may not grow into a longer word, so every line ends on the plan.
+
+    Each result has its lines and the length-normalized log-probability of its tokens under the model
+    (temperature 1, no penalty, forced tokens included), for the reranker."""
     model.eval()
+    V, nl, eos = codec.vocab_size, codec.id["<nl>"], codec.eos
+    pieces = [codec.sp.id_to_piece(i) for i in range(V)]
+    words = torch.tensor([bool(re.search("[a-z]", p)) for p in pieces], device=device)   # penalized on repeat
+    # pieces that would glue letters onto the rhyme word ("hearts", "heart's", "heart-x", raw bytes)
+    glue = torch.tensor([codec.sp.is_byte(i) or (i != nl and not p.startswith("▁") and bool(re.search("[a-z0-9']", p)))
+                         for i, p in enumerate(pieces)], device=device)
+    forced = [codec.sp.encode(w) for w in end_words] if codec.reverse else None
+
     prefix = torch.tensor([codec.prefix(list(traits), intensity, list(end_words))] * n, device=device)
     logits, h = model(prefix)
     logits = logits[:, -1]
-    words = torch.tensor([bool(re.search("[a-z]", codec.sp.id_to_piece(i))) for i in range(codec.vocab_size)],
-                         device=device)   # repetition penalty applies to words only, not <nl> or punctuation
-    seen = torch.zeros(n, codec.vocab_size, dtype=torch.bool, device=device)
-    out = [[] for _ in range(n)]
-    logprob, done, lines = torch.zeros(n, device=device), torch.zeros(n, dtype=torch.bool, device=device), \
-        torch.zeros(n, dtype=torch.long, device=device)
+    seen = torch.zeros(n, V, dtype=torch.bool, device=device)
+    out, line, pos = [[] for _ in range(n)], [0] * n, [0] * n      # pos: tokens so far in the current line
+    tail = [False] * n            # just after the forced rhyme word, before the next word starts
+    logprob, done = torch.zeros(n, device=device), torch.zeros(n, dtype=torch.bool, device=device)
 
     for _ in range(max_len):
         raw = F.log_softmax(logits, -1)
         adj = logits.clone()
         pen = seen & words
         adj[pen] = torch.where(adj[pen] > 0, adj[pen] / rep_penalty, adj[pen] * rep_penalty)
+        block = torch.zeros(n, V, dtype=torch.bool, device=device)
+        for k in range(n):
+            if pos[k] < min_line_tokens:
+                block[k, nl] = block[k, eos] = True
+            else:
+                block[k, eos if line[k] < 3 else nl] = True
+            if tail[k]:
+                block[k] |= glue                                # the rhyme word stays whole
+        adj[block] = float("-inf")
         probs = F.softmax(adj / temperature, -1)
         sorted_p, idx = probs.sort(-1, descending=True)
         cut = sorted_p.cumsum(-1) - sorted_p > top_p          # nucleus: keep the smallest set reaching top_p
         sorted_p[cut] = 0
         tok = idx.gather(1, torch.multinomial(sorted_p, 1)).squeeze(1)
+        for k in range(n):
+            if forced and pos[k] < len(forced[line[k]]):
+                tok[k] = forced[line[k]][pos[k]]
+            elif pos[k] >= max_line_tokens:                     # a runaway line is ended
+                tok[k] = nl if line[k] < 3 else eos
         tok = torch.where(done, torch.full_like(tok, codec.pad), tok)
         logprob += torch.where(done, torch.zeros_like(logprob), raw.gather(1, tok[:, None]).squeeze(1))
         for k in torch.nonzero(~done).flatten().tolist():
-            out[k].append(tok[k].item())
+            t = tok[k].item()
+            out[k].append(t)
+            if t == nl:
+                line[k], pos[k], tail[k] = line[k] + 1, 0, False
+            else:
+                pos[k] += 1
+                if forced and pos[k] == len(forced[line[k]]):
+                    tail[k] = True
+                elif pieces[t].startswith("▁"):
+                    tail[k] = False
         seen[torch.arange(n, device=device), tok] = True
-        lines += (tok == codec.id["<nl>"]).long()
-        done |= (tok == codec.eos) | (lines >= 4)              # stop at <eos>, or after a fourth line break
+        done |= tok == eos
         if done.all():
             break
         logits, h = model(tok[:, None], h)
@@ -168,26 +208,45 @@ def last_word(line):
     return w[-1] if w else ""
 
 
+def rhyme_checker():
+    """form_checks.rhymes (CMUdict), the same rule the datasets were filtered with; None if it can't be loaded."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "data"))
+    try:
+        from form_checks import rhymes
+        return rhymes
+    except ImportError:
+        return None
+
+
 def sample_report(model, codec, prompts, device, n=4, show=3, seed=0, log=print, **gen_kwargs):
-    """Generates n poems per prompt and measures form: share with exactly 4 lines, and share of lines that end
-    on the requested rhyme word. prompts: list of dicts with traits, intensity, end_words."""
+    """Generates n poems per prompt and measures form: share with exactly 4 lines, share of lines that end on
+    the requested rhyme word, share of couplets that rhyme and share of full AABB poems.
+    prompts: list of dicts with traits, intensity, end_words."""
     torch.manual_seed(seed)
     random.seed(seed)
-    four, hits, total, shown = 0, 0, 0, 0
+    rhymes = rhyme_checker()
+    four = hits = pairs = aabb = total = shown = 0
     for p in prompts:
         for s in generate(model, codec, p["traits"], p["intensity"], p["end_words"], n=n, device=device,
                           **gen_kwargs):
-            four += len(s["lines"]) == 4 and all(s["lines"])
-            for line, want in zip(s["lines"], p["end_words"]):
-                hits += last_word(line) == want
+            lines = s["lines"]
+            ends = [last_word(l) for l in lines]
+            four += len(lines) == 4 and all(lines)
+            hits += sum(e == w for e, w in zip(ends, p["end_words"]))
+            if rhymes and len(ends) == 4:
+                ok = [rhymes(ends[0], ends[1]), rhymes(ends[2], ends[3])]
+                pairs, aabb = pairs + sum(ok), aabb + all(ok)
             total += 1
             if shown < show:
                 shown += 1
                 log(f"\n[{', '.join(p['traits']) or 'no traits'} | {p['intensity']} | "
                     f"rhymes {' '.join(p['end_words'])}]  logprob/token {s['norm_logprob']:.2f}")
-                for line in s["lines"]:
-                    log("   " + line)
+                for l in lines:
+                    log("   " + l)
     report = {"samples": total, "four_lines": four / total, "end_word_hit": hits / (4 * total)}
-    log(f"\n{total} samples: {report['four_lines']:.1%} have 4 lines, "
-        f"{report['end_word_hit']:.1%} of lines end on the requested rhyme word")
+    if rhymes:
+        report.update(couplets_rhyme=pairs / (2 * total), aabb=aabb / total)
+    log(f"\n{total} samples: {report['four_lines']:.1%} have 4 lines | {report['end_word_hit']:.1%} of lines end "
+        f"on the requested rhyme word" + (f" | {report['couplets_rhyme']:.1%} of couplets rhyme | "
+                                          f"{report['aabb']:.1%} full AABB" if rhymes else ""))
     return report
