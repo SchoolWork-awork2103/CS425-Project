@@ -7,11 +7,16 @@ paths:
   eval_prompts: eval/prompts.json
   checkpoints: checkpoints        # mirrored to the shared Drive folder
   # checkpoint names: gen_{system}_stage{1|2}_best.pt, e.g. gen_A_stage2_best.pt
+  topics: data/quatrains/topics.json
+  quatrains: data/quatrains/gen_out/qwen3-32b/quatrains.jsonl
+  quatrains_meta: data/quatrains/gen_out/qwen3-32b/meta.json
+  corpus_dir: data/quatrains/corpus   # cleaned quatrains split into train / val
   disses_raw: data/disses/llm_out/disses.jsonl   # raw output of diss_gen.ipynb
   blocklist: data/disses/blocklist.txt
   diss_dir: data/disses/corpus     # filtered, reviewed and split disses
 
 data:
+  quatrain_val_frac: 0.05         # 95/5 split by topic group (no shared nouns)
   diss_split: [0.8, 0.1, 0.1]     # held-out-trait disses go to test only
   rouge_dedup: 0.7
   reviewers: 3                    # manual review sheets for the disses
