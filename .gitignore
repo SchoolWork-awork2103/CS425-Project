@@ -227,3 +227,6 @@ checkpoints/
 *.pt
 *.bin
 *.safetensors
+
+# GloVe vectors (data/prepare_glove.py), ~60 MB
+data/glove/

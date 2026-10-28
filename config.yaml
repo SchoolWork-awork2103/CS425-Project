@@ -15,6 +15,7 @@ paths:
   blocklist: data/disses/blocklist.txt
   diss_dir: data/disses/corpus     # filtered, reviewed and split disses
   tokenizer: generation/tokenizer/bpe8k   # sentencepiece prefix: bpe8k.model, bpe8k.vocab
+  glove: data/glove/glove.6B.300d.100k   # data/prepare_glove.py: .npy (float16) + .vocab.txt; git-ignored
 
 tokenizer:                        # shared by the from-scratch generators (Systems A, B, C)
   vocab_size: 8000
