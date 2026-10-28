@@ -4,3 +4,4 @@ pronouncing
 wordfreq
 detoxify
 nltk
+sentencepiece

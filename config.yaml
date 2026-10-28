@@ -14,6 +14,12 @@ paths:
   disses_raw: data/disses/llm_out/disses.jsonl   # raw output of diss_gen.ipynb
   blocklist: data/disses/blocklist.txt
   diss_dir: data/disses/corpus     # filtered, reviewed and split disses
+  tokenizer: generation/tokenizer/bpe8k   # sentencepiece prefix: bpe8k.model, bpe8k.vocab
+
+tokenizer:                        # shared by the from-scratch generators (Systems A, B, C)
+  vocab_size: 8000
+  special: ["<traits>", "<intensity>", "<rhymes>", "<poem>", "<nl>"]   # each always one token
+  # ids: <pad> 0, <unk> 1, <bos> 2, <eos> 3; byte fallback, so unseen characters never become <unk>
 
 data:
   quatrain_val_frac: 0.05         # 95/5 split by topic group (no shared nouns)
