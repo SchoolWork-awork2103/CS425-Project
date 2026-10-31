@@ -208,6 +208,16 @@ Then add:
 - **End-word tags:** each answer line starts with its end word in brackets (`[late] you live by your clock, not a minute too late,`), the same trick as the quatrain generation (1a), so the model commits to the rhyme word before writing the line. The tags are stripped on decoding. Lines are written forward, so unlike System A nothing forces the end word; the reranker's `aabb_score` matters for D.
 - **Repetition penalty** as in System A (1.2 on word tokens already in the answer), leaving out the prompt and the planned end words, which each appear twice. Qwen's own `repetition_penalty` is turned off, since it would also penalize the end words listed in the prompt.
 - Code in `generation/qwen_lora.py`, driven by `generation/train_qwen.ipynb` (Colab T4, about 25–40 min; adapter saved to Drive as `gen_D_1.5b_best/`). The notebook ends with A and D on the same 80 prompts with the same checks (end-word hit, AABB, syllables, lexical, trait mention, distinct-2).
+- **Result** (`eval/results/gen_D/`, 1.5B; Colab T4, about 4.5 min per epoch; best epoch 3 of 3, val loss 1.463): on the same 40 + 40 prompts × 4 samples, D against A (final run):
+
+  | | A seen | D seen | A held-out | D held-out |
+  |---|---|---|---|---|
+  | Lines ending on the planned word | 100% | 94% | 100% | 94% |
+  | Full AABB | 100% | 81% | 100% | 79% |
+  | Mentions a listed trait or synonym | 64% | 78% | 0% | 69% |
+  | Distinct-2 | 0.55 | 0.66 | 0.51 | 0.62 |
+
+  D knows held-out traits and is more varied, but with forward lines about 1 in 5 poems is not full AABB, which the reranker's `aabb_score` has to make up for. Test loss 1.455 for seen traits, 1.703 for held-out (per Qwen token, not comparable with A).
 - **Size comparison** [Optional]: the checkpoint name follows `MODEL_NAME`, so 0.5B and 3B (`gen_D_0.5b`, `gen_D_3b`; batch 4 × 4 for 3B on a T4) run from the same notebook, to show how much the planner and reranker add as the generator grows.
 
 ### Decoding, for all systems
