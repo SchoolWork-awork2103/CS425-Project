@@ -9,6 +9,11 @@ gets the best rhyming partner, from the anchors themselves or from words that en
 rhyme sounds, scored by the summed similarity of its four words; with two or more traits the couplets come from
 different traits. Within a pair the closer word goes last, so the punchline lands on the trait.
 
+End words are kept short and common, like the ones the disses end on (mean 1.1 syllables, 1% with three or more;
+median Zipf 4.75): long rare words (implemented/oriented) made the generators force them into lines that don't fit.
+Pairs that rhyme only through a shared ending, with the same consonant before the rhyme (optimistic/pessimistic,
+encouraging/discouraging), are left out too: they read as one word twice, not as a rhyme.
+
     planner = RhymePlanner()
     planner.plan(["confident"], k=3)  ->  [{"pairs": [(a1, a2), (b1, b2)], "end_words": [...], "score": ...}, ...]
 """
@@ -17,15 +22,16 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
+import pronouncing
 from wordfreq import zipf_frequency
 
 from utils import load_config, project_path
-from .rhyme import in_cmudict, rhyme_keys, rhymes, same_sound, word_syllables
+from .rhyme import in_cmudict, phones, rhyme_key, rhyme_keys, rhymes, same_sound, word_syllables
 
 GENERIC_SEEDS = ["boring", "lazy", "clueless", "awkward", "annoying"]    # no traits, or none GloVe knows
 GENERALITY_WEIGHT = 0.5    # 0 gives generic filler (tough/enough, might/quite); 1+ drifts to rare insults everywhere
 COMMON_WORDS = 10_000      # "average common word" = mean of the most frequent GloVe words
-MAX_SYLLABLES = 4          # longer end words ("counterproductive") make awkward line endings
+MAX_SYLLABLES = 2          # the disses' end words: 99% have one or two; longer ones get forced into lines
 # on top of the diss blocklist: mental-health words, since the disses avoid disability insults
 AVOID = {"psychopath", "sociopath", "psycho", "neurotic", "schizophrenic", "bipolar", "autistic", "retarded",
          "insane", "lunatic", "deranged", "demented", "maniac", "manic", "suicidal", "anorexic", "crippled"}
@@ -39,8 +45,22 @@ STOP = {"all", "and", "the", "who", "their", "own", "too", "with", "for", "you",
 WORD = re.compile(r"[a-z]+")
 
 
+def shared_ending(a, b):
+    """The rhyme carries the same consonant in front too (optimistic/pessimistic, encouraging/discouraging), so the
+    pair sounds like one ending twice. Different consonants (time/climb) or none on one side (treats/eats) are fine."""
+    for pa in phones(a):
+        for pb in phones(b):
+            if rhyme_key(pa) != rhyme_key(pb):
+                continue
+            n = len(pronouncing.rhyming_part(pa).split())
+            sa, sb = pa.split(), pb.split()
+            if len(sa) > n and len(sb) > n and sa[-n - 1] == sb[-n - 1]:
+                return True
+    return False
+
+
 class RhymePlanner:
-    def __init__(self, cfg=None, n_neighbours=1500, anchor_min_zipf=3.0, partner_min_count=2, pairs_per_trait=40):
+    def __init__(self, cfg=None, n_neighbours=1500, anchor_min_zipf=3.5, partner_min_count=2, pairs_per_trait=40):
         cfg = cfg or load_config()
         prefix = project_path(cfg["paths"]["glove"])
         if not Path(f"{prefix}.npy").exists():
@@ -103,7 +123,7 @@ class RhymePlanner:
         best = {}
         for a in anchors:
             partners = {p for k in rhyme_keys(a) for p in sound[k]
-                        if p != a and p not in exclude and rhymes(a, p)}
+                        if p != a and p not in exclude and rhymes(a, p) and not shared_ending(a, p)}
             if not partners:
                 continue
             p = max(partners, key=sim)

@@ -174,6 +174,8 @@ Then add:
    - find rhyming pairs among them using CMUdict
    - pick **two pairs with different rhyme sounds**, one for lines 1–2 and one for lines 3–4
    - rank by similarity to the trait and return the top k plans, e.g. `[("proud","loud"), ("wise","eyes")]`
+   - **end words short and common**, like the ones the disses end on: at most 2 syllables and Zipf frequency 3.5 or more for anchors (the disses' end words: mean 1.1 syllables, 1% with three or more, median Zipf 4.75). The first version allowed 4 syllables and Zipf 3.0, and its plans averaged 2.4 syllables with 41% of three or more (implemented/oriented, centralized/organized). The generators forced those words into lines that didn't fit: on the first rating pool System D reached full AABB in 49% of poems, against 81% with the real disses' end words.
+   - **no pairs that rhyme only through a shared ending**, with the same consonant before the rhyme (optimistic/pessimistic, encouraging/discouraging: 14 of the first version's 57 pairs). This is the planner's own rule (`shared_ending`); `rhymes()` is unchanged, so rhyme is still judged the way the training data was filtered.
 5. Unit tests with about 30 known rhyming and non-rhyming pairs.
 
 ---
@@ -288,7 +290,7 @@ Then add:
      `prompts` and `sheets` refuse to overwrite their output (pass `--force` to redo them), so a rerun can't wipe filled-in ratings.
    - **System D on Colab:** D needs a GPU, so its candidates come from `reranker/rating_pool_D.ipynb`. The notebook clones the repo, so push `reranker/rating_pool.py`, `config.yaml` and `data/rerank_ratings/prompts.jsonl` first (the prompts are made locally because the planner's GloVe files are git-ignored). Open the notebook in Colab (File → Open notebook → GitHub), pick a T4 GPU and Run all. It loads the adapter from `MyDrive/CS425/checkpoints/gen_D_1.5b_best/`, checks the GPU, adapter and prompts before loading the model, takes about 10 minutes, and saves `candidates_D.jsonl` to `MyDrive/CS425/rerank_ratings/` and downloads it. Put it in `data/rerank_ratings/` before running `sheets`.
    - **Files** in `data/rerank_ratings/`: `prompts.jsonl` (prompts, their system and two rhyme plans), `candidates_A.jsonl` and `candidates_D.jsonl` (all 20 candidates per prompt with their length-normalized log-probability), `items.jsonl` (the 150 rated candidates with system, plan, log-probability and toxicity: the key to the sheets, not to be shown to raters), `sheets/` (rating sheets and guide), `sheets_meta.json` (filter counts), `ratings.jsonl` (items with each rater's score and the mean). Agreement numbers go to `eval/results/rerank_tuning/agreement.json`.
-   - **Status:** prompts and System A candidates done (200 candidates, 21 s on CPU). Still to do: System D candidates on Colab, sheets, ratings, grid search.
+   - **Status:** prompts, candidates (A: 200 in 21 s on CPU; D: 400 on Colab) and sheets were built, but with the first version of the rhyme planner. Its long, rare end words made most poems poor (D full AABB 49%), so the sheets have not been rated. The planner has since been fixed (Phase 2, step 4); still to do: rebuild `prompts` (`--force`), both candidate sets and the sheets (`--force`) with the fixed planner, then rate, collect and run the grid search.
 
 ---
 

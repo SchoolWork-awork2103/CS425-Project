@@ -130,7 +130,13 @@ def cmd_sheets(cfg, args):
         path = d / f"candidates_{s}.jsonl"
         if not path.exists():
             sys.exit(f"{path} missing: run `python reranker/rating_pool.py generate --system {s}` first")
-        cands += read_jsonl(path)
+        rows = read_jsonl(path)
+        stale = [c for c in rows if c["prompt"] not in prompts or prompts[c["prompt"]]["system"] != s
+                 or prompts[c["prompt"]]["plans"][c["plan"]] != c["end_words"]]
+        if stale:
+            sys.exit(f"{path.name} was made from an older prompts.jsonl ({len(stale)} of {len(rows)} candidates don't "
+                     f"match it): run `python reranker/rating_pool.py generate --system {s}` again")
+        cands += rows
 
     # the reranker's hard filters, so no rating is spent on a candidate it would never rank
     vocab = set(Path(f"{project_path(cfg['paths']['glove'])}.vocab.txt").read_text(encoding="utf-8").split("\n"))
