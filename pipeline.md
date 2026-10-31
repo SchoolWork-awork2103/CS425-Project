@@ -235,6 +235,21 @@ Then add:
 1. **Trait-fit classifier** [Recommended]: fine-tune DistilBERT on `"[traits] [SEP] [poem]"`.
    - Positives: reviewed disses with their correct traits
    - Negatives: the 1e set (flat, non-rhyming, off-topic, and disses paired with a wrong trait), plus poems with shuffled lines
+   - **Code:** `reranker/trait_fit.py` (splits, model, `TraitFit.score(traits, poems)` for the reranker), `python reranker/train_trait_fit.py`, or on a Colab T4 `reranker/train_trait_fit.ipynb` after uploading the zip from `python reranker/make_colab_zip.py` (sweep of lr 2e-5 and 5e-5 × seeds 42–44, chosen on val AUC; `trait_fit` in `config.yaml`). Saved as `checkpoints/trait_fit_best/`, results in `eval/results/trait_fit/`.
+   - **Trait text:** each trait is written with its synonyms and flip side from `traits.json` (`confident: self-assured, bold, …, arrogant, all talk`), so held-out traits come with known words. The fallback disses have no traits and are left out.
+   - **Splits** (built on the fly, fixed by the seed): `flat`, `non_rhyming` and `off_topic` are split 80/10/10 within each type. The 1e `wrong_trait` rows reuse train disses, so they stay in train, and val and test relabel their own disses the same way (never within a `CLOSE` group) at the train ratio. `shuffled` (20% of each split's disses) reorders the lines so neither couplet stays together. Test adds the 146 held-out disses, each also with a wrong training trait, plus as many training-trait disses labelled with a held-out trait. Result: train 5,808 / val 723 / test 1,189 rows (467 held-out), and no val or test poem appears in train.
+   - Reported on test, training-trait and held-out-trait rows apart: AUC, accuracy/P/R/F1 at 0.5, how often each negative type is scored as a fit, and the time to score 5 candidates on GPU and CPU.
+   - **Result** (`eval/results/trait_fit/`; Colab T4, about 21 s per epoch; chosen run lr 5e-5 seed 42, best epoch 4 of 5):
+
+     | Test | n (pos) | AUC | Acc | P | R | F1 |
+     |---|---|---|---|---|---|---|
+     | training traits | 722 (402) | 0.984 | 0.971 | 0.961 | 0.988 | 0.974 |
+     | held-out traits | 467 (146) | 0.966 | 0.927 | 0.850 | 0.932 | 0.889 |
+     | all | 1,189 (548) | 0.984 | 0.954 | 0.930 | 0.973 | 0.951 |
+
+     - Share of each negative type scored as a fit: `off_topic` and `non_rhyming` 0, `wrong_trait` 0.058, `flat` 0.079, `shuffled` 0.138. Shuffled lines are the weakest point; the phonetic `aabb_score` catches them in the combined score anyway.
+     - The two learning rates tie on val (mean AUC 0.9762 for 2e-5, 0.9765 for 5e-5, seeds 42–44); on test they are within 0.003 AUC. Over all 6 runs: test AUC 0.970–0.984, held-out 0.928–0.966.
+     - 0.009 s to score 5 candidates on the T4, 0.38 s on the Colab CPU.
 2. **Combined score** [Core, with w5 Recommended]:
    ```
    score = w1·norm_logprob + w2·aabb_score + w3·syllable_score
@@ -249,9 +264,33 @@ Then add:
 
 # Phase 6: NLU [Recommended]
 
-1. Joint intent and slot model: DistilBERT with an intent head on `[CLS]` and a BIO slot head on tokens (Lab 9 code).
-2. **Slot normalization:** exact or synonym match against `traits.json` first; otherwise the closest trait by GloVe cosine similarity if it's above about 0.5; otherwise mark it unknown.
-3. Report intent accuracy and slot F1 on the NLU test set.
+1. Joint intent and slot model: DistilBERT with an intent head on `[CLS]` and a BIO slot head on tokens (Lab 9 code), in `nlu/joint_model.py`. Each word's tag sits on its first word piece; the loss is intent plus tag cross-entropy. Batch 16, linear warmup over 10% of the steps, up to 10 epochs with early stopping (patience 2; `nlu` in `config.yaml`). Each run keeps the epoch with the best mean of val intent accuracy and per-word slot F1; per word, not exact span, because exact-span F1 jumps between epochs with the loose gold boundaries.
+   - **Training:** `nlu/train_nlu.ipynb` on a Colab T4, after uploading the zip from `python nlu/make_colab_zip.py` (about 20 min). It runs a sweep, lr 3e-5 and 5e-5 × seeds 42, 43, 44, and every run is evaluated on test (`eval/results/nlu/sweep.json`). The learning rate with the best mean val score wins, then its seed with the best val score; test results are never used to choose. The chosen model is saved to the shared Drive as `checkpoints/nlu_joint_best/`.
+2. **Slot normalization** (`nlu/normalize.py`): a trait key or another form of it (loyalty → loyal) or a synonym phrase from `traits.json` first; otherwise sentence embeddings (all-MiniLM-L6-v2): the span's 7 nearest labelled spans from the NLU train split vote, plus each trait's similarity to its description, with full weight for traits with no training spans (the held-out ones); below similarity 0.4 to everything it is unknown, and the nearest trait is kept for the dialogue manager.
+   - **Why not GloVe:** most spans are indirect ("set financial goals for everything"). On the gold spans, the mean GloVe vector picked the labelled trait 20–33% of the time; the embedding kNN 39–57%. Many misses are a neighbouring trait (calm for easygoing), so the results are also given leniently, counting a trait from the same `CLOSE` group (`prepare_negatives.py`).
+   - The 0.4 threshold keeps 94% of real val spans but rejects only 12% of non-trait phrases, so it is a safety net; deciding what is a trait is the tagger's job.
+3. Report intent accuracy and slot F1 on the NLU test set, training-trait and held-out-trait messages apart, plus trait accuracy of the normalization (gold spans) and end to end (traits found in a message against its labels).
+4. **Result** (`eval/results/nlu/`). Over the seeds, mean ± standard deviation:
+
+   | lr | Val score | Test intent acc | Slot F1 exact / per word / overlap | Traits found exact, training / held-out |
+   |---|---|---|---|---|
+   | 3e-5 | 0.827 ± 0.003 | 0.934 ± 0.005 | 0.290 ± 0.008 / 0.649 ± 0.005 / 0.728 ± 0.004 | 0.295 ± 0.025 / 0.313 ± 0.018 |
+   | 5e-5 | 0.828 ± 0.007 | 0.935 ± 0.003 | 0.310 ± 0.009 / 0.656 ± 0.009 / 0.733 ± 0.004 | 0.305 ± 0.024 / 0.321 ± 0.021 |
+
+   The two learning rates are tied within the seed spread; 5e-5 won on mean val score. The chosen run (lr 5e-5, seed 44, epoch 8 of 10) on test:
+
+   | Test | n | Intent acc | Slot F1 exact / per word / overlap | Traits found, exact / lenient |
+   |---|---|---|---|---|
+   | training traits | 332 | 0.910 | 0.300 / 0.662 / 0.718 | 0.280 / 0.396 |
+   | held-out traits | 197 | 0.985 | 0.312 / 0.665 / 0.753 | 0.325 / 0.426 |
+   | all | 529 | 0.938 | 0.306 / 0.664 / 0.736 | |
+
+   - **The spread over seeds is under 0.01 on almost every metric, and per-word val F1 levels off around epochs 5–8**, so more training or tuning will not add much. The limits are the loose labels and the normalization.
+   - **Slot F1 by exact span match is low because the gold boundaries are loose:** the LLM picked span lengths freely (gold "talk circles around", predicted "talk circles around your entire team"). The tagger usually finds the right words (overlap F1 0.74). In `NLU.parse`, predicted spans one word apart are joined, which raised trait accuracy end to end on val.
+   - Normalization of the gold test spans: 0.44 strict / 0.58 lenient for training traits, 0.49 / 0.56 for held-out traits, the same in every run since it does not depend on the model. This is the weakest step.
+   - Weakest intent: `make_meaner` (0.77, 30 test messages). Plain "make it meaner" can come out as `request_diss`, so the dialogue manager should check for meaner/softer keywords first.
+   - 23 ms per message on the T4 and 66 ms on a laptop CPU, normalization included. On the CPU the model gives exactly the T4 test results.
+5. **Spot check** (`spot_check.csv`, 348 messages, first pass by Claude, to be confirmed by the team): 42 (12%) marked wrong. About half are the wrong intent, mostly `greet` messages that are really `request_diss` and `another_one` messages that tell a new story; the rest are a neighbouring trait or a span that misses the trait words. These show up as model errors on the test set too.
 
 *Minimal fallback if time is short:* keyword and synonym matching only, with no trained model.
 

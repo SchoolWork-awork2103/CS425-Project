@@ -46,3 +46,25 @@ toxicity:                         # Detoxify "original" scores; a diss is droppe
   obscene: 0.5
   threat: 0.3
   identity_attack: 0.2
+
+nlu:                              # Phase 6 joint intent + TRAIT slot model (nlu/train_nlu.py)
+  model: distilbert-base-uncased
+  lr: 5.0e-5
+  epochs: 10                      # keeps the epoch with the best val score (mean of intent accuracy and per-word slot F1)
+  patience: 2
+  batch_size: 16
+  max_len: 160                    # word pieces; the longest message is 74 words
+  span_encoder: sentence-transformers/all-MiniLM-L6-v2   # maps a TRAIT span to a trait (nlu/normalize.py)
+  unknown_threshold: 0.4          # a span less similar than this to every training span and trait description is "unknown"
+
+trait_fit:                        # Phase 5 trait-fit classifier for the reranker (reranker/train_trait_fit.py)
+  model: distilbert-base-uncased
+  lr: 3.0e-5
+  epochs: 5                       # keeps the epoch with the best val AUC
+  patience: 2
+  batch_size: 32
+  warmup: 0.1
+  weight_decay: 0.01
+  max_len: 192                    # word pieces of trait descriptions + poem; the longest is 160 (median 93)
+  describe_traits: true           # each trait as "key: synonyms, flip" from traits.json, so held-out traits come with known words
+  shuffled_frac: 0.2              # disses with shuffled lines, per split, as a share of its training-trait disses

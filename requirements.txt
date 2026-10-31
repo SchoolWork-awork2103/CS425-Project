@@ -5,3 +5,6 @@ wordfreq
 detoxify
 nltk
 sentencepiece
+torch
+transformers
+sentence-transformers
