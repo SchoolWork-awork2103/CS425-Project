@@ -1,5 +1,0 @@
-# In a new Python 3.10-3.12 environment. CPU or CUDA PyTorch required.
-torch>=2.2
-transformers>=4.50,<6
-accelerate>=1.0
-cmudict>=1.0

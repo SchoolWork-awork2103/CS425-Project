@@ -79,3 +79,16 @@ reranker:                         # Phase 5 combined score
     shown: 5                      # candidates per prompt on the rating sheets: 30 x 5 = 150
     raters: 2
     checkpoints: {A: gen_A_rev_stage2_best.pt, D: gen_D_1.5b_best}
+
+gpt2:                             # System E full fine-tune (generation/gpt2_lm.py, pipeline_gpt2.md)
+  models:                         # GPT-2 small (124M), same tokenizer
+    poems: ismaelfaro/gpt2-poems.en          # pretrained on a Kaggle poems dataset
+    crpo: andreipb/gpt2-poetry-model-crpo    # pretrained on the Gutenberg Poetry Corpus
+    base: gpt2                               # control: no poetry
+  # checkpoint names: gen_E_{poems|crpo|base}_stage{1|2}_best/, in paths.checkpoints and the shared Drive folder
+  lr: [5.0e-5, 1.0e-5]            # Stage 1 (quatrains), Stage 2 (disses): about 1/5, as for System A
+  epochs: 5                       # keeps the epoch with the best val loss
+  patience: 2
+  batch_size: 8
+  accum: 2                        # 16 examples per step; on a 6 GB GPU use batch 4 x accum 4 with gradient checkpointing
+  max_len: 256                    # GPT-2 tokens of prompt + poem; longer examples are skipped, not truncated

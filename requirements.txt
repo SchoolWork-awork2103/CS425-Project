@@ -7,4 +7,5 @@ nltk
 sentencepiece
 torch
 transformers
+accelerate
 sentence-transformers
