@@ -18,6 +18,7 @@ paths:
   nlu_dir: data/nlu/corpus         # intent + BIO slot data split into train / val / test
   negatives_raw: data/negatives/llm_out/negatives.jsonl   # raw output of negatives_gen.ipynb
   negatives_dir: data/negatives/corpus   # reranker negatives
+  rerank_ratings: data/rerank_ratings    # hand-rated candidates for tuning the reranker weights (reranker/rating_pool.py)
   tokenizer: generation/tokenizer/bpe8k   # sentencepiece prefix: bpe8k.model, bpe8k.vocab
   glove: data/glove/glove.6B.300d.100k   # data/prepare_glove.py: .npy (float16) + .vocab.txt; git-ignored
 
@@ -68,3 +69,13 @@ trait_fit:                        # Phase 5 trait-fit classifier for the reranke
   max_len: 192                    # word pieces of trait descriptions + poem; the longest is 160 (median 93)
   describe_traits: true           # each trait as "key: synonyms, flip" from traits.json, so held-out traits come with known words
   shuffled_frac: 0.2              # disses with shuffled lines, per split, as a share of its training-trait disses
+
+reranker:                         # Phase 5 combined score
+  lexical_min: 0.8                # hard filter: a candidate below this lexical_score is dropped (toxicity uses the limits above)
+  tuning:                         # candidates rated by hand to tune the weights (reranker/rating_pool.py)
+    prompts: {D: 20, A: 10}       # validation-diss prompts per generator; all candidates for a prompt come from one system
+    plans: 2                      # top rhyme plans per prompt, as at run time
+    per_plan: 10                  # candidates sampled per plan, as at run time (temperature 0.8, top-p 0.9, penalty 1.2)
+    shown: 5                      # candidates per prompt on the rating sheets: 30 x 5 = 150
+    raters: 2
+    checkpoints: {A: gen_A_rev_stage2_best.pt, D: gen_D_1.5b_best}

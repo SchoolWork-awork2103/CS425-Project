@@ -164,10 +164,10 @@ Then add:
    - a small penalty if the A and B rhyme sounds are the same (which would make it AAAA)
    - average the two pairs
 2. **`syllable_score(lines)`**: there's no fixed meter, so check two things:
-   - each line falls within 7–11 syllables
-   - the two lines in each rhyming pair are within 2 syllables of each other, so the couplets feel balanced
-   - the corpus filter in 1a was looser (6–12 syllables, within 3), so some corpus quatrains will score below 1 here
-   - **to check:** the disses follow the style CSV at 6–18 syllables within 5 (`diss_form`, median 13 per line), so a 7–11 target scores most real disses below 1. Consider aligning this range with `diss_form` before tuning the reranker weights.
+   - each line falls within 6–18 syllables
+   - the two lines in each rhyming pair are within 5 syllables of each other, so the couplets feel balanced
+   - these limits match `diss_form` in `config.yaml` (the disses run 7–18 syllables per line, median 13), so every real diss scores 1; the corpus filter in 1a was stricter (6–12, within 3), so corpus quatrains score 1 too
+   - since the negatives also pass `diss_form`, this score cannot separate them from real disses; its job in the reranker is to catch generated lines that are far too short or too long
 3. **`lexical_score(line)`**: the fraction of words found in CMUdict or the GloVe vocabulary.
 4. **Rhyme planner `plan_rhymes(traits)`** [Recommended]:
    - collect GloVe neighbours of the trait and its flip words
@@ -266,9 +266,29 @@ Then add:
          + w4·lexical_score + w5·trait_fit − w6·repetition − w7·toxicity
    ```
    Normalize log-probability by length, otherwise short poems win.
-3. **Hard filters first:** drop any candidate that isn't 4 lines, has toxicity above the threshold, or has a lexical score below 0.8.
+3. **Hard filters first:** drop any candidate that isn't 4 lines, reaches one of the Detoxify limits in `toxicity` (the same limits the disses were filtered with), or has a lexical score below 0.8 (`reranker.lexical_min` in `config.yaml`).
 4. **Order for speed:** run the instant checks on all candidates, then run DistilBERT on the top 5 only.
-5. **Weight tuning:** rate about 150 candidates on a 1–5 scale (at least two raters). Grid-search the weights to maximize Spearman correlation with those ratings.
+5. **Weight tuning:** two raters score 150 generated candidates from 1 to 5, then a grid search picks the weights whose combined score agrees best (Spearman) with the mean rating.
+   - **Prompts:** the traits and intensity of 30 validation disses: half mild, half harsh, no trait set twice (21 pairs, 7 single traits, 1 triple, 1 with no traits). Never the 50 frozen eval prompts, so the tuning doesn't see the evaluation. The end words come from the rhyme planner, as at run time; the diss itself is not used.
+   - **Candidates:** each prompt goes to one generator, 20 to System D (the main generator) and 10 to System A, and gets candidates the way it would at run time: 10 samples for each of the top 2 rhyme plans, at temperature 0.8, top-p 0.9 and repetition penalty 1.2. All the candidates for a prompt come from the same system, because the reranker only ever compares candidates for one request, and A's and D's log-probabilities are on different scales (different tokenizers).
+   - **Rating sheets:** the hard filters (step 3) run first, so no rating is spent on a candidate the reranker would drop, then 5 random survivors per prompt go on the sheets (30 × 5 = 150 items). Each rater gets their own CSV showing only the request (traits, intensity) and the four lines, with nothing about the system or plan. Item numbers are shuffled, and each rater sees the requests and the poems within a request in their own random order.
+   - **Scale:** one overall rating per poem, "how good is this as a reply to the request", with the guide in `sheets/HOW_TO_RATE.txt`: 5 you would send it, 4 good with one small weakness, 3 fine but forgettable, 2 weak (off-trait, a couplet doesn't rhyme), 1 nonsense or offensive. A clear intensity mismatch costs a point. Raters can be from the team (unlike the Phase 9 human evaluation, which needs raters outside it), but they rate alone and don't compare until both sheets are done.
+   - **Agreement:** `collect` refuses sheets with a missing or non-1–5 rating, then reports the Spearman correlation between the raters over all items and within each prompt, how often they agree exactly and within one point, and how often each rater used each score. The tuned score can't be expected to agree with the mean rating better than the raters agree with each other, so report it next to the tuning result.
+   - **Syllable weight:** not tuned, but tied to the rhyme weight (w3 = w2): line length counts as much as rhyme. 98–99% of generated candidates score 1 on `syllable_score` (`eval/results/gen_D/README.md`), so 150 ratings hold almost nothing to learn its weight from. It guards against lines far too short or too long.
+   - **Grid search** [to do, with `reranker/rerank.py`]: features scaled to [0, 1] within each prompt, the syllable weight tied as above, the other weights searched over a small grid. Since only the order within a request matters, the objective is the mean within-prompt Spearman with the mean rating; to keep it honest with 150 items, pick the weights on 5 folds of prompts and report the held-out fold score.
+   - **Code:** `reranker/rating_pool.py`, settings in `reranker.tuning` in `config.yaml`. Run from the project root:
+     ```
+     python reranker/rating_pool.py prompts               # prompts + rhyme plans (needs the GloVe files)
+     python reranker/rating_pool.py generate --system A   # about 20 s on a CPU
+     python reranker/rating_pool.py generate --system D   # needs a GPU and peft: on Colab, see below
+     python reranker/rating_pool.py sheets                # hard filters (Detoxify), sheets/rater_1.csv, rater_2.csv
+     (each rater fills in the rating column of their own sheet and saves it as CSV under the same name)
+     python reranker/rating_pool.py collect               # checks the sheets, agreement, ratings.jsonl
+     ```
+     `prompts` and `sheets` refuse to overwrite their output (pass `--force` to redo them), so a rerun can't wipe filled-in ratings.
+   - **System D on Colab:** D needs a GPU, so its candidates come from `reranker/rating_pool_D.ipynb`. The notebook clones the repo, so push `reranker/rating_pool.py`, `config.yaml` and `data/rerank_ratings/prompts.jsonl` first (the prompts are made locally because the planner's GloVe files are git-ignored). Open the notebook in Colab (File → Open notebook → GitHub), pick a T4 GPU and Run all. It loads the adapter from `MyDrive/CS425/checkpoints/gen_D_1.5b_best/`, checks the GPU, adapter and prompts before loading the model, takes about 10 minutes, and saves `candidates_D.jsonl` to `MyDrive/CS425/rerank_ratings/` and downloads it. Put it in `data/rerank_ratings/` before running `sheets`.
+   - **Files** in `data/rerank_ratings/`: `prompts.jsonl` (prompts, their system and two rhyme plans), `candidates_A.jsonl` and `candidates_D.jsonl` (all 20 candidates per prompt with their length-normalized log-probability), `items.jsonl` (the 150 rated candidates with system, plan, log-probability and toxicity: the key to the sheets, not to be shown to raters), `sheets/` (rating sheets and guide), `sheets_meta.json` (filter counts), `ratings.jsonl` (items with each rater's score and the mean). Agreement numbers go to `eval/results/rerank_tuning/agreement.json`.
+   - **Status:** prompts and System A candidates done (200 candidates, 21 s on CPU). Still to do: System D candidates on Colab, sheets, ratings, grid search.
 
 ---
 
