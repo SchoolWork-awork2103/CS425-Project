@@ -14,6 +14,10 @@ paths:
   disses_raw: data/disses/llm_out/disses.jsonl   # raw output of diss_gen.ipynb
   blocklist: data/disses/blocklist.txt
   diss_dir: data/disses/corpus     # filtered, reviewed and split disses
+  nlu_raw: data/nlu/llm_out/nlu.jsonl              # raw output of nlu_gen.ipynb
+  nlu_dir: data/nlu/corpus         # intent + BIO slot data split into train / val / test
+  negatives_raw: data/negatives/llm_out/negatives.jsonl   # raw output of negatives_gen.ipynb
+  negatives_dir: data/negatives/corpus   # reranker negatives
   tokenizer: generation/tokenizer/bpe8k   # sentencepiece prefix: bpe8k.model, bpe8k.vocab
   glove: data/glove/glove.6B.300d.100k   # data/prepare_glove.py: .npy (float16) + .vocab.txt; git-ignored
 
@@ -25,8 +29,10 @@ tokenizer:                        # shared by the from-scratch generators (Syste
 data:
   quatrain_val_frac: 0.05         # 95/5 split by topic group (no shared nouns)
   diss_split: [0.8, 0.1, 0.1]     # held-out-trait disses go to test only
+  nlu_split: [0.8, 0.1, 0.1]      # held-out-trait messages go to test only
   rouge_dedup: 0.7
   reviewers: 3                    # manual review sheets for the disses
+  nlu_spot_check_frac: 0.1
 
 diss_form:                        # follows diss_style_examples.csv (median 14 syllables); same values as diss_gen.ipynb
   syl_min: 6
