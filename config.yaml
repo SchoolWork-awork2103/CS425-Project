@@ -1,0 +1,81 @@
+# Shared paths and settings. Paths are relative to the project root.
+
+seed: 42
+
+paths:
+  traits: data/traits.json
+  eval_prompts: eval/prompts.json
+  checkpoints: checkpoints        # mirrored to the shared Drive folder
+  # checkpoint names: gen_{system}_stage{1|2}_best.pt, e.g. gen_A_stage2_best.pt
+  topics: data/quatrains/topics.json
+  quatrains: data/quatrains/gen_out/qwen3-32b/quatrains.jsonl
+  quatrains_meta: data/quatrains/gen_out/qwen3-32b/meta.json
+  corpus_dir: data/quatrains/corpus   # cleaned quatrains split into train / val
+  disses_raw: data/disses/llm_out/disses.jsonl   # raw output of diss_gen.ipynb
+  blocklist: data/disses/blocklist.txt
+  diss_dir: data/disses/corpus     # filtered, reviewed and split disses
+  nlu_raw: data/nlu/llm_out/nlu.jsonl              # raw output of nlu_gen.ipynb
+  nlu_dir: data/nlu/corpus         # intent + BIO slot data split into train / val / test
+  negatives_raw: data/negatives/llm_out/negatives.jsonl   # raw output of negatives_gen.ipynb
+  negatives_dir: data/negatives/corpus   # reranker negatives
+  rerank_ratings: data/rerank_ratings    # hand-rated candidates for tuning the reranker weights (reranker/rating_pool.py)
+  tokenizer: generation/tokenizer/bpe8k   # sentencepiece prefix: bpe8k.model, bpe8k.vocab
+  glove: data/glove/glove.6B.300d.100k   # data/prepare_glove.py: .npy (float16) + .vocab.txt; git-ignored
+
+tokenizer:                        # shared by the from-scratch generators (Systems A, B, C)
+  vocab_size: 8000
+  special: ["<traits>", "<intensity>", "<rhymes>", "<poem>", "<nl>"]   # each always one token
+  # ids: <pad> 0, <unk> 1, <bos> 2, <eos> 3; byte fallback, so unseen characters never become <unk>
+
+data:
+  quatrain_val_frac: 0.05         # 95/5 split by topic group (no shared nouns)
+  diss_split: [0.8, 0.1, 0.1]     # held-out-trait disses go to test only
+  nlu_split: [0.8, 0.1, 0.1]      # held-out-trait messages go to test only
+  rouge_dedup: 0.7
+  reviewers: 3                    # manual review sheets for the disses
+  nlu_spot_check_frac: 0.1
+
+diss_form:                        # follows diss_style_examples.csv (median 14 syllables); same values as diss_gen.ipynb
+  syl_min: 6
+  syl_max: 18
+  pair_diff: 5
+
+toxicity:                         # Detoxify "original" scores; a diss is dropped if any score reaches its limit
+  # "toxicity" and "insult" are left out on purpose: they rise with any hard-hitting roast.
+  # What is filtered: vulgarity (obscene), hate (identity_attack), threats and extreme toxicity.
+  severe_toxicity: 0.1
+  obscene: 0.5
+  threat: 0.3
+  identity_attack: 0.2
+
+nlu:                              # Phase 6 joint intent + TRAIT slot model (nlu/train_nlu.py)
+  model: distilbert-base-uncased
+  lr: 5.0e-5
+  epochs: 10                      # keeps the epoch with the best val score (mean of intent accuracy and per-word slot F1)
+  patience: 2
+  batch_size: 16
+  max_len: 160                    # word pieces; the longest message is 74 words
+  span_encoder: sentence-transformers/all-MiniLM-L6-v2   # maps a TRAIT span to a trait (nlu/normalize.py)
+  unknown_threshold: 0.4          # a span less similar than this to every training span and trait description is "unknown"
+
+trait_fit:                        # Phase 5 trait-fit classifier for the reranker (reranker/train_trait_fit.py)
+  model: distilbert-base-uncased
+  lr: 3.0e-5
+  epochs: 5                       # keeps the epoch with the best val AUC
+  patience: 2
+  batch_size: 32
+  warmup: 0.1
+  weight_decay: 0.01
+  max_len: 192                    # word pieces of trait descriptions + poem; the longest is 160 (median 93)
+  describe_traits: true           # each trait as "key: synonyms, flip" from traits.json, so held-out traits come with known words
+  shuffled_frac: 0.2              # disses with shuffled lines, per split, as a share of its training-trait disses
+
+reranker:                         # Phase 5 combined score
+  lexical_min: 0.8                # hard filter: a candidate below this lexical_score is dropped (toxicity uses the limits above)
+  tuning:                         # candidates rated by hand to tune the weights (reranker/rating_pool.py)
+    prompts: {D: 20, A: 10}       # validation-diss prompts per generator; all candidates for a prompt come from one system
+    plans: 2                      # top rhyme plans per prompt, as at run time
+    per_plan: 10                  # candidates sampled per plan, as at run time (temperature 0.8, top-p 0.9, penalty 1.2)
+    shown: 5                      # candidates per prompt on the rating sheets: 30 x 5 = 150
+    raters: 2
+    checkpoints: {A: gen_A_rev_stage2_best.pt, D: gen_D_1.5b_best}

@@ -1,0 +1,50 @@
+# One word or phrase per line, matched as whole words in the lowercased diss.
+# A hit drops the diss. Two things are banned in the disses: vulgar language, and slurs or hate
+# about identity or disability. Detoxify's obscene and identity_attack scores catch what this misses.
+# Appearance jokes are allowed, so words like "ugly" are not on the list.
+
+# swearing and vulgar words
+fuck
+fucking
+fucked
+shit
+shitty
+bullshit
+crap
+crappy
+ass
+asshole
+dumbass
+jackass
+piss
+pissed
+bitch
+bastard
+damn
+hell
+whore
+slut
+dick
+cunt
+pussy
+cock
+sexy
+
+# disability slurs
+retard
+retarded
+cripple
+crippled
+spastic
+midget
+
+# identity
+gay
+lesbian
+tranny
+church
+mosque
+bible
+quran
+jesus
+allah

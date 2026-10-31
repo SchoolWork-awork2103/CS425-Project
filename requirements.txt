@@ -1,0 +1,10 @@
+pyyaml
+numpy
+pronouncing
+wordfreq
+detoxify
+nltk
+sentencepiece
+torch
+transformers
+sentence-transformers

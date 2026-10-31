@@ -1,0 +1,30 @@
+{"id": 1, "system": "D", "traits": ["smart", "ambitious"], "intensity": "harsh", "kind": "pair", "diss_id": 2048, "plans": [["tart", "smart", "games", "aims"], ["pretty", "witty", "games", "aims"]]}
+{"id": 2, "system": "D", "traits": ["independent", "healthy"], "intensity": "harsh", "kind": "pair", "diss_id": 226, "plans": [["indeed", "need", "treats", "eats"], ["cry", "rely", "treats", "eats"]]}
+{"id": 3, "system": "A", "traits": [], "intensity": "mild", "kind": "fallback", "diss_id": 4156, "plans": [["sneaky", "cheeky", "numb", "dumb"], ["sneaky", "cheeky", "dude", "rude"]]}
+{"id": 4, "system": "D", "traits": ["ambitious", "adventurous"], "intensity": "harsh", "kind": "pair", "diss_id": 1294, "plans": [["games", "aims", "sneaky", "cheeky"], ["games", "aims", "skill", "thrill"]]}
+{"id": 5, "system": "D", "traits": ["spontaneous", "wise"], "intensity": "harsh", "kind": "pair", "diss_id": 3988, "plans": [["fearful", "cheerful", "replies", "wise"], ["squeal", "surreal", "replies", "wise"]]}
+{"id": 6, "system": "D", "traits": ["honest", "romantic"], "intensity": "harsh", "kind": "pair", "diss_id": 4419, "plans": [["quite", "polite", "dance", "romance"], ["quite", "polite", "unreal", "surreal"]]}
+{"id": 7, "system": "A", "traits": ["honest", "caring"], "intensity": "harsh", "kind": "pair", "diss_id": 4429, "plans": [["quite", "polite", "pleasing", "teasing"], ["quite", "polite", "pity", "witty"]]}
+{"id": 8, "system": "D", "traits": ["disciplined"], "intensity": "mild", "kind": "single", "diss_id": 133, "plans": [["serene", "routine", "addict", "strict"], ["serene", "routine", "mind", "kind"]]}
+{"id": 9, "system": "D", "traits": ["honest", "charming"], "intensity": "harsh", "kind": "pair", "diss_id": 496, "plans": [["quite", "polite", "sneaky", "cheeky"], ["pretty", "witty", "sneaky", "cheeky"]]}
+{"id": 10, "system": "A", "traits": ["generous", "helpful"], "intensity": "harsh", "kind": "pair", "diss_id": 1806, "plans": [["cheer", "sincere", "hateful", "grateful"], ["cheer", "sincere", "greedy", "needy"]]}
+{"id": 11, "system": "D", "traits": ["helpful", "romantic"], "intensity": "mild", "kind": "pair", "diss_id": 689, "plans": [["hateful", "grateful", "dance", "romance"], ["greedy", "needy", "dance", "romance"]]}
+{"id": 12, "system": "A", "traits": ["independent", "humble"], "intensity": "harsh", "kind": "pair", "diss_id": 1517, "plans": [["indeed", "need", "rumble", "humble"], ["cry", "rely", "rumble", "humble"]]}
+{"id": 13, "system": "D", "traits": ["organized", "athletic", "optimistic"], "intensity": "mild", "kind": "triple", "diss_id": 3071, "plans": [["swim", "gym", "discreet", "upbeat"], ["swim", "gym", "fearful", "cheerful"]]}
+{"id": 14, "system": "D", "traits": ["charming"], "intensity": "mild", "kind": "single", "diss_id": 3027, "plans": [["sneaky", "cheeky", "quite", "polite"], ["sneaky", "cheeky", "weave", "naive"]]}
+{"id": 15, "system": "D", "traits": ["confident", "ambitious"], "intensity": "harsh", "kind": "pair", "diss_id": 629, "plans": [["obsessed", "impressed", "games", "aims"], ["witty", "pretty", "games", "aims"]]}
+{"id": 16, "system": "A", "traits": ["musical", "competitive"], "intensity": "harsh", "kind": "pair", "diss_id": 1523, "plans": [["strings", "sings", "best", "contest"], ["strings", "sings", "beat", "compete"]]}
+{"id": 17, "system": "A", "traits": ["competitive", "helpful"], "intensity": "mild", "kind": "pair", "diss_id": 1450, "plans": [["best", "contest", "hateful", "grateful"], ["best", "contest", "greedy", "needy"]]}
+{"id": 18, "system": "D", "traits": ["ambitious", "curious"], "intensity": "mild", "kind": "pair", "diss_id": 4451, "plans": [["games", "aims", "yearn", "learn"], ["games", "aims", "invite", "polite"]]}
+{"id": 19, "system": "A", "traits": ["adventurous", "easygoing"], "intensity": "harsh", "kind": "pair", "diss_id": 1933, "plans": [["sneaky", "cheeky", "upright", "polite"], ["sneaky", "cheeky", "pretty", "witty"]]}
+{"id": 20, "system": "A", "traits": ["musical"], "intensity": "mild", "kind": "single", "diss_id": 2898, "plans": [["strings", "sings", "hop", "pop"], ["strings", "sings", "trio", "solo"]]}
+{"id": 21, "system": "D", "traits": ["organized"], "intensity": "mild", "kind": "single", "diss_id": 2751, "plans": [["manner", "planner", "discrete", "neat"], ["manner", "planner", "modes", "codes"]]}
+{"id": 22, "system": "D", "traits": ["athletic", "healthy"], "intensity": "mild", "kind": "pair", "diss_id": 545, "plans": [["swim", "gym", "treats", "eats"], ["swim", "gym", "sweets", "eats"]]}
+{"id": 23, "system": "D", "traits": ["honest", "tidy"], "intensity": "mild", "kind": "pair", "diss_id": 3535, "plans": [["quite", "polite", "discreet", "neat"], ["pretty", "witty", "discreet", "neat"]]}
+{"id": 24, "system": "A", "traits": ["healthy"], "intensity": "harsh", "kind": "single", "diss_id": 124, "plans": [["treats", "eats", "meat", "eat"], ["treats", "eats", "treat", "eat"]]}
+{"id": 25, "system": "D", "traits": ["responsible"], "intensity": "harsh", "kind": "single", "diss_id": 2702, "plans": [["sure", "mature", "sharing", "caring"], ["sure", "mature", "kind", "find"]]}
+{"id": 26, "system": "A", "traits": ["tidy", "meticulous"], "intensity": "harsh", "kind": "pair", "diss_id": 3763, "plans": [["discreet", "neat", "grail", "detail"], ["discreet", "neat", "nice", "precise"]]}
+{"id": 27, "system": "D", "traits": ["funny"], "intensity": "mild", "kind": "single", "diss_id": 1580, "plans": [["bunny", "funny", "folks", "jokes"], ["bunny", "funny", "poke", "joke"]]}
+{"id": 28, "system": "D", "traits": ["organized", "disciplined"], "intensity": "mild", "kind": "pair", "diss_id": 15, "plans": [["manner", "planner", "serene", "routine"], ["manner", "planner", "addict", "strict"]]}
+{"id": 29, "system": "D", "traits": ["smart", "curious"], "intensity": "mild", "kind": "pair", "diss_id": 1710, "plans": [["tart", "smart", "yearn", "learn"], ["tart", "smart", "invite", "polite"]]}
+{"id": 30, "system": "D", "traits": ["generous", "healthy"], "intensity": "mild", "kind": "pair", "diss_id": 3505, "plans": [["cheer", "sincere", "treats", "eats"], ["praise", "pays", "treats", "eats"]]}

@@ -1,0 +1,45 @@
+{
+  "model": {
+    "emb_dim": 300,
+    "hidden": 512,
+    "layers": 2,
+    "dropout": 0.3
+  },
+  "batch_size": 64,
+  "lr": [
+    0.002,
+    0.0004
+  ],
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "stage1": {
+    "epochs": 29,
+    "best_val_loss": 3.547162824700475,
+    "samples": {
+      "samples": 200,
+      "four_lines": 1.0,
+      "end_word_hit": 0.24
+    }
+  },
+  "stage2": {
+    "epochs": 30,
+    "best_val_loss": 2.763802755120199,
+    "samples": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.2734375
+    },
+    "samples_heldout": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.1875
+    }
+  },
+  "test_loss": {
+    "seen_traits": 2.7479417456012247,
+    "heldout_traits": 3.7121890360397534
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-28",
+  "raw": 4492,
+  "dropped": {
+    "digits_symbols": 15,
+    "non_latin": 49,
+    "end_word_mismatch": 1,
+    "blocklist": 52,
+    "toxicity:obscene": 1
+  },
+  "after_filters": 4374,
+  "reviewers": 0,
+  "toxicity_limits": {
+    "severe_toxicity": 0.1,
+    "obscene": 0.5,
+    "threat": 0.3,
+    "identity_attack": 0.2
+  },
+  "by_kind": {
+    "single": 958,
+    "heldout": 146,
+    "pair": 2551,
+    "fallback": 191,
+    "triple": 528
+  },
+  "by_intensity": {
+    "mild": 2217,
+    "harsh": 2157
+  }
+}

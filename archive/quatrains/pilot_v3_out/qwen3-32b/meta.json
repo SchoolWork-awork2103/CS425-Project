@@ -1,0 +1,22 @@
+{
+  "mode": "pilot",
+  "model_key": "qwen3-32b",
+  "model": "Qwen/Qwen3-32B-FP8",
+  "n_candidates": 4,
+  "temperature": 0.9,
+  "top_p": 0.95,
+  "judge_min": 4,
+  "saved": 169,
+  "prompts": 300,
+  "kept": 169,
+  "seconds": 134.49011611938477,
+  "tokens": 87397,
+  "form_pass": 0.30416666666666664,
+  "tag_adherence": 0.7858333333333334,
+  "yield_": 0.5633333333333334,
+  "judge_pass": 0.6547945205479452,
+  "judge_mean": 3.852054794520548,
+  "kept_score_mean": 4.408284023668639,
+  "est_min_20k": 265.2665012216662,
+  "est_min_50k": 663.1662530541655
+}

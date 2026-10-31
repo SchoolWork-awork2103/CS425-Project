@@ -1,0 +1,176 @@
+{
+  "date": "2026-10-28",
+  "mode": "full",
+  "model": "Qwen/Qwen3-32B-FP8",
+  "license": "Apache-2.0",
+  "thinking": false,
+  "n_candidates": 4,
+  "n_examples": 3,
+  "temperature": 0.8,
+  "top_p": 0.95,
+  "seed": 42,
+  "judge_min": 4,
+  "form": {
+    "syl_min": 6,
+    "syl_max": 18,
+    "pair_diff": 5
+  },
+  "settings": {
+    "PER_SINGLE": 15,
+    "N_PAIRS": 250,
+    "PER_PAIR": 6,
+    "N_TRIPLES": 100,
+    "PER_TRIPLE": 4,
+    "PER_HELDOUT": 15,
+    "N_FALLBACK": 100,
+    "YIELD_GUESS": 0.3,
+    "MAX_TRIES": 6,
+    "CHUNK_REQUESTS": 1500,
+    "MAX_PAIR_USES": 15,
+    "NEAR_DUP_ROUGE": 0.7
+  },
+  "style_examples": {
+    "file": "diss_style_examples.csv",
+    "jabs": {
+      "Empathetic": 15,
+      "Good-Listener": 12,
+      "Collaborative": 17,
+      "Athletic": 3,
+      "Approachable": 13,
+      "Dependable": 19,
+      "Detail-Oriented": 18,
+      "Self-Motivated": 17,
+      "Resourceful": 14,
+      "Organised": 18,
+      "Strong": 18,
+      "Intelligent": 13
+    },
+    "close_traits": {
+      "Empathetic": [
+        "caring"
+      ],
+      "Good-Listener": [
+        "patient"
+      ],
+      "Collaborative": [
+        "helpful"
+      ],
+      "Athletic": [
+        "athletic"
+      ],
+      "Approachable": [
+        "outgoing",
+        "charming"
+      ],
+      "Dependable": [
+        "responsible",
+        "loyal",
+        "punctual"
+      ],
+      "Detail-Oriented": [
+        "meticulous"
+      ],
+      "Self-Motivated": [
+        "ambitious",
+        "disciplined",
+        "hardworking"
+      ],
+      "Resourceful": [
+        "frugal"
+      ],
+      "Organised": [
+        "organized",
+        "tidy"
+      ],
+      "Strong": [
+        "athletic",
+        "confident"
+      ],
+      "Intelligent": [
+        "smart",
+        "knowledgeable",
+        "eloquent",
+        "bookish"
+      ]
+    }
+  },
+  "prompts": {
+    "system": "You write roast-battle disses: four-line rhyming insults aimed at the person you are talking to, who asked to be roasted. You never soften a roast. Reply with a RHYMES line, then exactly 4 lines, each starting with its end word in square brackets. No title, no explanation.",
+    "user_example": "Roast the person. They say they are \"confident\" (also said as: self-assured, bold), flip side: arrogant, all talk.\nIntensity: harsh: brutal, no mercy, name-calling allowed.\nWrite two jabs, each a rhyming couplet: the first line throws their brag back at them, the second line flips it into the insult. Together they make an AABB quatrain, with a different rhyme sound in each jab.\nPlain, clear words: every line must make sense on its own. No swear words or vulgar language, and nothing hateful about race, religion, gender, sexuality or disability.\nFirst write the RHYMES line, then the 4 lines, each starting with its end word in square brackets.",
+    "judge": "You are checking a roast for a dataset. The person asked to be roasted and said they are: {who}. Intensity asked for: {intensity}. Rhyme and metre are checked separately; ignore them.\n\nStep 1: list every line that does not make plain sense: a made-up or misused word, a phrase that is only there for the rhyme, or a line you cannot picture.\nStep 2: score the roast:\n5 = hits hard, every line is clear, both couplets are real burns about the trait\n4 = a solid burn, every line is clear\n3 = clear, but soft, generic or not really about the trait\n2 = at least one unclear line\n1 = mostly nonsense, or uses swear words or vulgar language, or is hateful about race, religion, gender, sexuality or disability\n\nExamples:\nTrait \"eloquent\": \"You're all over the place with your big-worded talk, / it's like a lecture, not a toasting chalk. / You've got a silver tongue and a library in your mind, / but half the room is checking what's on their phone behind.\"\nUNCLEAR LINES: 2, 4\nSCORE: 2\n\nTrait \"funny\": \"You think every line's a punch, but it's just a bad bunch, / you're juggling hot air and your ego's a lunch. / The room echoes every \"ha\" with a collective groan, / you laugh so loud, you sit on your joke's cold throne.\"\nUNCLEAR LINES: 1, 2, 4\nSCORE: 2\n\nTrait \"confident\": \"You're confident, that's plain to see, / you always speak so bold and free. / Sometimes you talk a little too long, / but hey, at least you're rarely wrong.\"\nUNCLEAR LINES: none\nSCORE: 3\n\nTrait \"dependable\": \"You claim you're dependable, always on the clock, / just a boring old robot stuck in autopilot lock. / You call yourself dependable, loyal to the end, / 'cause you lack the courage to break or even bend.\"\nUNCLEAR LINES: none\nSCORE: 5\n\nRoast:\n{poem}\n\nReply in exactly this form:\nUNCLEAR LINES: <line numbers, or none>\nSCORE: <1-5>"
+  },
+  "stats": {
+    "kept": 4492,
+    "wanted": 5200,
+    "chunks": 22,
+    "prompts": 33000,
+    "candidates": 132000,
+    "form_pass": 0.3220227272727273,
+    "judge_pass": 0.3409556073117369,
+    "judge_mean": 2.849977650739878,
+    "judge_dist": {
+      "1": 2,
+      "2": 27772,
+      "3": 240,
+      "4": 7587,
+      "5": 6906
+    },
+    "yield_": 0.1365151515151515,
+    "tag_adherence": 0.6641253371564649,
+    "by_kind": {
+      "single": {
+        "kept": 992,
+        "wanted": 1050
+      },
+      "pair": {
+        "kept": 2620,
+        "wanted": 3000
+      },
+      "triple": {
+        "kept": 538,
+        "wanted": 800
+      },
+      "heldout": {
+        "kept": 149,
+        "wanted": 150
+      },
+      "fallback": {
+        "kept": 193,
+        "wanted": 200
+      }
+    },
+    "short_combinations": 393,
+    "reasons": {
+      "B_no_rhyme": 53035,
+      "A_no_rhyme": 47676,
+      "judge=2": 27772,
+      "rare_end_word": 4043,
+      "syllable_range": 8807,
+      "same_sound_AB": 325,
+      "pair_unbalanced": 7453,
+      "judge=3": 240,
+      "line_count=8": 1841,
+      "line_count=6": 5858,
+      "stapled_end_word": 232,
+      "line_count=5": 230,
+      "line_count=9": 245,
+      "line_count=2": 11,
+      "line_count=7": 279,
+      "ABAB": 79,
+      "leftover_tag": 143,
+      "pair_cap": 9403,
+      "line_count=10": 14,
+      "line_count=3": 24,
+      "line_count=12": 15,
+      "over_target": 13,
+      "line_count=11": 12,
+      "line_count=13": 9,
+      "judge=1": 2,
+      "line_count=14": 2,
+      "line_count=15": 1
+    },
+    "tokens": 11227334,
+    "seconds": 39380.7
+  },
+  "record_note": "Built after the run from progress.jsonl and the notebook (no model call): the run was stopped after 22 chunks with 4,492 of 5,200 disses, as yield had fallen to about 6% per chunk."
+}

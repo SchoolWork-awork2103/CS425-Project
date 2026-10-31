@@ -1,0 +1,196 @@
+{
+  "date": "2026-10-27",
+  "mode": "pilot",
+  "model": "Qwen/Qwen3-32B-FP8",
+  "license": "Apache-2.0",
+  "thinking": false,
+  "n_candidates": 4,
+  "temperature": 0.9,
+  "top_p": 0.95,
+  "seed": 42,
+  "judge_min": 4,
+  "settings": {
+    "PER_SINGLE": 15,
+    "N_PAIRS": 250,
+    "PER_PAIR": 6,
+    "N_TRIPLES": 100,
+    "PER_TRIPLE": 4,
+    "PER_HELDOUT": 15,
+    "N_FALLBACK": 100,
+    "YIELD_GUESS": 0.4,
+    "MAX_ROUNDS": 4,
+    "MAX_PAIR_USES": 15,
+    "NEAR_DUP_ROUGE": 0.7,
+    "PERSONAS": [
+      "sarcastic stand-up comedian",
+      "rapper in a roast battle",
+      "disappointed teacher",
+      "brutally honest best friend",
+      "over-the-top game show host"
+    ],
+    "SCENES": [
+      "a group project",
+      "a family dinner",
+      "a first date",
+      "the office",
+      "a group chat",
+      "the gym",
+      "a job interview",
+      "a road trip",
+      "a house party",
+      "a wedding speech",
+      "a board game night",
+      "a team meeting",
+      "a birthday party",
+      "a school reunion",
+      "a long queue",
+      "a video call",
+      "a football match",
+      "a holiday abroad",
+      "moving house",
+      "a cooking class",
+      "a book club",
+      "a hackathon",
+      "an exam",
+      "a networking event",
+      "a camping trip",
+      "a quiz night",
+      "a coffee shop",
+      "a group holiday",
+      "a wedding",
+      "the first day at a new job"
+    ]
+  },
+  "prompts": {
+    "system": "You are a roast-battle writer. You write four-line rhyming disses that hit hard, aimed at the person you are talking to, who asked to be roasted. You never soften a roast. Reply with a RHYMES line, then exactly 4 lines, each starting with its end word in square brackets. No title, no explanation.",
+    "user_example": "Write one diss: a quatrain of two rhyming couplets (AABB) that roasts the person you are talking to.\nThey say they are \"confident\" (also said as: self-assured, bold), flip side: arrogant, all talk. Turn that positive trait into its flip side.\nIntensity: harsh: brutal, no mercy, the kind of burn that makes the crowd go 'oooh'.\nVoice: a sarcastic stand-up comedian.\nOptional idea: set the joke at a group project, or ignore this if it does not fit.\nMake it a real roast:\n- Speak straight to the person (\"you\") and go for the burn. No compliments, no softening, no nice ending.\n- Build to the punchline in line 4. Exaggeration, comparisons and specific situations hit hardest.\n- Every line must make sense. Pick rhyme words that fit the joke.\nRules:\n- AABB: line 1 rhymes with line 2, line 3 rhymes with line 4, with two different rhyme sounds.\n- Short, punchy lines.\n- No swear words or vulgar language, and nothing hateful about race, religion, gender, sexuality or disability.\nFirst write the RHYMES line with the end words of each couplet. Then write the 4 lines; start each one with its end word in square brackets, and make that word the natural last word of the line.",
+    "examples": [
+      {
+        "traits": "great at video games",
+        "flip": "no life outside the screen",
+        "intensity": "harsh",
+        "persona": "rapper in a roast battle",
+        "scene": "a house party",
+        "rhymes": "elite / seat ; shield / field",
+        "lines": [
+          "You made diamond rank and you're feeling elite,",
+          "but your mum brings your dinner straight to your seat.",
+          "You've conquered whole worlds with a sword and a shield,",
+          "yet you've never touched grass on a real-life field."
+        ]
+      },
+      {
+        "traits": "loves karaoke",
+        "flip": "thinks they're a star while everyone suffers",
+        "intensity": "mild",
+        "persona": "sarcastic stand-up comedian",
+        "scene": "a birthday party",
+        "rhymes": "name / fame ; high / goodbye",
+        "lines": [
+          "You grab the mic before they call your name,",
+          "like karaoke night is your path to fame.",
+          "You belt out each chorus with confidence high,",
+          "the crowd only claps when you're waving goodbye."
+        ]
+      },
+      {
+        "traits": "always has a podcast recommendation",
+        "flip": "never has an opinion of their own",
+        "intensity": "harsh",
+        "persona": "disappointed teacher",
+        "scene": "a group chat",
+        "rhymes": "show / ago ; two / you",
+        "lines": [
+          "You start every take with \"I heard on a show,\"",
+          "your own opinions got lost long ago.",
+          "Your friends stopped replying when you hit \"part two,\"",
+          "now even your echo is tired of you."
+        ]
+      },
+      {
+        "traits": "a dedicated plant parent",
+        "flip": "cares more about plants than people",
+        "intensity": "mild",
+        "persona": "brutally honest best friend",
+        "scene": "a video call",
+        "rhymes": "tune / june ; praise / days",
+        "lines": [
+          "You water your ferns and you sing them a tune,",
+          "but my texts have been waiting on \"read\" since June.",
+          "Your basil gets compliments, sunlight and praise,",
+          "while I've had a cold you ignored for six days."
+        ]
+      },
+      {
+        "traits": "a self-proclaimed foodie",
+        "flip": "a food snob who can't cook",
+        "intensity": "harsh",
+        "persona": "over-the-top game show host",
+        "scene": "a family dinner",
+        "rhymes": "not / pot ; see / me",
+        "lines": [
+          "You judge every plate like the critic you're not,",
+          "but you've burned instant noodles in your only pot.",
+          "You post every meal like we're dying to see,",
+          "but your only two likes are your mum and me."
+        ]
+      }
+    ],
+    "judge": "Rate this roast from 1 to 5 for how hard it hits. The person asked to be roasted and said they are: {who}. Intensity asked for: {intensity}. Ignore rhyme and metre, which are checked separately.\n5 = a savage, clever burn: it makes sense, it is about the trait, and the last line lands like a punchline\n4 = a solid burn, at most one slightly awkward phrase\n3 = more gentle teasing, compliment or description than roast, or a phrase that is only there for the rhyme\n2 = several forced or nonsensical phrases, or barely about the trait\n1 = mostly nonsense or off topic, uses swear words or vulgar language, or is hateful about race, religion, gender, sexuality or disability\nA \"mild\" roast can be friendly and still score 5 if it stings; a \"harsh\" one must be brutal to score 5.\n\nCalibration examples (the person said they are \"confident\"):\n\"You roar out loud but trip and hit the floor, roar, / your big talk is weaker than your weak rapport. / You strike a pose like it's your full compose, pose, / blooming bold but wilting without a close.\" -> 1\n\"You brag so loud but it's a load of crap, / your so-called confidence is a damn trap. / You strut around like you own the place, / then trip and land flat on your face.\" -> 1\n\"You're confident, that's plain to see, / you always speak so bold and free. / Sometimes you talk a little too long, / but hey, at least you're rarely wrong.\" -> 3\n\"You call yourself a legend, loud and proud, / but you are the only fan in your own crowd. / You walk in like the room should take a bow, / yet no one even knew your name till now.\" -> 5\n\nRoast:\n{poem}\n\nReply with only the number."
+  },
+  "stats": {
+    "kept": 60,
+    "wanted": 60,
+    "prompts": 166,
+    "candidates": 664,
+    "form_pass": 0.2996987951807229,
+    "judge_pass": 0.8693467336683417,
+    "judge_mean": 3.9899497487437188,
+    "judge_dist": {
+      "3": 26,
+      "4": 149,
+      "5": 24
+    },
+    "yield_": 0.7289156626506024,
+    "tag_adherence": 0.6864599092284418,
+    "by_kind": {
+      "single": {
+        "kept": 18,
+        "wanted": 18
+      },
+      "pair": {
+        "kept": 18,
+        "wanted": 18
+      },
+      "triple": {
+        "kept": 12,
+        "wanted": 12
+      },
+      "heldout": {
+        "kept": 6,
+        "wanted": 6
+      },
+      "fallback": {
+        "kept": 6,
+        "wanted": 6
+      }
+    },
+    "short_combinations": 0,
+    "reasons": {
+      "same_sound_AB": 5,
+      "A_no_rhyme": 264,
+      "B_no_rhyme": 293,
+      "stapled_end_word": 1,
+      "rare_end_word": 34,
+      "syllable_range": 111,
+      "pair_unbalanced": 46,
+      "judge=3": 26,
+      "over_target": 61,
+      "line_count=8": 1,
+      "leftover_tag": 2,
+      "line_count=5": 2
+    },
+    "tokens": 52135,
+    "seconds": 131.8
+  }
+}

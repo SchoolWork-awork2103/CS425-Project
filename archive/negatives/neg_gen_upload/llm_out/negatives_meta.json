@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-29",
+  "mode": "full",
+  "model": "Qwen/Qwen3-32B-FP8",
+  "license": "Apache-2.0",
+  "temperature": 0.9,
+  "top_p": 0.95,
+  "seed": 42,
+  "settings": {
+    "NEG_PER_REQUEST": 10,
+    "NEG_REQUESTS": {
+      "flat": 4,
+      "non_rhyming": 2
+    }
+  },
+  "prompts": {
+    "flat": "Write 10 rhyming quatrains spoken directly to the person (\"you\") about the trait that are flat and unfunny: they state plain facts or mild compliments, with no joke and no flip side. The trait is \"confident\" (also said as: self-assured, bold; flip side: arrogant, all talk).\nThese are bad examples for training a quality filter, so make them bad in exactly this way and otherwise normal. Modern English, no swear words, nothing hateful about identity. Each line is 10 to 15 syllables long.\nEach quatrain is AABB: line 1 rhymes with line 2, line 3 rhymes with line 4, and the two couplets use different rhyme sounds. An example for \"an early riser\":\n[\"You get up every morning at a quarter after five,\", \"and you like to watch the sunrise, feeling rested and alive.\", \"You make your bed and then you drink a glass of water too,\", \"and that is how you start the day, the way you always do.\"]\nReturn a JSON array of arrays, each holding the 4 lines as strings.",
+    "non_rhyming": "Write 10 four-line roasts spoken directly to the person (\"you\") about the trait, where the lines do not rhyme at all. The trait is \"confident\" (also said as: self-assured, bold; flip side: arrogant, all talk).\nThese are bad examples for training a quality filter, so make them bad in exactly this way and otherwise normal. Modern English, no swear words, nothing hateful about identity. Each line is 10 to 15 syllables long.\nNo two lines end in words that rhyme.\nReturn a JSON array of arrays, each holding the 4 lines as strings."
+  },
+  "stats": {
+    "quatrains": 2002,
+    "by_type": {
+      "flat": 1310,
+      "non_rhyming": 692
+    },
+    "bad_json": 9,
+    "tokens": 135085,
+    "seconds": 350.0
+  }
+}

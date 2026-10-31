@@ -1,0 +1,9 @@
+{
+  "model": "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8",
+  "n": 300,
+  "passed": 17,
+  "seconds": 4.4,
+  "output_tokens": 13381,
+  "temperature": 0.9,
+  "top_p": 0.95
+}

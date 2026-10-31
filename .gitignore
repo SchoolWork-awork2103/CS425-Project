@@ -221,3 +221,15 @@ __marimo__/
 diss_poem_project/**
 *.bak
 .DS_Store
+
+# model checkpoints (kept in the shared Drive folder instead)
+checkpoints/
+*.pt
+*.bin
+*.safetensors
+
+# GloVe vectors (data/prepare_glove.py), ~60 MB
+data/glove/
+
+# judge-rejected disses from diss_gen.ipynb, ~50 MB; stats are in disses_meta.json
+data/disses/llm_out/disses_rejected.jsonl
