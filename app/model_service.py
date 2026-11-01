@@ -3,6 +3,7 @@ from pathlib import Path
 import threading
 
 from dialogue.types import InterpretationError
+from .device import validate_device
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -18,6 +19,7 @@ class SharedModelService:
     def _load(self):
         if self.model is not None:
             return
+        validate_device(self.device)
         adapter = ROOT / self.cfg["paths"]["checkpoints"] / self.cfg["reranker"]["tuning"]["checkpoints"]["D"]
         if not (adapter / "adapter_config.json").is_file():
             raise FileNotFoundError(f"Missing poem adapter: {adapter}. See README.md for model setup.")
@@ -45,6 +47,7 @@ class SharedModelService:
                 encoded.pop("token_type_ids", None)  # decoder-only Qwen has no segment embeddings
                 output = self.model.generate(
                     **encoded, do_sample=False, num_beams=1, max_new_tokens=max_new_tokens,
+                    temperature=None, top_p=None, top_k=None,
                     repetition_penalty=1.0, pad_token_id=self.tokenizer.pad_token_id,
                     return_dict_in_generate=False, output_scores=False, output_logits=False,
                     use_cache=True)

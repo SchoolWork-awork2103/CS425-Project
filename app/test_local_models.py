@@ -66,15 +66,28 @@ class TinyModelTest(unittest.TestCase):
             model = BertForSequenceClassification(config).eval()
             names = ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"]
             checkpoint = path / "toxicity.pt"
-            torch.save({"config": {"arch": {"args": {"model_type": str(path),
+            payload = {"config": {"arch": {"args": {"model_type": str(path),
                          "model_name": "BertForSequenceClassification", "tokenizer_name": "BertTokenizerFast"}},
-                         "dataset": {"args": {"classes": names}}}, "state_dict": model.state_dict()}, checkpoint)
-            scorer = OfflineToxicity(checkpoint)
-            result = scorer(["you"])[0]
-            self.assertEqual(set(result), {"toxicity", "severe_toxicity", "obscene", "threat", "insult", "identity_attack"})
+                         "dataset": {"args": {"classes": names}}}, "state_dict": model.state_dict()}
             with torch.inference_mode():
                 expected = model(**tokenizer(["you"], return_tensors="pt", padding=True)).logits.sigmoid()[0].tolist()
-            self.assertAlmostEqual(result["toxicity"], expected[0], places=6)
+            for legacy in (False, True):
+                if legacy:
+                    payload["state_dict"]["bert.embeddings.position_ids"] = model.bert.embeddings.position_ids.clone()
+                torch.save(payload, checkpoint)
+                scorer = OfflineToxicity(checkpoint)
+                result = scorer(["you"])[0]
+                self.assertEqual(set(result), {"toxicity", "severe_toxicity", "obscene", "threat", "insult", "identity_attack"})
+                self.assertAlmostEqual(result["toxicity"], expected[0], places=6)
+            payload["state_dict"]["bert.embeddings.position_ids"].fill_(1)
+            torch.save(payload, checkpoint)
+            with self.assertRaisesRegex(RuntimeError, "unexpected BERT position IDs"):
+                OfflineToxicity(checkpoint)
+            payload["state_dict"].pop("bert.embeddings.position_ids")
+            payload["state_dict"]["unexpected.weight"] = torch.zeros(1)
+            torch.save(payload, checkpoint)
+            with self.assertRaisesRegex(RuntimeError, "Unexpected key"):
+                OfflineToxicity(checkpoint)
 
 
 if __name__ == "__main__":

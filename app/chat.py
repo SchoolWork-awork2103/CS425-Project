@@ -1,5 +1,6 @@
 """Launch locally with `python -m app.chat --device cuda` (or cpu)."""
 import argparse
+import warnings
 from .pipeline import Pipeline
 
 
@@ -9,7 +10,11 @@ def create_app(pipeline):
         gr.Markdown("# Four-line roast bot\nTell me traits you're proud of, then ask for another roast or change the intensity.")
         state = gr.State(pipeline.manager.initial_state())
         generator = gr.Dropdown(["A", "D"], value=pipeline.system, label="Poem generator")
-        chat = gr.Chatbot(type="messages", label="Roast conversation")
+        # Gradio 5.50 emits this warning even when False is explicitly supplied.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning,
+                                    message=r"The default value of 'allow_tags' in gr\.Chatbot will be changed.*")
+            chat = gr.Chatbot(type="messages", label="Roast conversation", allow_tags=False)
         message = gr.Textbox(label="Message", placeholder="Roast me, I'm confident and musical")
         with gr.Row():
             send = gr.Button("Send", variant="primary")
@@ -37,7 +42,11 @@ def main():
     cfg = load_config()
     if args.backend:
         cfg["dialogue"]["backend"] = args.backend
-    create_app(Pipeline(cfg, args.system, args.device)).queue().launch()
+    try:
+        pipeline = Pipeline(cfg, args.system, args.device)
+    except RuntimeError as exc:
+        parser.error(str(exc))
+    create_app(pipeline).queue().launch()
 
 
 if __name__ == "__main__":

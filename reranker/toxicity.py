@@ -17,7 +17,17 @@ class OfflineToxicity:
         config = model_class.config_class.from_pretrained(
             args["model_type"], num_labels=len(self.classes), local_files_only=True)
         self.model = model_class(config)
-        self.model.load_state_dict(loaded["state_dict"])
+        state_dict = loaded["state_dict"]
+        position_key = "bert.embeddings.position_ids"
+        # Older Detoxify checkpoints persist this deterministic BERT buffer;
+        # modern Transformers registers it as non-persistent. Ignore only the
+        # identical buffer, retaining strict checks on every learned parameter.
+        if position_key in state_dict and position_key not in self.model.state_dict():
+            expected = self.model.get_buffer(position_key)
+            if not torch.equal(state_dict[position_key], expected):
+                raise RuntimeError("Detoxify checkpoint has unexpected BERT position IDs")
+            state_dict.pop(position_key)
+        self.model.load_state_dict(state_dict)
         self.model.to(device).eval()
         self.tokenizer = getattr(transformers, args["tokenizer_name"]).from_pretrained(
             args["model_type"], local_files_only=True)

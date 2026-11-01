@@ -8,6 +8,7 @@ from dialogue.interpreter import NLUInterpreter, QwenInterpreter
 from dialogue.manager import DialogueManager
 from dialogue.types import InterpretationError, PoemRecord
 from .model_service import SharedModelService
+from .device import validate_device
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class Pipeline:
             cfg = load_config()
         if system not in {"A", "D"}:
             raise ValueError("Generator must be A or D")
+        validate_device(device)
         self.cfg, self.system, self.device = cfg, system, device
         self.catalogue = catalogue or TraitCatalogue.load(ROOT / cfg["paths"].get("trait_catalogue", "data/trait_catalogue.json"))
         options = cfg.get("dialogue", {})
