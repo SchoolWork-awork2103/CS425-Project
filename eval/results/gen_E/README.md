@@ -7,6 +7,7 @@ One training run of `generation/train_gpt2.ipynb` per checkpoint. The models the
 |---|---|---|
 | E-poems | `gen_E_poems_summary.json` | `ismaelfaro/gpt2-poems.en` (Kaggle poems) |
 | E-crpo | `gen_E_crpo_summary.json` | `andreipb/gpt2-poetry-model-crpo` (Gutenberg Poetry Corpus) |
+| E-base | `gen_E_base_summary.json` | `gpt2` (control: no poetry pretraining) |
 
 Each summary holds the settings, the training history of both stages, test loss and sample checks.
 
@@ -116,3 +117,56 @@ Same shape as E-poems: Stage 1 best at epoch 4, Stage 2 still improving at the c
 - Held-out trait mentions nearly double (21% → 39%) but stay well below D's 69%.
 - Slightly less varied (distinct-2 0.61 vs 0.64).
 - E-crpo is the stronger System E checkpoint so far.
+
+## E-base (2026-11-01)
+
+Same settings and prompts as E-poems; plain GPT-2 small, with no poetry pretraining, as the control.
+
+### Training
+
+| Stage | Epoch | Train loss | Val loss | Val perplexity |
+|---|---|---|---|---|
+| 1 (quatrains) | 1 | 2.246 | 2.080 | 8.00 |
+| | 2 | 1.973 | 2.026 | 7.58 |
+| | 3 | 1.863 | 2.011 | 7.47 |
+| | 4 | 1.792 | **2.009** | **7.46** |
+| | 5 | 1.750 | 2.011 | 7.47 |
+| 2 (disses) | 1 | 2.150 | 1.929 | 6.88 |
+| | 2 | 1.940 | 1.852 | 6.38 |
+| | 3 | 1.864 | 1.812 | 6.12 |
+| | 4 | 1.825 | 1.792 | 6.00 |
+| | 5 | 1.803 | **1.786** | **5.97** |
+
+Same shape as the other two: Stage 1 best at epoch 4, Stage 2 still improving at the cap by 0.006.
+
+| Diss test set | Loss | Perplexity |
+|---|---|---|
+| seen traits | 1.785 | 5.96 |
+| held-out traits | 1.970 | 7.17 |
+
+### Samples: D and the three E checkpoints
+
+| | D seen | E-poems seen | E-crpo seen | E-base seen | D held-out | E-poems held-out | E-crpo held-out | E-base held-out |
+|---|---|---|---|---|---|---|---|---|
+| Exactly 4 lines | 100% | 100% | 100% | 100% | 100% | 99% | 100% | 100% |
+| Lines ending on the planned rhyme word | 94% | 89% | 91% | 91% | 94% | 94% | 95% | 95% |
+| Couplets that rhyme (CMUdict) | 89% | 80% | 83% | 85% | 89% | 89% | 91% | 90% |
+| Full AABB | 81% | 64% | 71% | 74% | 79% | 79% | 84% | 83% |
+| Mean `syllable_score` | 0.98 | 0.98 | 0.99 | 0.98 | 1.00 | 0.99 | 0.99 | 0.99 |
+| Mean `lexical_score` | 1.00 | 0.99 | 0.99 | 1.00 | 0.99 | 1.00 | 0.99 | 0.99 |
+| Mentions a listed trait or synonym | 78% | 90% | 88% | 88% | 69% | 21% | 39% | 39% |
+| Distinct-2 | 0.66 | 0.64 | 0.61 | 0.63 | 0.62 | 0.62 | 0.61 | 0.63 |
+
+### Takeaways
+
+- The control has the lowest loss of the three at every point: Stage 2 val loss 1.786 against 1.820 (crpo) and 1.925
+  (poems), and the same order on both test sets. It also starts lower (Stage 1 epoch 1 val loss 2.080 against 2.102 and
+  2.195). The losses are directly comparable: same tokenizer, data and settings.
+- In samples, E-base and E-crpo are level (AABB 74% vs 71% seen, 83% vs 84% held-out; held-out trait mentions 39% each),
+  within the noise of 40 prompts; both are ahead of E-poems.
+- So poetry pretraining does not help here, and the Kaggle-poems checkpoint hurts. A likely reason: the disses are
+  modern, conversational English, closer to GPT-2's web text than to Gutenberg or Kaggle poetry, and fine-tuning on
+  poetry may have worn away some of what plain GPT-2 knew. The quatrain and diss data (Stage 1 and 2) already teach the
+  form.
+- E-base is the best System E checkpoint on loss and level with E-crpo on samples. All three stay well below D on
+  held-out traits (39% at best vs 69%).

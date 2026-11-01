@@ -1,0 +1,115 @@
+{
+  "name": "gen_E_base",
+  "model": "gpt2",
+  "stage1": true,
+  "lr": [
+    5e-05,
+    1e-05
+  ],
+  "max_epochs": 5,
+  "patience": 2,
+  "batch_size": 16,
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "history": {
+    "stage1": [
+      {
+        "epoch": 1,
+        "train_loss": 2.246003879744487,
+        "val_loss": 2.080012798309326,
+        "val_ppl": 8.004571358621066
+      },
+      {
+        "epoch": 2,
+        "train_loss": 1.9725576826229856,
+        "val_loss": 2.0259976387023926,
+        "val_ppl": 7.583672937570051
+      },
+      {
+        "epoch": 3,
+        "train_loss": 1.8631091712388677,
+        "val_loss": 2.011340379714966,
+        "val_ppl": 7.473327733858685
+      },
+      {
+        "epoch": 4,
+        "train_loss": 1.7924877163512511,
+        "val_loss": 2.009044885635376,
+        "val_ppl": 7.456192428810668
+      },
+      {
+        "epoch": 5,
+        "train_loss": 1.749700777605492,
+        "val_loss": 2.0106301307678223,
+        "val_ppl": 7.468021695231282
+      }
+    ],
+    "stage2": [
+      {
+        "epoch": 1,
+        "train_loss": 2.1499515749373526,
+        "val_loss": 1.9286953210830688,
+        "val_ppl": 6.880527503889554
+      },
+      {
+        "epoch": 2,
+        "train_loss": 1.9404139968584169,
+        "val_loss": 1.852400541305542,
+        "val_ppl": 6.375104871276785
+      },
+      {
+        "epoch": 3,
+        "train_loss": 1.8643925504864387,
+        "val_loss": 1.8122079372406006,
+        "val_ppl": 6.123953821816285
+      },
+      {
+        "epoch": 4,
+        "train_loss": 1.8247634599793632,
+        "val_loss": 1.792337417602539,
+        "val_ppl": 6.003468692512952
+      },
+      {
+        "epoch": 5,
+        "train_loss": 1.8026161913601857,
+        "val_loss": 1.7861614227294922,
+        "val_ppl": 5.966505560195389
+      }
+    ]
+  },
+  "best_val_loss": {
+    "stage1": 2.009044885635376,
+    "stage2": 1.7861614227294922
+  },
+  "test_loss": {
+    "seen_traits": 1.7850318222584427,
+    "heldout_traits": 1.9700746490785728
+  },
+  "samples": {
+    "seen": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.9109375,
+      "couplets_rhyme": 0.846875,
+      "aabb": 0.74375,
+      "syllables": 0.9828125,
+      "lexical": 0.9960076461421734,
+      "trait_mention": 0.8782051282051282,
+      "distinct_2": 0.6260086902545003
+    },
+    "heldout": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.9453125,
+      "couplets_rhyme": 0.9,
+      "aabb": 0.825,
+      "syllables": 0.9875,
+      "lexical": 0.9926625836699271,
+      "trait_mention": 0.3875,
+      "distinct_2": 0.6297158826269212
+    }
+  }
+}
