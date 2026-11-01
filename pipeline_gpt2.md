@@ -18,8 +18,8 @@ fine-tuned on poetry.
   | E-base | `gpt2` [Recommended] | no poetry (control) |
 
   All three use the same tokenizer, so their perplexities **can** be compared with each other (not with A or D).
-- **Cheap.** A full fine-tune of 124M fits a 6 GB laptop GPU or a Colab T4, and it runs on a laptop CPU much faster
-  than D, which matters for the demo.
+- **Cheap.** A full fine-tune of 124M fits a small consumer GPU or a Colab T4, and it runs on a CPU much faster than
+  D, which matters for the demo.
 
 **Systems to compare:** add a row to the table in `pipeline.md`:
 
@@ -66,34 +66,71 @@ No changes to the BPE tokenizer: it is for the from-scratch systems, and E keeps
 
 ### System E: GPT-2 small, poetry-pretrained [Optional]
 
-1. **Data:** Stage 1 on `data/quatrains/corpus/quatrains_{train,val}.jsonl` (18,850 / 1,000), Stage 2 on
-   `data/disses/corpus/{train,val}.jsonl` (3,382 / 423). Stage 1 examples have empty traits and take their end words
-   from the `rhymes` field. Topic, tone and voice are dropped, because the disses don't have them and A and D don't
-   use them.
-2. **Prompt**, with the same information as A and D:
-   ```
-   Traits: confident, smart
-   Intensity: harsh
-   Rhymes: proud loud wise eyes
-   Poem:
-   [proud] you strut around like the room should be proud,
-   [loud] ...
-   <eos>
-   ```
-   - Empty `Traits:` for Stage 1 and the fallback disses.
-   - **End-word tags** as in System D: each line starts with its end word in brackets, so the model commits to the
-     rhyme word before writing the line. Tags are stripped on decoding.
-   - **Reversed lines** like System A [Optional ablation]: they force every end word, but reversed text wastes
-     GPT-2's English pretraining, so expect worse fluency.
-3. **Loss** on poem tokens only (already in `train_gpt2.py`). Poems longer than `max_length` are skipped, not
-   truncated.
-4. **E-crpo quirk:** that checkpoint expects `<start>` at the start of every line. Fine-tuning teaches the new format,
+**Prompt format and data loading: done.** What changed in `generation/gpt2_lm.py`:
+
+| Change | Detail |
+|---|---|
+| Added `prompt_text()`, `answer_text()`, `decode_lines()` | The prompt and tagged poem below; `decode_lines` strips the tags and keeps the first four lines |
+| Added `load_split(stage, split)` | (prompt, poem) pairs: Stage 1 from `data/quatrains/corpus/quatrains_{train,val}.jsonl` (18,850 / 1,000), Stage 2 from `data/disses/corpus/{train,val,test}.jsonl` (3,382 / 423 / 569) |
+| Changed `generate()` | Takes traits, intensity and end words instead of a prompt string, and strips the tags. Uses System D's repetition penalty instead of Hugging Face's, and `top_k=0` so only top-p applies, as in D |
+
+```
+Traits: romantic, wise
+Intensity: mild
+Rhymes: heart apart insight blight
+Poem:
+[heart] you say you fill life with romance and keep love near the heart,
+[apart] but your cliches are so thick, they drive true feelings far apart.
+[insight] you claim your wisdom adds depth and gives us fresh insight,
+[blight] when it's just a stream of platitudes that chokes the conversation's blight.<|endoftext|>
+```
+
+- Stage 1 quatrains have `Traits: none` and `Intensity: none`, as in System A. Fallback disses have `Traits: none`
+  with `mild` or `harsh`, so the two stay apart. Topic, tone and voice are dropped.
+- **Why the penalty changed:** the prompt's `Rhymes:` line contains the same tokens the lines must end on
+  (` heart`), and Hugging Face's penalty also covers the prompt, so it pushed the model away from the planned end
+  words. D's penalty (copied from `qwen_lora.py`, which needs `peft` to import) leaves out the prompt and the end
+  words.
+- **Checked** on all 24,224 poems: each end word is its line's last word; every poem has 4 lowercase ASCII lines with
+  no brackets; encoding prompt and poem separately gives the same tokens as encoding them together; the longest
+  example is 118 GPT-2 tokens (none skipped at `max_len` 256) and the longest poem 93 (within `max_new_tokens` 128).
+  All three checkpoints have the same vocabulary and merges.
+- **Tested:** 11 unit tests pass. A forward pass and `generate()` ran on a tiny random GPT-2.
+
+**Smoke test: done** on a local GPU, with torch 2.14.1 and transformers 5.22.1. E-poems, Stage 1 on 100 quatrains
+(1 epoch), then Stage 2 from Stage 1's best weights on 100 disses (3 epochs), 20 validation examples each, settings
+from `config.yaml`; then reloaded from `_best/` and sampled.
+
+| Stage | Val loss per epoch | Peak GPU memory |
+|---|---|---|
+| 1 | 4.67 | 3.07 GiB |
+| 2 | 4.61, 4.45, 4.40 | 3.28 GiB |
+
+What changed in `generation/gpt2_lm.py` after the first smoke run:
+
+| Change | Why |
+|---|---|
+| `train()` logs once per epoch (`logging_strategy="epoch"`) | Logging every 50 steps left `train_loss` empty on short runs and misaligned with epochs on long ones |
+| `train()` saves model-only checkpoints and deletes `<name>_run/` after saving `<name>_best/` | Each checkpoint held the optimizer state (1.4 GB; 2.8 GB per run) that nothing used, since a run cannot be resumed. A finished run now takes 0.5 GB |
+
+`config.yaml`: the `accum` comment now gives batch 8's peak memory (it said to use batch 4 × 4 on a small GPU).
+
+- The rerun gave the same losses and samples as the first run, so runs are reproducible with the seed.
+- Samples after 7 training steps are not yet poems (one long line, tags in the middle), as expected. Two habits of
+  the E-poems checkpoint to check after full training: it writes a literal `\n` (backslash, n) as a line break, and
+  capital letters, where the training data is lowercase with real line breaks.
+
+Still to do:
+
+1. **Reversed lines** like System A [Optional ablation]: they force every end word, but reversed text wastes GPT-2's
+   English pretraining, so expect worse fluency.
+2. **E-crpo quirk:** that checkpoint expects `<start>` at the start of every line. Fine-tuning teaches the new format,
    but check the first Stage 1 samples for leftover `<start>` tags.
-5. **Training** (full fine-tune, AdamW, fp16, gradient clipping at 1.0):
+3. **Training** (full fine-tune, AdamW, fp16, gradient clipping at 1.0):
    - Stage 1 on quatrains: lr 5e-5, up to 5 epochs, early stopping (patience 2), keep the best val loss.
    - Stage 2 on disses: lr 1e-5 (about 1/5 of Stage 1, as for A), up to 5 epochs, same stopping rule.
-   - 16 examples per step (batch 8 × 2 accumulation; on a 6 GB GPU, batch 4 × 4 with gradient checkpointing).
-6. **Runs:**
+   - 16 examples per step (batch 8 × 2 accumulation).
+4. **Runs:**
 
    | Run | Priority | Notes |
    |---|---|---|
@@ -103,17 +140,19 @@ No changes to the BPE tokenizer: it is for the from-scratch systems, and E keeps
    | best of the above, Stage 2 only | Recommended | ablation: does Stage 1 still help a pretrained model? |
    | best, reversed lines | Optional | ablation: end-word tags against forced end words |
 
-   - **Smoke test** first: 100 training and 20 val examples, 1 epoch, a few samples printed.
    - Log train loss, val loss and perplexity per epoch. Save `eval/results/gen_E/gen_E_<run>_history.json` and
      `_summary.json`, in the same format as `gen_D`.
-7. **Code:** `generation/gpt2_lm.py`, driven by `generation/train_gpt2.ipynb`, built like `train_qwen.ipynb`: clones
-   the repo, mounts Drive in Colab, has a `SMOKE_TEST` switch, and ends with the sample checks (Phase 9).
+5. **Notebook: done.** Added `generation/train_gpt2.ipynb`, built like `train_qwen.ipynb`: clones the repo and mounts
+   Drive in Colab, picks the checkpoint (`MODEL_KEY`) and whether to run Stage 1 (`STAGE1`), skips a stage that has
+   already finished, samples the same 40 + 40 prompts as D and scores them with D's `report()`, counts leftover
+   checkpoint habits (`<start>`, literal `\n`, capitals), computes test loss, compares with A and D from D's saved
+   results, and saves `<name>_summary.json`. `train()` gained `run_root`, so on Colab the epoch checkpoints stay off
+   Drive. All code cells ran in smoke-test mode (`SMOKE_TEST=1`).
 
 ### Decoding, for all systems
-No changes to the settings. For E:
-- Replace Hugging Face's `repetition_penalty` with D's `AnswerRepetitionPenalty`. The built-in one also penalizes the
-  prompt, which includes the planned end words.
-- Stop after the fourth line or at `<eos>`, and keep exactly four lines.
+No changes to the settings. For E, the repetition penalty is done (above). Still to do:
+- Stop after the fourth line or at `<eos>`. Now generation runs to `<eos>` or 128 tokens and the first four lines are
+  kept.
 - Return each candidate's length-normalized log-probability, which the reranker needs.
 
 ---
@@ -146,7 +185,7 @@ No changes.
 # Phase 8: Integration
 
 1. Add E to the generator dropdown in the Gradio UI.
-2. Measure E's response time on the laptop CPU next to the other systems.
+2. Measure E's response time on CPU next to the other systems.
 
 ---
 
@@ -192,9 +231,9 @@ Order of work for E:
 | Step | Work | Depends on |
 |---|---|---|
 | 1 | Move the baseline code into `generation/gpt2_lm.py`, delete `cs425_poetry_baseline/` (done) | none |
-| 2 | Prompt format with end-word tags, data loading from the shared corpora, unit tests | 1 |
-| 3 | Smoke test locally | 2 |
-| 4 | `train_gpt2.ipynb`, full runs E-poems and E-crpo (then E-base) | 3 |
+| 2 | Prompt format with end-word tags, data loading from the shared corpora, unit tests (done) | 1 |
+| 3 | Smoke test locally (done) | 2 |
+| 4 | `train_gpt2.ipynb` (done), full runs E-poems and E-crpo (then E-base) | 3 |
 | 5 | Sample checks, `gen_E` results README | 4 |
 | 6 | Frozen prompts, reranker and app hookup | 5 and the team's Phase 5/8 code |
 
@@ -205,5 +244,5 @@ Added for E:
   reranker's `aabb_score`. If the tags aren't enough, try the reversed-lines run.
 - **E-crpo writes archaic verse even after fine-tuning:** report it as a finding. It supports Phase 1a's decision to
   drop Gutenberg.
-- **Out of memory on the 6 GB laptop GPU:** batch 4 × 4 with gradient checkpointing, or use Colab.
+- **A local GPU is too slow:** run on a Colab T4. Memory is not the limit: batch 8 peaks at 3.3 GiB.
 - **Short on time:** E-poems only, Stage 1 + 2, sample checks. Drop E-base and the ablations.

@@ -90,5 +90,5 @@ gpt2:                             # System E full fine-tune (generation/gpt2_lm.
   epochs: 5                       # keeps the epoch with the best val loss
   patience: 2
   batch_size: 8
-  accum: 2                        # 16 examples per step; on a 6 GB GPU use batch 4 x accum 4 with gradient checkpointing
+  accum: 2                        # 16 examples per step; batch 8 peaks at 3.3 GiB of GPU memory
   max_len: 256                    # GPT-2 tokens of prompt + poem; longer examples are skipped, not truncated

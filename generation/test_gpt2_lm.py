@@ -1,8 +1,16 @@
 """System E unit tests, with no model download. Run from the project root:  python -m unittest generation.test_gpt2_lm -v"""
-import json, unittest
+import json, re, unittest
+
+import torch
 
 from utils import load_config, project_path
-from generation.gpt2_lm import encode, encode_all, epoch_history, make_collate
+from generation.gpt2_lm import (STAGE_FILES, AnswerRepetitionPenalty, answer_text, decode_lines, encode, encode_all,
+                                epoch_history, load_split, make_collate, prompt_text, read_jsonl)
+
+WORD_RE = re.compile(r"[a-z]+(?:'[a-z]+)?")
+LINES = ["you think you are so very bright,", "yet copy answers every night.",
+         "you promised work would be your art,", "then missed the deadline at the start."]
+ENDS = ["bright", "night", "art", "start"]
 
 
 class CharTok:
@@ -13,9 +21,20 @@ class CharTok:
         return [ord(c) for c in text]
 
 
-def read_jsonl(rel):
-    with open(project_path(rel), encoding="utf-8") as f:
-        return [json.loads(line) for line in f if line.strip()]
+class FormatTest(unittest.TestCase):
+    def test_prompt(self):
+        self.assertEqual(prompt_text(["lazy", "funny"], "harsh", ENDS),
+                         "Traits: lazy, funny\nIntensity: harsh\nRhymes: bright night art start\nPoem:\n")
+        self.assertTrue(prompt_text([], "none", ENDS).startswith("Traits: none\nIntensity: none\n"))
+
+    def test_answer_round_trip(self):
+        text = answer_text(LINES, ENDS)
+        self.assertEqual(text.split("\n")[0], "[bright] you think you are so very bright,")
+        self.assertEqual(decode_lines(text), LINES)
+
+    def test_decode_lines(self):
+        text = "[a] one\n\nno tag here\n[c]   three\n[d] four\n[e] five"
+        self.assertEqual(decode_lines(text), ["one", "no tag here", "three", "four"])
 
 
 class ExampleTest(unittest.TestCase):
@@ -48,25 +67,50 @@ class ExampleTest(unittest.TestCase):
         self.assertIsNone(rows[1]["train_loss"])
 
 
+class PenaltyTest(unittest.TestCase):
+    def test_only_answer_words_penalized(self):
+        penalized = torch.tensor([True, True, True, False, True])     # token 3 stands in for an end word
+        p = AnswerRepetitionPenalty(penalized, prompt_len=2, penalty=2.0)
+        ids = torch.tensor([[4, 0, 1, 2, 3]])                          # prompt 4, 0; answer 1, 2, 3
+        scores = p(ids, torch.tensor([[1.0, 2.0, -2.0, 4.0, 8.0]]))
+        self.assertEqual(scores.tolist(), [[1.0, 1.0, -4.0, 4.0, 8.0]])
+
+
 class SplitTest(unittest.TestCase):
-    """The splits E trains on: no validation topic in the quatrain training split, and held-out-trait disses in the
-    test split only."""
+    """The data E trains on: each stage's pairs, and the splits (no validation topic in the quatrain training split,
+    held-out-trait disses in the test split only)."""
+
+    def test_pairs(self):
+        cfg = load_config()
+        for stage, splits in STAGE_FILES.items():
+            for split, (key, name) in splits.items():
+                rows = read_jsonl(project_path(cfg["paths"][key]) / name)
+                pairs = load_split(stage, split, cfg)
+                self.assertEqual(len(pairs), len(rows))
+                for (prompt, completion), r in zip(pairs, rows):
+                    self.assertEqual(decode_lines(completion), r["lines"])
+                    tags = re.findall(r"^\[(\w[\w']*)\]", completion, re.M)
+                    self.assertEqual(tags, [WORD_RE.findall(l)[-1] for l in r["lines"]], r["id"])
+                    head = prompt.split("\n")
+                    if stage == 1:
+                        self.assertEqual(head[:2], ["Traits: none", "Intensity: none"])
+                    else:
+                        self.assertIn(head[1], ("Intensity: mild", "Intensity: harsh"))
 
     def test_quatrain_topics_disjoint(self):
         cfg = load_config()["paths"]
-        train = {r["topic"] for r in read_jsonl(f"{cfg['corpus_dir']}/quatrains_train.jsonl")}
-        val = {r["topic"] for r in read_jsonl(f"{cfg['corpus_dir']}/quatrains_val.jsonl")}
+        train = {r["topic"] for r in read_jsonl(project_path(cfg["corpus_dir"]) / "quatrains_train.jsonl")}
+        val = {r["topic"] for r in read_jsonl(project_path(cfg["corpus_dir"]) / "quatrains_val.jsonl")}
         self.assertFalse(train & val)
 
     def test_heldout_traits_in_test_only(self):
         cfg = load_config()["paths"]
         with open(project_path(cfg["traits"]), encoding="utf-8") as f:
-            traits = json.load(f)
-        heldout = {t for t, info in traits.items() if info["heldout"]}
+            heldout = {t for t, info in json.load(f).items() if info["heldout"]}
         for split in ("train", "val"):
-            rows = read_jsonl(f"{cfg['diss_dir']}/{split}.jsonl")
+            rows = read_jsonl(project_path(cfg["diss_dir"]) / f"{split}.jsonl")
             self.assertFalse([r["id"] for r in rows if heldout & set(r["traits"])], split)
-        test = read_jsonl(f"{cfg['diss_dir']}/test.jsonl")
+        test = read_jsonl(project_path(cfg["diss_dir"]) / "test.jsonl")
         self.assertTrue(any(heldout & set(r["traits"]) for r in test))
 
 
