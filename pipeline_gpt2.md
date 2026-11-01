@@ -42,11 +42,15 @@ fine-tuned on poetry.
 - **Cheap.** A full fine-tune of 124M fits a small consumer GPU or a Colab T4, and it runs on a CPU much faster than
   D, which matters for the demo.
 
+**Result (2026-11-01):** poetry pretraining did not help. E-base (plain `gpt2`) has the lowest loss and is level with
+E-crpo on samples; E-poems is worst. E-base is carried forward as System E, and E-crpo is kept for comparison. Full
+numbers in `eval/results/gen_E/README.md`.
+
 **Systems to compare:** add a row to the table in `pipeline.md`:
 
 | ID | Generator | Course link | Priority |
 |---|---|---|---|
-| E | GPT-2 small (124M), poetry-pretrained, full fine-tune | Week 6 | Optional |
+| E | GPT-2 small (124M), plain `gpt2`, full fine-tune (Stage 1 + 2) | Week 6 | Optional |
 
 **Priority tags** as in `pipeline.md`: **[Core]**, **[Recommended]**, **[Optional]**.
 
@@ -141,34 +145,40 @@ What changed in `generation/gpt2_lm.py` after the first smoke run:
   the E-poems checkpoint to check after full training: it writes a literal `\n` (backslash, n) as a line break, and
   capital letters, where the training data is lowercase with real line breaks.
 
-Still to do:
+**Notebook: done.** Added `generation/train_gpt2.ipynb`, built like `train_qwen.ipynb`: clones the repo and mounts
+Drive in Colab, picks the checkpoint (`MODEL_KEY`) and whether to run Stage 1 (`STAGE1`), skips a stage that has
+already finished, samples the same 40 + 40 prompts as D and scores them with D's `report()`, counts leftover
+checkpoint habits (`<start>`, literal `\n`, capitals), computes test loss, compares with A and D from D's saved
+results, and saves `<name>_summary.json`. `train()` gained `run_root`, so on Colab the epoch checkpoints stay off
+Drive. All code cells ran in smoke-test mode (`SMOKE_TEST=1`).
+
+**Training: done** (2026-11-01, local GPU). Full fine-tune, AdamW, fp16, gradient clipping at 1.0, 16 examples per
+step (batch 8 × 2 accumulation). Stage 1 on quatrains at lr 5e-5, then Stage 2 on disses at lr 1e-5, each up to 5
+epochs with early stopping (patience 2), keeping the best val loss. The summaries, which include the per-epoch history,
+are in `eval/results/gen_E/`; the separate history files were not copied, since the summaries hold the same rows.
+
+| Run | Stage 2 val loss | Full AABB, seen / held-out | Held-out trait mentions |
+|---|---|---|---|
+| E-poems, Stage 1 + 2 | 1.925 | 64% / 79% | 21% |
+| E-crpo, Stage 1 + 2 | 1.820 | 71% / 84% | 39% |
+| E-base, Stage 1 + 2 | **1.786** | 74% / 83% | 39% |
+| E-base, Stage 2 only | 1.933 | 13% / 11% | 23% |
+| D (for reference) | (different tokenizer) | 81% / 79% | 69% |
+
+- **Poetry pretraining does not help:** E-base has the lowest loss at every epoch, and E-base and E-crpo are level on
+  samples (within the noise of 40 prompts). E-poems is behind on both.
+- **Stage 1 is essential:** without it, full AABB falls from about 80% to about 12%. Caveat: the Stage 2-only run kept
+  lr 1e-5, which may undertrain a model starting from plain GPT-2.
+- In every full run, Stage 1 was best at epoch 4 and Stage 2 was still improving at the 5-epoch cap, by under 0.01.
+- **Checkpoint habits are gone** after fine-tuning (80 samples per checkpoint, 2026-11-02): no `<start>` tags or
+  literal `\n` in any of the three; E-poems wrote one capital letter and one extra line. E-crpo's lines are modern
+  English, not archaic verse.
+
+Not done:
 
 1. **Reversed lines** like System A [Optional ablation]: they force every end word, but reversed text wastes GPT-2's
    English pretraining, so expect worse fluency.
-2. **E-crpo quirk:** that checkpoint expects `<start>` at the start of every line. Fine-tuning teaches the new format,
-   but check the first Stage 1 samples for leftover `<start>` tags.
-3. **Training** (full fine-tune, AdamW, fp16, gradient clipping at 1.0):
-   - Stage 1 on quatrains: lr 5e-5, up to 5 epochs, early stopping (patience 2), keep the best val loss.
-   - Stage 2 on disses: lr 1e-5 (about 1/5 of Stage 1, as for A), up to 5 epochs, same stopping rule.
-   - 16 examples per step (batch 8 × 2 accumulation).
-4. **Runs:**
-
-   | Run | Priority | Notes |
-   |---|---|---|
-   | E-poems, Stage 1 + 2 | Core for E | |
-   | E-crpo, Stage 1 + 2 | Core for E | the two-model comparison the baseline was made for |
-   | E-base, Stage 1 + 2 | Recommended | control: no poetry pretraining |
-   | best of the above, Stage 2 only | Recommended | ablation: does Stage 1 still help a pretrained model? |
-   | best, reversed lines | Optional | ablation: end-word tags against forced end words |
-
-   - Log train loss, val loss and perplexity per epoch. Save `eval/results/gen_E/gen_E_<run>_history.json` and
-     `_summary.json`, in the same format as `gen_D`.
-5. **Notebook: done.** Added `generation/train_gpt2.ipynb`, built like `train_qwen.ipynb`: clones the repo and mounts
-   Drive in Colab, picks the checkpoint (`MODEL_KEY`) and whether to run Stage 1 (`STAGE1`), skips a stage that has
-   already finished, samples the same 40 + 40 prompts as D and scores them with D's `report()`, counts leftover
-   checkpoint habits (`<start>`, literal `\n`, capitals), computes test loss, compares with A and D from D's saved
-   results, and saves `<name>_summary.json`. `train()` gained `run_root`, so on Colab the epoch checkpoints stay off
-   Drive. All code cells ran in smoke-test mode (`SMOKE_TEST=1`).
+2. **Stage 2 only at lr 5e-5** [Optional]: separates the missing quatrains from the learning rate in the ablation.
 
 ### Decoding, for all systems
 No changes to the settings. For E, the repetition penalty is done (above). Still to do:
@@ -227,13 +237,22 @@ No changes.
 Gutenberg pretraining makes the language more archaic (E-crpo), and where E lands between A and D on trait mentions
 for held-out traits.
 
+**Done (2026-11-01):** items 1, 2 and 6, and the Stage 1 ablation from item 4. `report()` is still in `qwen_lora.py`.
+Answers:
+- Poetry pretraining does not improve rhyme or form: E-base is level with E-crpo and ahead of E-poems.
+- E-crpo's language is not archaic after fine-tuning.
+- On held-out traits E lands between A and D: 39% trait mentions (E-base, E-crpo) against A's 0% and D's 69%.
+
+Still to do: item 3 (frozen prompts), the rest of item 4 (rhyme planning and reranking), item 5.
+
 ---
 
 # Phase 10: Report and demo
 
 - Describe E as the mid-size pretrained transformer and state the poetry-pretraining comparison as a contribution.
+  The finding is negative: plain GPT-2 does as well as or better than both poetry checkpoints.
 - Record both checkpoints' sources and licenses (both MIT on Hugging Face) and what they were trained on.
-- Error analysis: archaic vocabulary from E-crpo, missed end words, lines that drift off-trait.
+- Error analysis: missed end words, lines that drift off-trait. (Archaic vocabulary from E-crpo was not observed.)
 - Notes from the GPT-2 poetry baseline's README, for the limitations section:
   - GPT-2 is not instruction-tuned, so it learns the prompt format only from fine-tuning.
   - The quatrains' `score` field (4 or 5 only) is the generating model's own judgment, not an independent quality
@@ -254,8 +273,8 @@ Order of work for E:
 | 1 | Move the baseline code into `generation/gpt2_lm.py`, delete `cs425_poetry_baseline/` (done) | none |
 | 2 | Prompt format with end-word tags, data loading from the shared corpora, unit tests (done) | 1 |
 | 3 | Smoke test locally (done) | 2 |
-| 4 | `train_gpt2.ipynb` (done), full runs E-poems and E-crpo (then E-base) | 3 |
-| 5 | Sample checks, `gen_E` results README | 4 |
+| 4 | `train_gpt2.ipynb`, full runs E-poems, E-crpo, E-base and E-base Stage 2 only (done) | 3 |
+| 5 | Sample checks, `gen_E` results README (done) | 4 |
 | 6 | Frozen prompts, reranker and app hookup | 5 and the team's Phase 5/8 code |
 
 # Risks and fallbacks
@@ -264,6 +283,6 @@ Added for E:
 - **AABB is poor with forward lines** (the forward GRU reached only 6% full AABB): rely on the end-word tags plus the
   reranker's `aabb_score`. If the tags aren't enough, try the reversed-lines run.
 - **E-crpo writes archaic verse even after fine-tuning:** report it as a finding. It supports Phase 1a's decision to
-  drop Gutenberg.
+  drop Gutenberg. (Did not happen: its samples are modern English.)
 - **A local GPU is too slow:** run on a Colab T4. Memory is not the limit: batch 8 peaks at 3.3 GiB.
 - **Short on time:** E-poems only, Stage 1 + 2, sample checks. Drop E-base and the ablations.
