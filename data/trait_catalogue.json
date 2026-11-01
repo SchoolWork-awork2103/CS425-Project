@@ -1,0 +1,490 @@
+{
+  "schema_version": 1,
+  "source_sha256": {
+    "traits": "cf88bea67e41fb43a7e5c8cd141199ba41984df4655bfb6b20c35c7fb6f74ee5",
+    "poem_train": "8ff1f25e9feb8821b12c35e55c71082f75f62e5532bf2b1cf5d1565fdc28c576"
+  },
+  "ambiguous_aliases": {},
+  "entries": [
+    {
+      "key": "adventurous",
+      "description": "Seeks new experiences, excitement or risks.",
+      "synonyms": [
+        "daring",
+        "fearless",
+        "outdoorsy",
+        "risk-taker"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 203
+    },
+    {
+      "key": "ambitious",
+      "description": "Strongly seeks future achievement, advancement or challenging goals.",
+      "synonyms": [
+        "driven",
+        "goal-oriented",
+        "aiming high",
+        "go-getter"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 140
+    },
+    {
+      "key": "athletic",
+      "description": "Enjoys or excels at physical exercise and sports.",
+      "synonyms": [
+        "sporty",
+        "fit",
+        "gym rat",
+        "into sports"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 212
+    },
+    {
+      "key": "bookish",
+      "description": "Enjoys reading books and literary pursuits.",
+      "synonyms": [
+        "well-read",
+        "bookworm",
+        "reads a lot",
+        "literary"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 155
+    },
+    {
+      "key": "calm",
+      "description": "Stays emotionally composed under stress or pressure.",
+      "synonyms": [
+        "relaxed",
+        "composed",
+        "laid-back",
+        "never stressed"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 164
+    },
+    {
+      "key": "caring",
+      "description": "Shows concern for others feelings and wellbeing.",
+      "synonyms": [
+        "kind",
+        "thoughtful",
+        "nurturing",
+        "considerate"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 229
+    },
+    {
+      "key": "charming",
+      "description": "Uses charisma and social warmth to attract or please people.",
+      "synonyms": [
+        "charismatic",
+        "smooth",
+        "rizz",
+        "likeable"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 145
+    },
+    {
+      "key": "competitive",
+      "description": "Strongly wants to win and compares performance with others.",
+      "synonyms": [
+        "hates losing",
+        "driven to win",
+        "a winner",
+        "always first"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 239
+    },
+    {
+      "key": "confident",
+      "description": "Self-assured and trusting in their own abilities.",
+      "synonyms": [
+        "self-assured",
+        "bold",
+        "sure of myself",
+        "cocky"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 198
+    },
+    {
+      "key": "creative",
+      "description": "Invents original ideas or expresses imagination through making things.",
+      "synonyms": [
+        "artistic",
+        "imaginative",
+        "inventive",
+        "full of ideas"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 126
+    },
+    {
+      "key": "curious",
+      "description": "Wants to learn, explore ideas and ask questions.",
+      "synonyms": [
+        "inquisitive",
+        "always asking why",
+        "interested in everything",
+        "eager to learn"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 155
+    },
+    {
+      "key": "disciplined",
+      "description": "Consistently follows routines or exercises self-control.",
+      "synonyms": [
+        "self-controlled",
+        "strict routine",
+        "focused",
+        "wakes up at 5am"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 152
+    },
+    {
+      "key": "easygoing",
+      "description": "Is flexible and undemanding about preferences or plans; not specifically composure under stress.",
+      "synonyms": [
+        "chill",
+        "flexible",
+        "go with the flow",
+        "low-maintenance"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 222
+    },
+    {
+      "key": "eloquent",
+      "description": "Expresses ideas fluently and persuasively in words.",
+      "synonyms": [
+        "articulate",
+        "well-spoken",
+        "a good speaker",
+        "great with words"
+      ],
+      "seen_in_poem_training": false,
+      "poem_training_count": 0
+    },
+    {
+      "key": "entrepreneurial",
+      "description": "Starts ventures or seeks business opportunities.",
+      "synonyms": [
+        "business-minded",
+        "a hustler",
+        "runs a startup",
+        "enterprising"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 164
+    },
+    {
+      "key": "frugal",
+      "description": "Carefully limits spending and avoids waste.",
+      "synonyms": [
+        "thrifty",
+        "good with money",
+        "saves everything",
+        "budget-savvy"
+      ],
+      "seen_in_poem_training": false,
+      "poem_training_count": 0
+    },
+    {
+      "key": "funny",
+      "description": "Often makes people laugh through jokes or humour.",
+      "synonyms": [
+        "hilarious",
+        "humorous",
+        "the class clown",
+        "a comedian"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 154
+    },
+    {
+      "key": "generous",
+      "description": "Readily gives money, possessions or time to others.",
+      "synonyms": [
+        "giving",
+        "kind-hearted",
+        "always pays",
+        "big-hearted"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 149
+    },
+    {
+      "key": "hardworking",
+      "description": "Spends sustained effort and time on work, regardless of long-term ambitions.",
+      "synonyms": [
+        "diligent",
+        "grinder",
+        "always working",
+        "industrious"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 186
+    },
+    {
+      "key": "healthy",
+      "description": "Prioritizes nutritious food, wellness and health-conscious habits.",
+      "synonyms": [
+        "health-conscious",
+        "eats clean",
+        "into wellness",
+        "never eats junk"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 194
+    },
+    {
+      "key": "helpful",
+      "description": "Actively assists others with their needs or tasks.",
+      "synonyms": [
+        "supportive",
+        "always helping",
+        "useful",
+        "there for everyone"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 158
+    },
+    {
+      "key": "honest",
+      "description": "Tells the truth and communicates sincerely.",
+      "synonyms": [
+        "truthful",
+        "straightforward",
+        "tells it like it is",
+        "blunt"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 207
+    },
+    {
+      "key": "humble",
+      "description": "Is modest about their abilities and achievements.",
+      "synonyms": [
+        "modest",
+        "down to earth",
+        "unassuming",
+        "grounded"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 176
+    },
+    {
+      "key": "independent",
+      "description": "Relies on themselves and prefers acting without others help.",
+      "synonyms": [
+        "self-reliant",
+        "self-sufficient",
+        "a lone wolf",
+        "does it all alone"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 197
+    },
+    {
+      "key": "knowledgeable",
+      "description": "Has accumulated many facts or expertise; knowledge rather than raw problem-solving ability.",
+      "synonyms": [
+        "well-informed",
+        "a walking encyclopedia",
+        "knows a lot",
+        "into history"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 146
+    },
+    {
+      "key": "loyal",
+      "description": "Remains committed to friends, groups or relationships.",
+      "synonyms": [
+        "faithful",
+        "devoted",
+        "ride or die",
+        "dependable"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 217
+    },
+    {
+      "key": "meticulous",
+      "description": "Pays close attention to detail, precision and correctness.",
+      "synonyms": [
+        "detail-oriented",
+        "perfectionist",
+        "precise",
+        "thorough"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 168
+    },
+    {
+      "key": "musical",
+      "description": "Plays instruments, sings or engages deeply with making music.",
+      "synonyms": [
+        "plays guitar",
+        "sings",
+        "a musician",
+        "into music"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 152
+    },
+    {
+      "key": "optimistic",
+      "description": "Expects positive outcomes and notices the bright side.",
+      "synonyms": [
+        "positive",
+        "hopeful",
+        "glass half full",
+        "always upbeat"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 187
+    },
+    {
+      "key": "organized",
+      "description": "Plans and structures tasks, schedules and information; not merely keeping spaces clean.",
+      "synonyms": [
+        "neat planner",
+        "methodical",
+        "has a planner",
+        "structured"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 101
+    },
+    {
+      "key": "outgoing",
+      "description": "Enjoys social interaction and readily engages with people.",
+      "synonyms": [
+        "social",
+        "extroverted",
+        "life of the party",
+        "talks to everyone"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 203
+    },
+    {
+      "key": "patient",
+      "description": "Tolerates waiting, delays or frustration without becoming upset.",
+      "synonyms": [
+        "tolerant",
+        "unhurried",
+        "can wait forever",
+        "even-tempered"
+      ],
+      "seen_in_poem_training": false,
+      "poem_training_count": 0
+    },
+    {
+      "key": "punctual",
+      "description": "Consistently arrives or completes commitments on time.",
+      "synonyms": [
+        "on time",
+        "never late",
+        "early for everything",
+        "prompt"
+      ],
+      "seen_in_poem_training": false,
+      "poem_training_count": 0
+    },
+    {
+      "key": "responsible",
+      "description": "Reliably fulfills duties and takes accountability.",
+      "synonyms": [
+        "reliable",
+        "mature",
+        "trustworthy",
+        "the adult in the room"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 142
+    },
+    {
+      "key": "romantic",
+      "description": "Expresses affection and idealizes love or romantic gestures.",
+      "synonyms": [
+        "sweet",
+        "affectionate",
+        "a hopeless romantic",
+        "lovey-dovey"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 165
+    },
+    {
+      "key": "smart",
+      "description": "Quick to understand ideas and solve problems; intellectual ability rather than accumulated facts.",
+      "synonyms": [
+        "intelligent",
+        "clever",
+        "brainy",
+        "big brain"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 175
+    },
+    {
+      "key": "spontaneous",
+      "description": "Acts on impulse without much advance planning.",
+      "synonyms": [
+        "impulsive",
+        "carefree",
+        "random",
+        "up for anything"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 159
+    },
+    {
+      "key": "tidy",
+      "description": "Keeps physical spaces and belongings clean and orderly.",
+      "synonyms": [
+        "clean",
+        "neat",
+        "spotless",
+        "minimalist"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 201
+    },
+    {
+      "key": "wise",
+      "description": "Shows good judgment and insight drawn from experience.",
+      "synonyms": [
+        "insightful",
+        "sage",
+        "gives good advice",
+        "an old soul"
+      ],
+      "seen_in_poem_training": true,
+      "poem_training_count": 197
+    },
+    {
+      "key": "worldly",
+      "description": "Has broad cultural experience and familiarity with places or ways of life.",
+      "synonyms": [
+        "well-traveled",
+        "a globetrotter",
+        "been everywhere",
+        "cultured"
+      ],
+      "seen_in_poem_training": false,
+      "poem_training_count": 0
+    }
+  ]
+}

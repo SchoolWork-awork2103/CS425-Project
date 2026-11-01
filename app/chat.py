@@ -1,0 +1,44 @@
+"""Launch locally with `python -m app.chat --device cuda` (or cpu)."""
+import argparse
+from .pipeline import Pipeline
+
+
+def create_app(pipeline):
+    import gradio as gr
+    with gr.Blocks(title="Four-line roast bot") as demo:
+        gr.Markdown("# Four-line roast bot\nTell me traits you're proud of, then ask for another roast or change the intensity.")
+        state = gr.State(pipeline.manager.initial_state())
+        generator = gr.Dropdown(["A", "D"], value=pipeline.system, label="Poem generator")
+        chat = gr.Chatbot(type="messages", label="Roast conversation")
+        message = gr.Textbox(label="Message", placeholder="Roast me, I'm confident and musical")
+        with gr.Row():
+            send = gr.Button("Send", variant="primary")
+            reset = gr.Button("Reset conversation")
+
+        def respond(text, history, session, system):
+            reply, session = pipeline.respond(text, session, system)
+            return "", [*(history or []), {"role": "user", "content": text}, {"role": "assistant", "content": reply}], session
+
+        for event in (message.submit, send.click):
+            event(respond, [message, chat, state, generator], [message, chat, state], concurrency_limit=1,
+                  concurrency_id="shared-model")
+        reset.click(lambda: ("", [], pipeline.manager.initial_state()), outputs=[message, chat, state],
+                    concurrency_limit=1, concurrency_id="shared-model")
+    return demo
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
+    parser.add_argument("--system", choices=["A", "D"], default="D")
+    parser.add_argument("--backend", choices=["qwen", "nlu"], default=None)
+    args = parser.parse_args()
+    from utils import load_config
+    cfg = load_config()
+    if args.backend:
+        cfg["dialogue"]["backend"] = args.backend
+    create_app(Pipeline(cfg, args.system, args.device)).queue().launch()
+
+
+if __name__ == "__main__":
+    main()

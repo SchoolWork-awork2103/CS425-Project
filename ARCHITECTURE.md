@@ -1,6 +1,6 @@
 # Architecture and status
 
-How the finished product is meant to fit together, and where each piece stands. The design is in [pipeline.md](pipeline.md); this file maps it to code. Status was checked against the repo on **2026-11-01** (branch `feat/phase0`, commit `7af65db`).
+How the finished product is meant to fit together, and where each piece stands. The design is in [pipeline.md](pipeline.md); this file maps it to code. Updated **2026-11-01** after implementing the shared-Qwen dialogue path. Runtime quality and latency still require the external project checkpoints and GloVe assets; saved training metrics below were not rerun.
 
 **Legend:** ✅ done · 🟡 partly done · ⬜ not started · ➖ optional, not planned unless there is time
 
@@ -14,7 +14,7 @@ A user chats with the bot, names traits they're proud of, and gets back an AABB 
 flowchart LR
     U([User message]) --> NLU
     subgraph RT[Run time: Pipeline.respond]
-        NLU["NLU<br/>intent + TRAIT spans<br/>→ trait keys"] --> DM["Dialogue manager<br/>state: traits, intensity,<br/>history, last plan"]
+        NLU["Interpreter<br/>Qwen, poem adapter disabled<br/>→ validated turn operations<br/>or existing NLU baseline"] --> DM["Dialogue manager<br/>state: traits, intensity,<br/>history, last plan"]
         DM -->|generate| PL["Rhyme planner<br/>top 2 plans<br/>(4 end words each)"]
         PL --> RET["Retrieval (optional)<br/>BM25 top 3 disses"]
         PL --> GEN["Generator A or D<br/>10 samples × 2 plans<br/>≈ 20 candidates"]
@@ -29,7 +29,7 @@ flowchart LR
 The same chain as text:
 
 ```
-message ─► NLU.parse ─► DialogueManager.step ─┬─► (no generation) canned reply
+message ─► interpreter.interpret ─► DialogueManager.step ─┬─► (no generation) canned reply
                                               └─► plan_rhymes ─► generator ─► Reranker.rank ─► reply
 ```
 
@@ -88,16 +88,16 @@ Phonetics (`phonetics/`, `data/form_checks.py`) sits under all of this: it filte
 | 3 | System D: Qwen2.5-1.5B + LoRA | [generation/qwen_lora.py](generation/qwen_lora.py) | `generate(model, tok, traits, intensity, end_words, n)` | ✅ 1.5B (`gen_D_1.5b_best/`); 0.5B / 3B size comparison ➖ |
 | 4 | Retrieval (BM25) | [retrieval/](retrieval/) (empty) | `retrieve(traits, k=3)` | ➖ not started |
 | 5 | Trait-fit classifier | [reranker/trait_fit.py](reranker/trait_fit.py) | `TraitFit.score(traits, poems)` → probabilities | ✅ test AUC 0.984, held-out 0.966 |
-| 5 | Combined reranker | `reranker/rerank.py` (missing) | candidates → best poem | ⬜ |
+| 5 | Combined reranker | [reranker/rerank.py](reranker/rerank.py) | strict form/lexical/toxicity filters, history, top-5 trait fit → best poem | ✅ code + tests; weights provisional |
 | 5 | Weight tuning | [reranker/rating_pool.py](reranker/rating_pool.py) | 150 rated candidates → weights | 🟡 see §5 |
 | 6 | Joint NLU | [nlu/joint_model.py](nlu/joint_model.py) | `NLU.parse(text)` → intent, spans, traits | ✅ intent acc 0.938 |
 | 6 | Trait normalizer | [nlu/normalize.py](nlu/normalize.py) | span → trait key / unknown + nearest | ✅ (weakest step: 0.44–0.49 strict on gold spans) |
-| 7 | Dialogue manager | [dialogue/](dialogue/) (empty) | `(nlu result, state)` → action + new state | ⬜ |
-| 8 | Pipeline + Gradio UI | [app/](app/) (empty) | `Pipeline.respond(message, state)`, `gr.ChatInterface` | ⬜ |
-| 8 | Run script + README | | one command to launch the demo | ⬜ |
+| 7 | Dialogue manager | [dialogue/manager.py](dialogue/manager.py), [interpreter.py](dialogue/interpreter.py) | validated operations + session state → decision + new state | ✅ policy/mock integration tests; real parser evaluation pending |
+| 8 | Pipeline + Gradio UI | [app/pipeline.py](app/pipeline.py), [app/chat.py](app/chat.py) | `Pipeline.respond(message, state)`, Gradio Blocks | ✅ implemented; UI constructed; project-model smoke pending |
+| 8 | Run script + README | [README.md](README.md), `python -m app.chat` | asset setup and local launch | ✅ |
 | 9 | Automatic eval on 50 prompts | | main results table | ⬜ |
 | 9 | Ablations | | with/without Stage 1, planner, reranker, retrieval; quality vs. candidates | 🟡 only A forward vs. reversed exists |
-| 9 | Dialogue eval | | 20 scripted conversations | ⬜ |
+| 9 | Dialogue eval | [eval/run_dialogue_eval.py](eval/run_dialogue_eval.py) | 22 frozen conversations / 57 turns; separate dev set | 🟡 gold-policy run passes; real-model runs pending |
 | 9 | Human eval | | 30 prompts × 4 configs, 3–5 outside raters | ⬜ |
 | 10 | Report and demo | | | ⬜ |
 
@@ -105,74 +105,55 @@ Checkpoints in `checkpoints/` (git-ignored, mirrored to Drive): `gen_A_*`, `gen_
 
 ---
 
-## 4. Run-time flow in detail
+## 4. Implemented run-time flow
 
-What happens inside `Pipeline.respond(message, state)` once it exists. Steps marked ⬜ are the ones still to write.
+1. **Interpret:** one shared `Qwen2.5-1.5B-Instruct` model and the existing unmerged poem LoRA adapter are loaded lazily. `app/model_service.py` serializes all Qwen access. Inside `model.disable_adapter()`, the model maps the original message, structured session state and the full 40-trait catalogue to validated JSON. The existing NLU remains selectable with `--backend nlu`.
+2. **Validate:** `dialogue/types.py` rejects unknown fields, malformed flags/enums, invalid trait keys and contradictory operation combinations. One bounded retry is allowed. Repeated invalid output leaves state unchanged and returns a clarification. JSON validity does not imply semantic accuracy.
+3. **Manage state:** `DialogueManager.step` applies ordered add/remove/replace operations, intensity changes and explicit generic requests. Default intensity is `mild`. Unknown descriptions stage their proposed changes until clarified; yes/no, choices, cancellation and fresh requests are handled explicitly. Reset clears only the current session.
+4. **Plan:** `RhymePlanner.plan` supplies two plan dictionaries. The previous selected plan's words are excluded first; an empty result permits a bounded fallback without word exclusions. Candidate metadata retains each plan's end words.
+5. **Generate:** System D uses the same Qwen model with its poem adapter restored. System A uses the existing GRU. Sampling remains 10 candidates per plan, temperature 0.8, top-p 0.9 and repetition penalty 1.2.
+6. **Select:** the combined reranker requires four nonempty lines, exact AABB, lexical score ≥ 0.8 and the existing toxicity limits. It rejects exact history duplicates, penalizes repetition and ROUGE-L above 0.5, scales features within a request and scores trait fit on the top five. Weights are provisional until human tuning. Toxicity uses local Detoxify checkpoint weights and cached BERT configuration/tokenizer.
+7. **Commit:** append only the selected valid poem, including generator, active settings, planned and actual end words. Persist its planned words as `last_plan`. One extra generation batch is allowed if selection is empty. Exhaustion preserves settings without changing successful history.
 
-1. **NLU** ✅ — `NLU.parse(message)` returns the intent, the `TRAIT` spans and their normalized trait keys. Spans one word apart are joined. A span below 0.4 similarity to everything comes back as unknown, with its nearest trait.
-2. **Dialogue manager** ⬜ — updates `state = {traits, intensity, history, last_plan, awaiting}` and picks an action:
+Session state is independent of shared models. The UI uses Gradio Blocks with a per-session state object and serialized callbacks; switching A/D preserves settings. Qwen interpretation still requires Qwen when System A writes the poem. `app/setup_assets.py` prepares public dependencies only when explicitly invoked with `--download`; inference uses local assets.
 
-   | Intent / situation | Action |
-   |---|---|
-   | `request_diss` with traits | set traits → generate |
-   | `request_diss` without traits | ask for traits (`awaiting = "traits"`) |
-   | `another_one` | generate with the same state, avoid `history` and `last_plan` |
-   | `make_meaner` / `make_softer` | set intensity to harsh / mild → generate |
-   | new traits mid-conversation | add, or replace if the user says so |
-   | unknown trait | use the nearest trait and say so, or a fallback diss (empty traits) |
-   | `greet` / `goodbye` / `out_of_scope` | canned reply, redirect to purpose |
+The catalogue is generated by `python -m dialogue.build_catalogue` from `data/traits.json` plus the poem **training** split. It includes 40 entries, 35 seen in fine-tuning and five held out. The prompt includes neutral descriptions and synonyms, not training flags or roast angles.
 
-   Check meaner/softer keywords before trusting the intent head (`make_meaner` is the weakest intent, 0.77).
-3. **Rhyme planner** ✅ — `plan_rhymes(traits, k=2, exclude=last_plan)`.
-4. **Retrieval** ➖ — `retrieve(traits, k=3)` for few-shot examples in D's prompt and as extra candidates.
-5. **Generator** ✅ — 10 samples per plan at temperature 0.8, top-p 0.9, repetition penalty 1.2, so about 20 candidates, each with its length-normalized log-probability. A forces the end words (reversed lines); D does not, so its rhyme depends on the reranker.
-6. **Reranker** ⬜ (`TraitFit` ✅)
-   - hard filters: exactly 4 lines, Detoxify limits from `config.yaml`, `lexical_score ≥ 0.8`
-   - instant features on every survivor: `norm_logprob`, `aabb_score`, `syllable_score`, `lexical_score`, repetition, ROUGE-L > 0.5 against `history`
-   - `TraitFit.score` on the top 5 only
-   - `score = w1·logprob + w2·aabb + w3·syllable + w4·lexical + w5·trait_fit − w6·repetition − w7·toxicity`, features scaled within the request, `w3 = w2`
-7. **Reply** ⬜ — format the four lines, append to `history`, store the plan as `last_plan`, add a note if a trait was guessed.
-
-### Interfaces still to define
-
-These are suggestions that match the code already there; rename freely.
+Entry points:
 
 ```python
-# reranker/rerank.py
-class Reranker:
-    def __init__(self, cfg, weights, trait_fit=None, toxicity=None): ...
-    def rank(self, traits, candidates, history=()) -> list[dict]:   # candidates: {"lines", "norm_logprob", ...}
-
-# dialogue/manager.py
-class DialogueManager:
-    def step(self, parsed, state) -> tuple[dict, dict]:   # (action, new_state); action: {"kind": "generate" | "say", ...}
-
 # app/pipeline.py
-class Pipeline:
-    def __init__(self, cfg, system="D", device="cpu"): ...   # loads NLU, planner, generator, reranker once
-    def respond(self, message, state) -> tuple[str, dict]: ...
-
-# app/chat.py: gr.ChatInterface with a generator dropdown (A / D)
-# eval/run_auto_eval.py: frozen prompts → eval/results/auto/{system}_{config}.json
+pipeline = Pipeline(cfg, system="D", device="cpu")
+reply, new_state = pipeline.respond(message, state)
 ```
+
+```text
+python -m app.chat --device cuda
+python -m unittest discover -v
+python -m eval.run_dialogue_eval --mode policy
+python -m eval.run_dialogue_eval --mode interpreter --backend qwen --device cuda
+python -m eval.run_dialogue_eval --mode integrated --system D --device cuda
+```
+
+See [README.md](README.md) for checkpoints, public caches and GloVe setup. The policy evaluation uses gold operations and mocked poem records, so its success is not a Qwen matching or poem-quality result. Real-checkpoint interpretation, integration, comparative quality and hardware latency remain unmeasured in this checkout.
 
 ---
 
 ## 5. Where things stand right now
 
-### Reranker weight tuning (the item in progress)
+### Reranker weight tuning (historical local run; assets must be restored here)
 
 | Step | Command | Status |
 |---|---|---|
 | Prompts with the fixed planner | `rating_pool.py prompts --force` | ✅ committed in `7af65db` |
 | System A candidates | `rating_pool.py generate --system A` | ✅ committed (200) |
-| System D candidates | `rating_pool_D.ipynb` on Colab | ✅ `candidates_D.jsonl` (400), **not committed** |
-| Rating sheets | `rating_pool.py sheets --force` | ⚠️ **stale**: `sheets/`, `items.jsonl` and `sheets_meta.json` were built at 23:07, before the new prompts (23:22) and candidates. Only 3 of their 31 plans match the current prompts. Rebuild before anyone rates. |
+| System D candidates | `rating_pool_D.ipynb` on Colab | Earlier run produced 400; file absent in this checkout |
+| Rating sheets | `rating_pool.py sheets --force` | Absent here; older local sheets were stale. Rebuild with current candidates before rating. |
 | Ratings | two raters fill `rater_1.csv`, `rater_2.csv` | ⬜ (0 / 150 each) |
 | Collect + agreement | `rating_pool.py collect` | ⬜ |
-| Grid search | `reranker/rerank.py` | ⬜ |
+| Grid search | planned tuning tool | ⬜; runtime ranking exists with provisional weights |
 
-A quick check of the new candidates with `aabb_score` (both couplets an exact rhyme):
+The earlier architecture audit reported these candidate checks with `aabb_score` (both couplets an exact rhyme); D cannot be reproduced from this checkout until its candidates are restored:
 
 | | Candidates | Full AABB | Line ends on planned word |
 |---|---|---|---|
@@ -185,27 +166,19 @@ pipeline.md reports D at 49% with the old planner and 81% with real diss end wor
 
 - **NLU spot check**: 348 rows in `data/nlu/corpus/spot_check.csv` were checked by Claude only (42 marked wrong); the team still has to confirm.
 - **System checkpoint for Week 10** ("every system produces readable quatrains for the 50 evaluation prompts"): not yet run on `eval/prompts.json`. Note that those prompts carry `intensity: null`, so the eval needs a default.
-- **Intensity values don't line up**: the dialogue sketch in pipeline.md starts at `"normal"`, but the generators only know `mild`, `harsh` (and `none` from Stage 1). Pick one default, probably `mild`, and use it in the dialogue manager and the eval.
-- **`requirements.txt`** is missing packages the code already imports (`peft`, `scipy`) and ones the remaining phases need (`gradio`, and `rank_bm25` if retrieval is built).
+- **Intensity default resolved:** dialogue uses `mild`; runtime validation permits only `mild` and `harsh`. Frozen automatic poem-evaluation prompts still need their null intensities defaulted by that evaluator.
+- **Dependencies updated:** `peft`, `scipy`, `safetensors` and Gradio are included, with compatible Transformers/PEFT/Gradio ranges. Retrieval would still need its own dependency if implemented.
 - **Legacy files**: `Datasets/` (sonnets, old diss CSV) and `Train.ipynb` are from before the current pipeline and are not used by it. Archive or delete them before submission.
-- **Untracked**: `data/rerank_ratings/candidates_D.jsonl`, and the stale sheets (which should be rebuilt rather than committed).
+- **Rating assets in this checkout:** only A candidates and prompts are present. D candidates and rating sheets must be restored or regenerated before tuning; older local status notes above are historical.
 
 ---
 
-## 6. What's left, in order
+## 6. Remaining work
 
-The critical path to a demo-able product, then the evaluation the report needs.
+1. Restore project checkpoints, public model caches and GloVe; run `python -m app.setup_assets`.
+2. Run actual Qwen/NLU interpreter comparisons on the fixed dialogue fixtures, then complete A/D integrated conversations and measure CPU/GPU latency and memory.
+3. Rebuild rating candidates/sheets as needed; rate, collect and tune the combined reranker's provisional weights.
+4. Run the 50-prompt automatic generation evaluation and planned generator/reranker ablations.
+5. Conduct outside-rater human evaluation, then complete the report and demo.
 
-1. **Rebuild the rating sheets** (`python reranker/rating_pool.py sheets --force`) with the current candidates; look at D's 54% AABB first.
-2. **`reranker/rerank.py`**: hard filters, features, combined score, top-5 trait-fit. It can run with hand-set weights before the ratings come back.
-3. **Rate, collect, grid search** → final weights into `config.yaml`.
-4. **`dialogue/manager.py`**: the rule table in §4, keyword check for meaner/softer, repeat avoidance.
-5. **`app/pipeline.py` + `app/chat.py`**: chain everything, Gradio UI with A/D dropdown, measure response time on CPU (A) and laptop GPU (D).
-6. **Run script + README** for the "executable conditions" in the brief; fix `requirements.txt`.
-7. **Automatic eval** on the 50 frozen prompts for A and D (rhyme, syllables, format, lexical, trait-fit, distinct-1/2, 4-gram memorization, perplexity, time).
-8. **Ablations**: no Stage 1 (A), no planner (unconstrained end words), no reranker (first candidate), and quality against 5/10/20/40 candidates.
-9. **Dialogue eval**: write 20 scripted conversations and score task success per turn.
-10. **Human eval**: 30 prompts × 4 configs (A-base, A-full, D-base, D-full), 3–5 raters outside the team, Krippendorff's alpha and Wilcoxon tests, held-out traits reported apart.
-11. **Report and demo.**
-
-Optional, only if time allows: retrieval (Phase 4), Systems B and C, the D size comparison (0.5B / 3B), and an LLM second judge.
+Retrieval, Systems B/C, new model sizes and new adapters remain optional. See [AGENTS.md](AGENTS.md) for the detailed implementation checklist and remaining model-dependent acceptance criteria.

@@ -3,9 +3,9 @@
 **Output format:** every poem is a **quatrain with an AABB rhyme scheme**: four lines, where lines 1 and 2 rhyme with each other and lines 3 and 4 rhyme with each other, using a different rhyme sound.
 
 **Pipeline at run time** (no API calls anywhere):
-user message → NLU → dialogue manager → rhyme planner → retrieval → generator (several candidates) → reranker → reply
+user message → Qwen interpreter (poem adapter disabled) → Python dialogue manager → rhyme planner → generator (poem adapter enabled for D) → reranker → reply
 
-**Where an LLM is used** (offline, before training only): generating the modern AABB quatrain corpus for pretraining, the diss data, the NLU training data, intensity labels and two kinds of reranker negatives (flat and non-rhyming), and optionally as a second judge in evaluation. All of it uses Qwen3-32B-FP8 with thinking off.
+**Offline data generation:** Qwen3-32B-FP8 with thinking off generated the modern AABB quatrain corpus, diss data, NLU data, intensity labels and selected reranker negatives. An offline evaluation judge remains optional. **Local runtime:** one Qwen2.5-1.5B-Instruct instance now interprets dialogue with the poem adapter disabled and writes System D candidates with the adapter enabled. The original trained NLU remains an explicit baseline. Retrieval is optional and not implemented.
 
 **Priority tags**
 - **[Core]**: needed for a working, valid project
@@ -328,34 +328,25 @@ Then add:
 
 ---
 
-# Phase 7: Dialogue manager [Recommended]
+# Phase 7: Dialogue manager [Implemented; real-model evaluation pending]
 
-A rule-based state machine (Lab 10):
+- `dialogue/build_catalogue.py` generates all 40 supported traits from the canonical definitions and poem training counts; five traits remain held out from poem fine-tuning. Neutral descriptions and synonyms enter the prompt.
+- `dialogue/interpreter.py` obtains validated turn JSON from Qwen with its poem LoRA adapter disabled. It supports multiple ordered trait operations, intensity, generic requests and unresolved descriptions. A bounded validation retry precedes a recoverable clarification.
+- `dialogue/manager.py` owns independent session state: traits, `mild`/`harsh` intensity, pending clarification, generic mode, successful history and last plan. It contains no model calls. Unknown descriptions require clarification rather than automatic nearest-trait substitution.
+- `app/model_service.py` loads one unmerged Qwen model/adapter and serializes both roles. The context manager restores adapter state even on inference failure.
+- Only selected valid poems update history. Exact duplicates are rejected; ROUGE-L above 0.5 is penalized in the reranker. Planned and actual rhyme words are recorded separately.
 
-```python
-state = {"traits": [], "intensity": "normal", "history": [], "awaiting": None}
-```
-
-| Situation | Action |
-|---|---|
-| `request_diss` with traits | update the state, generate, reply |
-| `request_diss` without traits | ask for traits |
-| `another_one` | regenerate with the same state, avoiding poems in `history` |
-| `make_meaner` / `make_softer` | change the `<intensity>` token, regenerate |
-| new traits mid-conversation | add them, or replace the old ones if the user says so |
-| unknown trait | use the nearest trait and say so, or use a generic diss |
-| `out_of_scope` | redirect back to the bot's purpose |
-
-**Repeat avoidance:** penalize any candidate with ROUGE-L above 0.5 against a poem in `history`, and avoid reusing the same rhyme plan twice in a row.
+The default Qwen backend is a candidate configuration, not a measured improvement over the existing DistilBERT/MiniLM baseline. Unit and gold-policy tests are separate from actual interpretation evaluation.
 
 ---
 
-# Phase 8: Integration [Core]
+# Phase 8: Integration [Implemented; project-model smoke pending]
 
-1. `Pipeline.respond(message, state)` chains every module.
-2. Gradio chat UI (`gr.ChatInterface`) with a dropdown to pick the generator, and a "writing your roast..." message while it works.
-3. Confirm it runs on a laptop CPU and measure the average response time per system. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU with a CUDA build of PyTorch.
-4. One-command run script and a README with setup steps, which covers the brief's "executable conditions".
+`app/pipeline.py` chains interpretation, policy, planning, A/D generation and `reranker/rerank.py`. Two plans and ten samples per plan are retained. Runtime selection enforces four lines, exact AABB, lexical validity and the existing toxicity thresholds; combined weights remain provisional. Empty selection gets one bounded retry without relaxing hard filters.
+
+`app/chat.py` supplies a Gradio Blocks UI with A/D selection, per-session state and reset. Launch with `python -m app.chat --device cuda` or `--device cpu`. System A still needs Qwen if Qwen is the interpretation backend. `--backend nlu` selects the original interpreter baseline.
+
+See `README.md` for setup, `python -m app.setup_assets --download` for public dependency preparation, and `python -m app.setup_assets` for a local check. Project-trained checkpoints and GloVe must be restored from training outputs. Runtime inference performs no external model calls.
 
 ---
 
@@ -380,7 +371,7 @@ state = {"traits": [], "intensity": "normal", "history": [], "awaiting": None}
 For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table.
 
 ### Dialogue evaluation [Recommended]
-20 scripted multi-turn conversations (another one, no traits, adding traits, make it meaner). Report task success per turn.
+22 frozen scripted multi-turn conversations (57 turns) are in `eval/dialogue_test.jsonl`, with a separate development set. `python -m eval.run_dialogue_eval --mode policy` tests gold-operation state transitions with mocked poem records. Use `--mode interpreter --backend qwen|nlu` for actual understanding and `--mode integrated --system A|D` for complete generation. Report state/operation/trait/intensity accuracy, task completion, clarifications, retries, latency and memory. Actual checkpoint runs remain pending.
 
 ### Human evaluation [Core]
 1. 30 prompts × 4 configurations (e.g., A-base, A-full, D-base, D-full) = 120 outputs.

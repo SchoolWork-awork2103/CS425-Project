@@ -1,0 +1,276 @@
+{
+  "mode": "policy",
+  "backend": "qwen",
+  "system": "D",
+  "model_inference_run": false,
+  "prompt_version": "trait-operations-v1",
+  "fixture_sha256": "7e640ea5479fbc303d9691a33163a4d360953d55f8931abe113f6a77274b4d67",
+  "catalogue_sha256": "895cfaa3cf7b2eba68f28cec9d6bfa29f8cde9109e85010d7403df655dc0c609",
+  "checkpoint": "C:\\Users\\Pojim\\Documents\\Code\\CS425-Project\\checkpoints\\gen_D_1.5b_best",
+  "adapter_config_sha256": null,
+  "adapter_weights_sha256": null,
+  "settings": {
+    "dialogue": {
+      "backend": "qwen",
+      "default_intensity": "mild",
+      "local_files_only": true,
+      "max_input_tokens": 4096,
+      "max_new_tokens": 384,
+      "validation_retries": 1,
+      "generation_retries": 1,
+      "history_limit": 20
+    },
+    "sampling": {
+      "temperature": 0.8,
+      "top_p": 0.9,
+      "rep_penalty": 1.2
+    },
+    "reranker": {
+      "lexical_min": 0.8,
+      "strict_aabb": true,
+      "trait_fit_top_k": 5,
+      "history_rouge_threshold": 0.5,
+      "weights": {
+        "logprob": 1.0,
+        "aabb": 2.0,
+        "syllables": 2.0,
+        "lexical": 1.0,
+        "trait_fit": 2.0,
+        "repetition": 1.0,
+        "toxicity": 1.0
+      },
+      "tuning": {
+        "prompts": {
+          "D": 20,
+          "A": 10
+        },
+        "plans": 2,
+        "per_plan": 10,
+        "shown": 5,
+        "raters": 2,
+        "checkpoints": {
+          "A": "gen_A_rev_stage2_best.pt",
+          "D": "gen_D_1.5b_best"
+        }
+      }
+    }
+  },
+  "hardware": {
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD",
+    "device": "cpu",
+    "gpu": null
+  },
+  "versions": {
+    "torch": "2.15.0",
+    "transformers": "4.57.6",
+    "peft": "0.18.1",
+    "gradio": "5.50.0",
+    "detoxify": "0.5.4"
+  },
+  "counts": {
+    "turns": 5,
+    "state_correct": 5,
+    "clarifications": 1,
+    "errors": 0,
+    "retried": 0,
+    "conversations": 3,
+    "conversations_complete": 3
+  },
+  "state_accuracy": 1.0,
+  "conversation_completion": 1.0,
+  "latency_seconds": {
+    "median": 6.639998173341155e-05,
+    "p95": 8.200001320801675e-05
+  },
+  "interpretation_seconds": {
+    "median": null,
+    "p95": null
+  },
+  "peak_cuda_memory_bytes": null,
+  "peak_process_memory_bytes": 41586688,
+  "details": [
+    {
+      "conversation": "dev-social",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "traits": [
+          "outgoing"
+        ],
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "outgoing"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001142999972216785,
+      "attempts": 0
+    },
+    {
+      "conversation": "dev-social",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "traits": [
+          "outgoing",
+          "funny"
+        ],
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "funny"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.200001320801675e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "dev-budget",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "traits": [
+          "frugal"
+        ],
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "frugal"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 4.789998638443649e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "dev-unsupported",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "traits": [],
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "time travel",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "time travel",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 5.3499999921768904e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "dev-unsupported",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "traits": [
+          "spontaneous"
+        ],
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "replace",
+            "traits": [
+              "spontaneous"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 6.639998173341155e-05,
+      "attempts": 0
+    }
+  ]
+}

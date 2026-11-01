@@ -10,7 +10,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from sequences import PoemCodec, SequenceDataset, make_collate
+if __package__:
+    from .sequences import PoemCodec, SequenceDataset, make_collate
+else:  # training notebooks also import this module from generation/ on sys.path
+    from sequences import PoemCodec, SequenceDataset, make_collate
 
 WORD_RE = re.compile(r"[a-z]+(?:'[a-z]+)?")
 

@@ -4,6 +4,8 @@ seed: 42
 
 paths:
   traits: data/traits.json
+  trait_catalogue: data/trait_catalogue.json
+  toxicity_checkpoint: checkpoints/toxic_original-c1212f89.ckpt
   eval_prompts: eval/prompts.json
   checkpoints: checkpoints        # mirrored to the shared Drive folder
   # checkpoint names: gen_{system}_stage{1|2}_best.pt, e.g. gen_A_stage2_best.pt
@@ -72,6 +74,11 @@ trait_fit:                        # Phase 5 trait-fit classifier for the reranke
 
 reranker:                         # Phase 5 combined score
   lexical_min: 0.8                # hard filter: a candidate below this lexical_score is dropped (toxicity uses the limits above)
+  strict_aabb: true
+  trait_fit_top_k: 5
+  history_rouge_threshold: 0.5
+  # Provisional weights, not yet tuned against human ratings. Syllables follow aabb.
+  weights: {logprob: 1.0, aabb: 2.0, syllables: 2.0, lexical: 1.0, trait_fit: 2.0, repetition: 1.0, toxicity: 1.0}
   tuning:                         # candidates rated by hand to tune the weights (reranker/rating_pool.py)
     prompts: {D: 20, A: 10}       # validation-diss prompts per generator; all candidates for a prompt come from one system
     plans: 2                      # top rhyme plans per prompt, as at run time
@@ -79,3 +86,15 @@ reranker:                         # Phase 5 combined score
     shown: 5                      # candidates per prompt on the rating sheets: 30 x 5 = 150
     raters: 2
     checkpoints: {A: gen_A_rev_stage2_best.pt, D: gen_D_1.5b_best}
+
+sampling: {temperature: 0.8, top_p: 0.9, rep_penalty: 1.2}
+
+dialogue:
+  backend: qwen                  # candidate default; compare with nlu before final model selection
+  default_intensity: mild
+  local_files_only: true
+  max_input_tokens: 4096
+  max_new_tokens: 384
+  validation_retries: 1
+  generation_retries: 1
+  history_limit: 20
