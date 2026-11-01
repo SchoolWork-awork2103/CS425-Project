@@ -1,0 +1,115 @@
+{
+  "name": "gen_E_crpo",
+  "model": "andreipb/gpt2-poetry-model-crpo",
+  "stage1": true,
+  "lr": [
+    5e-05,
+    1e-05
+  ],
+  "max_epochs": 5,
+  "patience": 2,
+  "batch_size": 16,
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "history": {
+    "stage1": [
+      {
+        "epoch": 1,
+        "train_loss": 2.2924239374602418,
+        "val_loss": 2.102257013320923,
+        "val_ppl": 8.184621882178812
+      },
+      {
+        "epoch": 2,
+        "train_loss": 1.9912444835400764,
+        "val_loss": 2.041109085083008,
+        "val_ppl": 7.699143470562614
+      },
+      {
+        "epoch": 3,
+        "train_loss": 1.8828437682225403,
+        "val_loss": 2.025665044784546,
+        "val_ppl": 7.581151073477653
+      },
+      {
+        "epoch": 4,
+        "train_loss": 1.8129843468378923,
+        "val_loss": 2.0207579135894775,
+        "val_ppl": 7.544040498249477
+      },
+      {
+        "epoch": 5,
+        "train_loss": 1.7709252743320612,
+        "val_loss": 2.022019386291504,
+        "val_ppl": 7.5535631043920635
+      }
+    ],
+    "stage2": [
+      {
+        "epoch": 1,
+        "train_loss": 2.1943442866487324,
+        "val_loss": 1.9757517576217651,
+        "val_ppl": 7.212039321955564
+      },
+      {
+        "epoch": 2,
+        "train_loss": 1.9837161370043486,
+        "val_loss": 1.8932723999023438,
+        "val_ppl": 6.641065383249817
+      },
+      {
+        "epoch": 3,
+        "train_loss": 1.9028723374852594,
+        "val_loss": 1.8496016263961792,
+        "val_ppl": 6.357286442968494
+      },
+      {
+        "epoch": 4,
+        "train_loss": 1.8602169684644014,
+        "val_loss": 1.8271243572235107,
+        "val_ppl": 6.2159859777029665
+      },
+      {
+        "epoch": 5,
+        "train_loss": 1.8377496971274323,
+        "val_loss": 1.8200533390045166,
+        "val_ppl": 6.172187659449064
+      }
+    ]
+  },
+  "best_val_loss": {
+    "stage1": 2.0207579135894775,
+    "stage2": 1.8200533390045166
+  },
+  "test_loss": {
+    "seen_traits": 1.8213189344456555,
+    "heldout_traits": 2.0007472948594525
+  },
+  "samples": {
+    "seen": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.909375,
+      "couplets_rhyme": 0.834375,
+      "aabb": 0.7125,
+      "syllables": 0.99375,
+      "lexical": 0.9948604647013284,
+      "trait_mention": 0.8846153846153846,
+      "distinct_2": 0.6108227151171937
+    },
+    "heldout": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.946875,
+      "couplets_rhyme": 0.909375,
+      "aabb": 0.8375,
+      "syllables": 0.99453125,
+      "lexical": 0.9942251755790773,
+      "trait_mention": 0.3875,
+      "distinct_2": 0.6124305983960519
+    }
+  }
+}

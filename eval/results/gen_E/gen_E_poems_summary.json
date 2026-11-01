@@ -1,0 +1,115 @@
+{
+  "name": "gen_E_poems",
+  "model": "ismaelfaro/gpt2-poems.en",
+  "stage1": true,
+  "lr": [
+    5e-05,
+    1e-05
+  ],
+  "max_epochs": 5,
+  "patience": 2,
+  "batch_size": 16,
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "history": {
+    "stage1": [
+      {
+        "epoch": 1,
+        "train_loss": 2.4283276429309795,
+        "val_loss": 2.1950292587280273,
+        "val_ppl": 8.980263804071784
+      },
+      {
+        "epoch": 2,
+        "train_loss": 2.0780026190760177,
+        "val_loss": 2.1235923767089844,
+        "val_ppl": 8.36111989376244
+      },
+      {
+        "epoch": 3,
+        "train_loss": 1.9575346476754665,
+        "val_loss": 2.0999295711517334,
+        "val_ppl": 8.165594798878494
+      },
+      {
+        "epoch": 4,
+        "train_loss": 1.8806307649491094,
+        "val_loss": 2.0966293811798096,
+        "val_ppl": 8.138691202715394
+      },
+      {
+        "epoch": 5,
+        "train_loss": 1.8360762397953774,
+        "val_loss": 2.098513126373291,
+        "val_ppl": 8.154036872277542
+      }
+    ],
+    "stage2": [
+      {
+        "epoch": 1,
+        "train_loss": 2.3346920373304836,
+        "val_loss": 2.095115900039673,
+        "val_ppl": 8.126382763719333
+      },
+      {
+        "epoch": 2,
+        "train_loss": 2.102259653919148,
+        "val_loss": 2.0028088092803955,
+        "val_ppl": 7.4098397232288855
+      },
+      {
+        "epoch": 3,
+        "train_loss": 2.014137699918927,
+        "val_loss": 1.956318974494934,
+        "val_ppl": 7.0732422999579105
+      },
+      {
+        "epoch": 4,
+        "train_loss": 1.968130147682046,
+        "val_loss": 1.931380271911621,
+        "val_ppl": 6.899026204850201
+      },
+      {
+        "epoch": 5,
+        "train_loss": 1.9424920711877212,
+        "val_loss": 1.9245104789733887,
+        "val_ppl": 6.851793747705168
+      }
+    ]
+  },
+  "best_val_loss": {
+    "stage1": 2.0966293811798096,
+    "stage2": 1.9245104789733887
+  },
+  "test_loss": {
+    "seen_traits": 1.9285331814425584,
+    "heldout_traits": 2.0902292761289085
+  },
+  "samples": {
+    "seen": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.8859375,
+      "couplets_rhyme": 0.796875,
+      "aabb": 0.6375,
+      "syllables": 0.978125,
+      "lexical": 0.9943686475917071,
+      "trait_mention": 0.9038461538461539,
+      "distinct_2": 0.6376408831249035
+    },
+    "heldout": {
+      "samples": 160,
+      "four_lines": 0.99375,
+      "end_word_hit": 0.9359375,
+      "couplets_rhyme": 0.8875,
+      "aabb": 0.7875,
+      "syllables": 0.9875,
+      "lexical": 0.9957485499888783,
+      "trait_mention": 0.2125,
+      "distinct_2": 0.624865694551036
+    }
+  }
+}
