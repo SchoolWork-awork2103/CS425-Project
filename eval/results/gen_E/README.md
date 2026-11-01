@@ -8,6 +8,7 @@ One training run of `generation/train_gpt2.ipynb` per checkpoint. The models the
 | E-poems | `gen_E_poems_summary.json` | `ismaelfaro/gpt2-poems.en` (Kaggle poems) |
 | E-crpo | `gen_E_crpo_summary.json` | `andreipb/gpt2-poetry-model-crpo` (Gutenberg Poetry Corpus) |
 | E-base | `gen_E_base_summary.json` | `gpt2` (control: no poetry pretraining) |
+| E-base, Stage 2 only | `gen_E_base_nos1_summary.json` | `gpt2`, trained on the disses only (ablation) |
 
 Each summary holds the settings, the training history of both stages, test loss and sample checks.
 
@@ -170,3 +171,46 @@ Same shape as the other two: Stage 1 best at epoch 4, Stage 2 still improving at
   form.
 - E-base is the best System E checkpoint on loss and level with E-crpo on samples. All three stay well below D on
   held-out traits (39% at best vs 69%).
+
+## E-base, Stage 2 only (2026-11-01)
+
+Ablation: plain GPT-2 trained on the disses only, skipping Stage 1 (quatrains). Same Stage 2 settings (lr 1e-5, up to 5
+epochs) and prompts as the full runs.
+
+### Training
+
+| Epoch | Train loss | Val loss | Val perplexity |
+|---|---|---|---|
+| 1 | 2.771 | 2.174 | 8.79 |
+| 2 | 2.212 | 2.028 | 7.60 |
+| 3 | 2.087 | 1.969 | 7.16 |
+| 4 | 2.027 | 1.941 | 6.97 |
+| 5 | 1.997 | **1.933** | **6.91** |
+
+| Diss test set | Loss | Perplexity |
+|---|---|---|
+| seen traits | 1.939 | 6.95 |
+| held-out traits | 2.159 | 8.67 |
+
+### Samples: E-base with and without Stage 1
+
+| | Full seen | Stage 2 only seen | Full held-out | Stage 2 only held-out |
+|---|---|---|---|---|
+| Exactly 4 lines | 100% | 96% | 100% | 95% |
+| Lines ending on the planned rhyme word | 91% | 50% | 95% | 54% |
+| Couplets that rhyme (CMUdict) | 85% | 30% | 90% | 29% |
+| Full AABB | 74% | 13% | 83% | 11% |
+| Mean `syllable_score` | 0.98 | 0.86 | 0.99 | 0.85 |
+| Mean `lexical_score` | 1.00 | 1.00 | 0.99 | 1.00 |
+| Mentions a listed trait or synonym | 88% | 78% | 39% | 23% |
+| Distinct-2 | 0.63 | 0.71 | 0.63 | 0.71 |
+
+### Takeaways
+
+- Stage 1 is what teaches the form. Without it, only half the lines end on the planned rhyme word and full AABB drops
+  from 74-83% to 11-13%; line lengths and trait mentions get worse too. Val loss is 0.15 higher (1.933 vs 1.786).
+- The higher distinct-2 (0.71) is not a gain: lines that ignore the rhyme plan and length limits are freer to vary.
+- Caveat: Stage 2 keeps its lr of 1e-5, chosen for continuing from Stage 1. Starting from plain GPT-2 at that rate,
+  5 epochs may undertrain (train loss starts at 2.77 and val loss is still falling at epoch 5), so part of the gap may
+  be the learning rate rather than the missing quatrains. A Stage 2-only run at 5e-5 would separate the two. Even so,
+  the 3,382 disses alone are unlikely to make up for 18,850 quatrains of rhyme-plan practice.

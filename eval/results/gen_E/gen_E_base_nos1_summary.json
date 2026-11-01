@@ -1,0 +1,82 @@
+{
+  "name": "gen_E_base_nos1",
+  "model": "gpt2",
+  "stage1": false,
+  "lr": [
+    5e-05,
+    1e-05
+  ],
+  "max_epochs": 5,
+  "patience": 2,
+  "batch_size": 16,
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "history": {
+    "stage2": [
+      {
+        "epoch": 1,
+        "train_loss": 2.7707125105947816,
+        "val_loss": 2.173898220062256,
+        "val_ppl": 8.792492391820117
+      },
+      {
+        "epoch": 2,
+        "train_loss": 2.212314821639151,
+        "val_loss": 2.0282554626464844,
+        "val_ppl": 7.600814880374975
+      },
+      {
+        "epoch": 3,
+        "train_loss": 2.0868560503113947,
+        "val_loss": 1.9691303968429565,
+        "val_ppl": 7.164443555915853
+      },
+      {
+        "epoch": 4,
+        "train_loss": 2.0271841085182047,
+        "val_loss": 1.9413479566574097,
+        "val_ppl": 6.968137390157489
+      },
+      {
+        "epoch": 5,
+        "train_loss": 1.997195837632665,
+        "val_loss": 1.9332464933395386,
+        "val_ppl": 6.911913336766063
+      }
+    ]
+  },
+  "best_val_loss": {
+    "stage2": 1.9332464933395386
+  },
+  "test_loss": {
+    "seen_traits": 1.939168572979402,
+    "heldout_traits": 2.1593770383610558
+  },
+  "samples": {
+    "seen": {
+      "samples": 160,
+      "four_lines": 0.95625,
+      "end_word_hit": 0.5046875,
+      "couplets_rhyme": 0.296875,
+      "aabb": 0.125,
+      "syllables": 0.85546875,
+      "lexical": 0.9950687000518462,
+      "trait_mention": 0.7756410256410257,
+      "distinct_2": 0.7091140044458558
+    },
+    "heldout": {
+      "samples": 160,
+      "four_lines": 0.95,
+      "end_word_hit": 0.5421875,
+      "couplets_rhyme": 0.29375,
+      "aabb": 0.1125,
+      "syllables": 0.846875,
+      "lexical": 0.9957926362482585,
+      "trait_mention": 0.225,
+      "distinct_2": 0.7058642922935217
+    }
+  }
+}
