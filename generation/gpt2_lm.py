@@ -17,13 +17,15 @@ word before it writes the line; decode_lines strips it. Lines are written forwar
 The loss covers the poem only, and an example longer than max_len is skipped rather than truncated, so the last
 couplet never loses its rhyme.
 
-Training and sampling. load_base() loads a Hugging Face checkpoint or a saved <name>_best/ directory alike.
+Training and sampling. load_base() loads a Hugging Face checkpoint or a saved <name>_best/ directory alike. generate()
+returns each poem with its length-normalized log-probability, for the reranker.
 """
 import json, math, re, shutil, sys
 from pathlib import Path
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, LogitsProcessor, LogitsProcessorList
+from transformers import (AutoModelForCausalLM, AutoTokenizer, LogitsProcessor, LogitsProcessorList, StoppingCriteria,
+                          StoppingCriteriaList)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from utils import load_config, project_path
@@ -167,9 +169,9 @@ class AnswerRepetitionPenalty(LogitsProcessor):
         if answer.shape[1] == 0 or self.penalty == 1:
             return scores
         seen = torch.zeros_like(scores, dtype=torch.bool).scatter_(1, answer, True) & self.penalized
-        s = scores[seen]
-        scores[seen] = torch.where(s > 0, s / self.penalty, s * self.penalty)
-        return scores
+        # a new tensor: generate() keeps the scores it passes in as the raw logits (output_logits), which the
+        # log-probability is computed from, so changing them in place would put the penalty into it
+        return torch.where(seen, torch.where(scores > 0, scores / self.penalty, scores * self.penalty), scores)
 
 
 def penalized_tokens(tok, vocab_size, end_words, device):
@@ -182,21 +184,49 @@ def penalized_tokens(tok, vocab_size, end_words, device):
     return mask
 
 
+class FourLineStop(StoppingCriteria):
+    """Ends an answer once it has four non-empty lines and a line break after them: the model is starting a fifth
+    line, which would run on to max_new_tokens. length[k] is answer k's length in tokens at that point."""
+
+    def __init__(self, tok, prompt_len):
+        self.tok, self.prompt_len, self.length = tok, prompt_len, {}
+
+    def __call__(self, input_ids, scores, **kwargs):
+        answers = self.tok.batch_decode(input_ids[:, self.prompt_len:], skip_special_tokens=True)
+        done = [sum(bool(l.strip()) for l in a.split("\n")[:-1]) >= 4 for a in answers]
+        for k in (k for k, d in enumerate(done) if d):
+            self.length.setdefault(k, input_ids.shape[1] - self.prompt_len)
+        return torch.tensor(done, device=input_ids.device)
+
+
 @torch.no_grad()
 def generate(model, tok, traits, intensity, end_words, n=10, temperature=0.8, top_p=0.9, rep_penalty=1.2,
              max_new_tokens=128, device="cpu"):
     """Samples n poems in one batch, with the shared decoding settings. intensity is "mild" or "harsh" for a diss
-    ("none" asks for a Stage 1 quatrain). Each result has its lines (tags stripped, at most four), the number of
-    non-empty lines the model wrote, and the raw text."""
+    ("none" asks for a Stage 1 quatrain). Each answer ends at <|endoftext|> or at the line break after its fourth line.
+
+    Each result has its lines (tags stripped, at most four), the raw text, and the length-normalized log-probability
+    of its tokens under the model (temperature 1, no penalty), for the reranker, as in System D."""
     model.eval()
     prompt = torch.tensor([tok.encode(prompt_text(list(traits), intensity, list(end_words)),
                                       add_special_tokens=False)], device=device)
     penalty = AnswerRepetitionPenalty(penalized_tokens(tok, model.config.vocab_size, end_words, device),
                                       prompt.shape[1], rep_penalty)
+    stop = FourLineStop(tok, prompt.shape[1])
     out = model.generate(input_ids=prompt, attention_mask=torch.ones_like(prompt), do_sample=True,
                          temperature=temperature, top_p=top_p, top_k=0, repetition_penalty=1.0,
                          num_return_sequences=n, max_new_tokens=max_new_tokens, pad_token_id=tok.pad_token_id,
-                         logits_processor=LogitsProcessorList([penalty]))
-    texts = tok.batch_decode(out[:, prompt.shape[1]:], skip_special_tokens=True)
-    return [{"lines": decode_lines(t), "line_count": sum(bool(l.strip()) for l in t.split("\n")), "text": t}
-            for t in texts]
+                         logits_processor=LogitsProcessorList([penalty]),
+                         stopping_criteria=StoppingCriteriaList([stop]), output_logits=True,
+                         return_dict_in_generate=True)
+    answer = out.sequences[:, prompt.shape[1]:]
+    lp = torch.stack([l.float().log_softmax(-1).gather(1, answer[:, j, None]).squeeze(1)
+                      for j, l in enumerate(out.logits)], 1)
+    end = answer == tok.eos_token_id                              # finished answers are padded with it too
+    for k, length in stop.length.items():
+        end[k, length - 1] = True
+    valid = (end.cumsum(1) - end.int()) == 0                      # up to and including the first end token
+    logprob, length = (lp * valid).sum(1), valid.sum(1).clamp(min=1)
+    texts = tok.batch_decode(answer, skip_special_tokens=True)
+    return [{"lines": decode_lines(t), "text": t, "logprob": l, "norm_logprob": l / k}
+            for t, l, k in zip(texts, logprob.tolist(), length.tolist())]

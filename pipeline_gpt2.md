@@ -181,10 +181,24 @@ Not done:
 2. **Stage 2 only at lr 5e-5** [Optional]: separates the missing quatrains from the learning rate in the ablation.
 
 ### Decoding, for all systems
-No changes to the settings. For E, the repetition penalty is done (above). Still to do:
-- Stop after the fourth line or at `<eos>`. Now generation runs to `<eos>` or 128 tokens and the first four lines are
-  kept.
-- Return each candidate's length-normalized log-probability, which the reranker needs.
+No changes to the settings. For E, the repetition penalty is done (above).
+
+**Stop and log-probability: done** (2026-11-02). What changed in `generation/gpt2_lm.py`:
+
+| Change | Detail |
+|---|---|
+| Added `FourLineStop` | Ends an answer at the line break after its fourth non-empty line, where the model is starting a fifth; before, it ran on to `<|endoftext|>` or 128 tokens |
+| Changed `generate()` | Returns `lines`, `text`, `logprob` and `norm_logprob`, the same keys as System D (`line_count`, which nothing used, is gone). The log-probability is of the answer's tokens up to and including `<|endoftext|>` or the stopping line break, under the model at temperature 1 with no penalty |
+| Fixed `AnswerRepetitionPenalty` | It changed the scores in place, and `generate()` keeps those same scores as the raw logits, so the penalty leaked into the log-probability (3 to 10 nats too high per poem). It now returns a new tensor |
+
+- **Checked** on E-base, E-poems and E-base Stage 2 only, 320 samples each with the notebook's prompts and seed:
+  each log-probability matches a teacher-forced forward pass over the same tokens (largest gap 0.0015). E-base's and
+  E-poems' sample checks are identical to their saved summaries. The stop ended 0, 1 and 38 answers respectively; for
+  the Stage 2-only run that changes the random draws for later prompts, so its numbers moved within noise (full AABB
+  12.5% to 15% seen). The saved summaries stand.
+- **Tested:** 12 unit tests pass (added: the stop, and that the penalty leaves its input unchanged).
+- **System D has the same penalty bug** (`qwen_lora.py`), so D's `norm_logprob`, including the values in the
+  reranker rating pool, is overstated. The fix is the same one line.
 
 ---
 

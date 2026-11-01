@@ -4,8 +4,8 @@ import json, re, unittest
 import torch
 
 from utils import load_config, project_path
-from generation.gpt2_lm import (STAGE_FILES, AnswerRepetitionPenalty, answer_text, decode_lines, encode, encode_all,
-                                epoch_history, load_split, make_collate, prompt_text, read_jsonl)
+from generation.gpt2_lm import (STAGE_FILES, AnswerRepetitionPenalty, FourLineStop, answer_text, decode_lines, encode,
+                                encode_all, epoch_history, load_split, make_collate, prompt_text, read_jsonl)
 
 WORD_RE = re.compile(r"[a-z]+(?:'[a-z]+)?")
 LINES = ["you think you are so very bright,", "yet copy answers every night.",
@@ -19,6 +19,9 @@ class CharTok:
 
     def encode(self, text, add_special_tokens=False):
         return [ord(c) for c in text]
+
+    def batch_decode(self, ids, skip_special_tokens=False):
+        return ["".join(chr(i) for i in row if i or not skip_special_tokens) for row in ids.tolist()]
 
 
 class FormatTest(unittest.TestCase):
@@ -72,8 +75,23 @@ class PenaltyTest(unittest.TestCase):
         penalized = torch.tensor([True, True, True, False, True])     # token 3 stands in for an end word
         p = AnswerRepetitionPenalty(penalized, prompt_len=2, penalty=2.0)
         ids = torch.tensor([[4, 0, 1, 2, 3]])                          # prompt 4, 0; answer 1, 2, 3
-        scores = p(ids, torch.tensor([[1.0, 2.0, -2.0, 4.0, 8.0]]))
+        raw = torch.tensor([[1.0, 2.0, -2.0, 4.0, 8.0]])
+        scores = p(ids, raw)
         self.assertEqual(scores.tolist(), [[1.0, 1.0, -4.0, 4.0, 8.0]])
+        self.assertEqual(raw.tolist(), [[1.0, 2.0, -2.0, 4.0, 8.0]])  # unchanged: generate() keeps it as the logits
+
+
+class StopTest(unittest.TestCase):
+    def test_stops_after_fourth_line(self):
+        tok, prompt = CharTok(), "P:\n\n"                             # line breaks in the prompt don't count
+        answers = ["a\nb\nc\nd\n", "a\nb\nc\nd", "a\n\nb\nc\nd\n", "a\nb\nc\nd\0\0"]
+        n = max(map(len, answers))
+        ids = torch.tensor([tok.encode(prompt + a.ljust(n, "\0")) for a in answers])
+        stop = FourLineStop(tok, len(prompt))
+        for j in range(1, n + 1):                                      # one call per generated token, as in generate
+            done = stop(ids[:, :len(prompt) + j], None)
+        self.assertEqual(done.tolist(), [True, False, True, False])
+        self.assertEqual(stop.length, {0: 8, 2: 9})                    # up to and including the fourth line break
 
 
 class SplitTest(unittest.TestCase):
