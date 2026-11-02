@@ -1,16 +1,46 @@
 """Local conversation orchestration. Components are injectable for asset-free tests."""
+import difflib
 import logging
+import re
 import threading
 import time
 
 from dialogue.catalogue import ROOT, TraitCatalogue
 from dialogue.interpreter import NLUInterpreter, QwenInterpreter
 from dialogue.manager import DialogueManager
-from dialogue.types import InterpretationError, PoemRecord
+from dialogue.types import InterpretationError, PoemRecord, TraitUpdate
 from .model_service import SharedModelService
 from .device import validate_device
 
 log = logging.getLogger(__name__)
+
+# "Roast" only ever refers to the generated poem in this app. If the interpreter drops an
+# explicit roast request, the policy still requires it to generate; explicit refusals keep the no-op.
+ROAST_REQUEST = re.compile(r"\broast(?:ed|s|ing)?\b", re.IGNORECASE)
+ROAST_REFUSAL = re.compile(r"\b(?:don'?t|do not|no|not|never|stop|quit|without|can'?t|refuse)\s+(?:\w+\s+)?roast", re.IGNORECASE)
+
+# Obvious synonyms of the two real intensity values, accepted when the model outputs the
+# word the user actually used.
+INTENSITY_ALIASES = {"high": "harsh", "strong": "harsh", "meaner": "harsh",
+                     "low": "mild", "soft": "mild", "gentle": "mild", "softer": "mild"}
+
+
+def _trait_mentioned(key, message, catalogue):
+    """True when the message names or approximates the trait: the key, a synonym
+    (whole or one content word of a multi-word synonym), or a near-typo."""
+    low = message.casefold().replace("-", " ")
+    words = {w for w in re.findall(r"[a-z0-9']+", low) if len(w) >= 3}
+    for form in (key, *catalogue.entries[key]["synonyms"]):
+        form = form.casefold().replace("-", " ")
+        if form in low:
+            return True
+        for part in form.split():
+            if part in words:
+                return True
+            if len(part) >= 4 and any(difflib.SequenceMatcher(None, part, w).ratio() >= 0.70
+                                       for w in words):
+                return True
+    return False
 
 
 class Pipeline:
@@ -46,7 +76,8 @@ class Pipeline:
             elif options.get("backend", "qwen") == "qwen":
                 self.interpreter = QwenInterpreter(
                     self.service, self.catalogue, options.get("validation_retries", 1),
-                    options.get("max_input_tokens", 4096), options.get("max_new_tokens", 384))
+                    options.get("max_input_tokens", 4096), options.get("max_new_tokens", 384),
+                    intensity_aliases=INTENSITY_ALIASES)
             else:
                 raise ValueError("dialogue.backend must be qwen or nlu")
         return self.interpreter
@@ -79,6 +110,39 @@ class Pipeline:
             self.generator_a = lambda ts, intensity, ends, **kw: generate(model, codec, ts, intensity, ends, device=self.device, **kw)
         return self.generator_a(traits, intensity, end_words, **kwargs)
 
+    def _ground_destructive_updates(self, turn, message, state):
+        """Drop remove/replace edits the message never asks for.
+
+        The small model sometimes echoes session state back as operations
+        ("change intensity to harsh" -> remove confident), which silently
+        corrupts the user's settings. Every trait in a destructive edit must
+        therefore be named or approximated by the message itself. Add
+        operations are left to the model (they show in the settings reply),
+        and an answer to a pending question may describe rather than name the
+        trait.
+        """
+        if turn.kind == "answer" and state.awaiting is not None:
+            return
+        kept, dropped = [], []
+        for update in turn.trait_updates:
+            if update.mode == "replace" and not update.traits:
+                # An empty replacement would silently clear every trait.
+                dropped.append(update)
+            elif update.mode in {"remove", "replace"}:
+                grounded = [t for t in update.traits if _trait_mentioned(t, message, self.catalogue)]
+                if grounded == update.traits:
+                    kept.append(update)
+                elif update.mode == "remove" and grounded:
+                    kept.append(TraitUpdate("remove", grounded))
+                else:
+                    dropped.append(update)
+            else:
+                kept.append(update)
+        if dropped:
+            turn.trait_updates = kept
+            self.last_trace["ungrounded_updates_dropped"] = [
+                {"mode": u.mode, "traits": list(u.traits)} for u in dropped]
+
     def respond(self, message, state=None, system=None):
         with self._lock:
             start = time.perf_counter()
@@ -105,7 +169,17 @@ class Pipeline:
             turn = self._interpreter().interpret(message, state)
             self.last_trace.update(interpretation_seconds=time.perf_counter() - start,
                                    interpretation=turn.to_dict(),
-                                   attempts=getattr(self.interpreter, "last_attempts", 1))
+                                   attempts=getattr(self.interpreter, "last_attempts", 1),
+                                   **({"interpretation_salvaged": True}
+                                       if getattr(self.interpreter, "last_salvaged", False) else {}))
+            if (turn.kind in {"request", "answer"} and not turn.request_generation
+                    and not turn.generic_requested
+                    and ROAST_REQUEST.search(message) and not ROAST_REFUSAL.search(message)):
+                # The trace above keeps the model's raw output; the policy requires an
+                # explicit roast request to generate, so restore the dropped flag here.
+                turn.request_generation = True
+                self.last_trace["roast_request_restored"] = True
+            self._ground_destructive_updates(turn, message, state)
             self.last_trace["stage"] = "policy"
             decision, new_state = self.manager.step(turn, state)
         except InterpretationError:

@@ -6,8 +6,13 @@ from .pipeline import Pipeline
 
 def create_app(pipeline):
     import gradio as gr
-    with gr.Blocks(title="Four-line roast bot") as demo:
-        gr.Markdown("# Four-line roast bot\nTell me traits you're proud of, then ask for another roast or change the intensity.")
+    # Gradio 5.50's show_progress has no "spinner without timer" option: "full" is the
+    # only value that renders the loading spinner, but it also renders the corner
+    # "processing | Xs" runtime display (not configurable from Python). Keep the
+    # default "full" and hide that timer text with CSS; the spinner stays.
+    with gr.Blocks(title="AABB roast bot", analytics_enabled=False,
+                   css=".meta-text { display: none; } footer { display: none !important; }") as demo:
+        gr.Markdown("# AABB roast bot\nTell me traits you're proud of, then ask for another roast or change the intensity.")
         state = gr.State(pipeline.manager.initial_state())
         generator = gr.Dropdown(["A", "D"], value=pipeline.system, label="Poem generator")
         # Gradio 5.50 emits this warning even when False is explicitly supplied.
@@ -26,9 +31,9 @@ def create_app(pipeline):
 
         for event in (message.submit, send.click):
             event(respond, [message, chat, state, generator], [message, chat, state], concurrency_limit=1,
-                  concurrency_id="shared-model", show_progress="hidden")
+                  concurrency_id="shared-model")
         reset.click(lambda: ("", [], pipeline.manager.initial_state()), outputs=[message, chat, state],
-                    concurrency_limit=1, concurrency_id="shared-model", show_progress="hidden")
+                    concurrency_limit=1, concurrency_id="shared-model")
     return demo
 
 

@@ -2,7 +2,8 @@ from copy import deepcopy
 import unittest
 from unittest.mock import Mock
 from .pipeline import Pipeline
-from dialogue.types import DialogueState, InterpretationError, TurnInterpretation, TraitUpdate
+from dialogue.types import (DialogueState, InterpretationError, PendingQuestion, TraitUpdate,
+                            TurnInterpretation, Unresolved)
 from reranker.rerank import Reranker
 from utils import load_config
 
@@ -35,7 +36,7 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(original, DialogueState())
 
     def test_repeat_retry_exhaustion_preserves_history_and_settings(self):
-        _, state = self.pipeline.respond("roast me")
+        _, state = self.pipeline.respond("roast my confidence")
         original = deepcopy(state)
         reply, state = self.pipeline.respond("another", state)
         self.assertIn("couldn't find", reply)
@@ -56,7 +57,7 @@ class PipelineTest(unittest.TestCase):
 
     def test_switch_generator_and_reset_independent_sessions(self):
         self.pipeline.generator_a = Mock(return_value=[{"lines": GOOD, "norm_logprob": -1.0}])
-        _, state = self.pipeline.respond("roast me", system="A")
+        _, state = self.pipeline.respond("roast my confidence", system="A")
         self.assertEqual(state.history[0].system, "A")
         self.service.generate.assert_not_called()
         self.assertEqual(self.pipeline.manager.initial_state(), DialogueState())
@@ -66,14 +67,14 @@ class PipelineTest(unittest.TestCase):
     def test_missing_assets_are_recoverable(self):
         self.planner.plan.side_effect = FileNotFoundError("missing GloVe")
         with self.assertLogs("app.pipeline", level="ERROR"):
-            reply, state = self.pipeline.respond("roast me")
+            reply, state = self.pipeline.respond("roast my confidence")
         self.assertIn("settings are saved", reply)
         self.assertEqual(state.traits, ["confident"])
         self.assertEqual(state.history, [])
 
     def test_planner_exclusion_fallback_keeps_candidate_metadata(self):
         self.planner.plan.side_effect = [[], [{"end_words": ["proud", "loud", "wise", "eyes"]}]]
-        _, state = self.pipeline.respond("roast me", DialogueState(last_plan=["bright", "night", "day", "say"]))
+        _, state = self.pipeline.respond("roast my confidence", DialogueState(last_plan=["bright", "night", "day", "say"]))
         self.assertEqual(self.planner.plan.call_args_list[0].kwargs["exclude"], ["bright", "night", "day", "say"])
         self.assertEqual(state.last_plan, ["proud", "loud", "wise", "eyes"])
 
@@ -81,6 +82,68 @@ class PipelineTest(unittest.TestCase):
         reply, state = self.pipeline.respond(None, DialogueState(traits=["wise"]))
         self.assertIn("Tell me a trait", reply)
         self.assertEqual(state.traits, ["wise"])
+
+    def test_explicit_roast_request_restored_when_interpreter_drops_it(self):
+        self.interpreter.interpret.return_value = TurnInterpretation(
+            request_generation=False, trait_updates=[TraitUpdate("add", ["confident"])])
+        reply, state = self.pipeline.respond("roast me, I am confident")
+        self.assertEqual(reply, "\n".join(GOOD))
+        self.assertEqual(state.traits, ["confident"])
+        self.assertEqual(self.pipeline.last_trace.get("roast_request_restored"), True)
+
+    def test_refused_roast_is_not_forced(self):
+        self.interpreter.interpret.return_value = TurnInterpretation(
+            request_generation=False, trait_updates=[TraitUpdate("add", ["confident"])])
+        reply, state = self.pipeline.respond("no roast for now, just note that I am confident")
+        self.assertIn("Settings updated", reply)
+        self.assertEqual(state.traits, ["confident"])
+        self.service.generate.assert_not_called()
+        self.assertNotIn("roast_request_restored", self.pipeline.last_trace)
+
+    def test_unanchored_remove_echoing_session_is_dropped(self):
+        # "change intensity to harsh" never mentions confident; the model's remove is an echo.
+        self.interpreter.interpret.return_value = TurnInterpretation(
+            request_generation=False, intensity="harsh",
+            trait_updates=[TraitUpdate("remove", ["confident"])])
+        reply, state = self.pipeline.respond("change intensity to harsh",
+                                             DialogueState(traits=["confident", "athletic"]))
+        self.assertIn("Settings updated: confident, athletic; harsh", reply)
+        self.assertEqual(state.traits, ["confident", "athletic"])
+        self.assertEqual(state.intensity, "harsh")
+        self.assertEqual(self.pipeline.last_trace.get("ungrounded_updates_dropped"),
+                         [{"mode": "remove", "traits": ["confident"]}])
+        self.service.generate.assert_not_called()
+
+    def test_anchored_remove_is_kept(self):
+        self.interpreter.interpret.return_value = TurnInterpretation(
+            request_generation=True, trait_updates=[TraitUpdate("remove", ["bookish"])])
+        reply, state = self.pipeline.respond("leave out the reading part",
+                                             DialogueState(traits=["bookish", "confident"]))
+        self.assertEqual(reply, "\n".join(GOOD))
+        self.assertEqual(state.traits, ["confident"])
+        self.assertNotIn("ungrounded_updates_dropped", self.pipeline.last_trace)
+
+    def test_hallucinated_add_is_left_to_the_model(self):
+        # Adds show in the settings reply, so only destructive edits are bounded here.
+        self.interpreter.interpret.return_value = TurnInterpretation(
+            request_generation=True, trait_updates=[TraitUpdate("add", ["adventurous"])])
+        _, state = self.pipeline.respond("roast me")
+        self.assertEqual(state.traits, ["adventurous"])
+        self.assertNotIn("ungrounded_updates_dropped", self.pipeline.last_trace)
+
+    def test_pending_answer_remove_is_exempt_from_grounding(self):
+        state = DialogueState(traits=["patient", "confident"],
+                              awaiting=PendingQuestion(
+                                  TurnInterpretation(request_generation=True,
+                                                      unresolved=[Unresolved("drop which trait",
+                                                                             ["patient", "confident"],
+                                                                             "remove", "traits")])))
+        self.interpreter.interpret.return_value = TurnInterpretation(
+            kind="answer", request_generation=True, trait_updates=[TraitUpdate("remove", ["patient"])])
+        reply, new = self.pipeline.respond("no, the second quality", state)
+        self.assertEqual(reply, "\n".join(GOOD))
+        self.assertEqual(new.traits, ["confident"])
+        self.assertIsNone(new.awaiting)
 
 
 if __name__ == "__main__":

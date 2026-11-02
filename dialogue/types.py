@@ -47,7 +47,7 @@ class TurnInterpretation:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data, allowed):
+    def from_dict(cls, data, allowed, intensity_aliases=None):
         _object(data, ("kind", "request_generation", "trait_updates", "intensity",
                        "generic_requested", "unresolved"))
         kind = data["kind"]
@@ -56,7 +56,12 @@ class TurnInterpretation:
             raise InterpretationError("Invalid kind")
         if type(data["request_generation"]) is not bool or type(data["generic_requested"]) is not bool:
             raise InterpretationError("Flags must be booleans")
-        if data["intensity"] is not None and data["intensity"] not in ("mild", "harsh"):
+        intensity = data["intensity"]
+        if intensity is not None and type(intensity) is str and intensity_aliases is not None:
+            # App-level leniency for obvious synonyms of the two real values; the
+            # contract itself stays strict unless aliases are passed in.
+            intensity = intensity_aliases.get(intensity, intensity)
+        if intensity is not None and intensity not in ("mild", "harsh"):
             raise InterpretationError("Invalid intensity")
         updates, unresolved = [], []
         if type(data["trait_updates"]) is not list or len(data["trait_updates"]) > 8:
@@ -84,16 +89,16 @@ class TurnInterpretation:
                 raise InterpretationError("Intensity clarification cannot propose traits")
             unresolved.append(Unresolved(item["text"].strip(), candidates, item["mode"], item["target"]))
         if kind not in {"request", "answer"} and (
-                updates or unresolved or data["intensity"] is not None
+                updates or unresolved or intensity is not None
                 or data["request_generation"] or data["generic_requested"]):
             raise InterpretationError("Non-request turn cannot change settings")
         if data["generic_requested"] and any(u.traits for u in updates):
             raise InterpretationError("Generic roast conflicts with specific traits")
-        return cls(kind, data["request_generation"], updates, data["intensity"],
+        return cls(kind, data["request_generation"], updates, intensity,
                    data["generic_requested"], unresolved)
 
     @classmethod
-    def from_json(cls, text, allowed):
+    def from_json(cls, text, allowed, intensity_aliases=None):
         if not isinstance(text, str) or len(text) > 12000:
             raise InterpretationError("Interpretation is too long")
         def unique(pairs):
@@ -107,7 +112,7 @@ class TurnInterpretation:
             data = json.loads(text, object_pairs_hook=unique)
         except (ValueError, TypeError) as exc:
             raise InterpretationError("Expected one JSON object") from exc
-        return cls.from_dict(data, allowed)
+        return cls.from_dict(data, allowed, intensity_aliases)
 
 
 @dataclass
@@ -138,7 +143,10 @@ class DialogueState:
     generic: bool = False
 
     def summary(self):
-        return {"traits": self.traits, "intensity": self.intensity, "generic": self.generic,
+        # Current traits are deliberately omitted from what the interpreter sees:
+        # the model only needs the settings a message might change, and the current
+        # trait list was the source of it echoing traits into trait_updates.
+        return {"intensity": self.intensity, "generic": self.generic,
                 "pending": asdict(self.awaiting) if self.awaiting else None}
 
 
