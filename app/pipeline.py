@@ -83,6 +83,7 @@ class Pipeline:
         with self._lock:
             start = time.perf_counter()
             self.last_trace = {"stage": "control", "system": system or self.system}
+            message = "" if message is None else str(message)
             state = state if state is not None else self.manager.initial_state()
             try:
                 reply, new_state = self._respond(message, state, system or self.system)

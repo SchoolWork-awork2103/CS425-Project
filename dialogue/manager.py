@@ -27,15 +27,23 @@ class DialogueManager:
                 return Decision("say", "Cancelled. Your previous settings are still active."), new
             pending = state.awaiting
             if pending.expected == "choice" and pending.proposed.unresolved:
-                options = pending.proposed.unresolved[0].candidates
-                choice = text if text in options else None
-                if text in {"yes", "yep", "correct"} and len(options) == 1:
-                    choice = options[0]
-                indices = {"1": 0, "first": 0, "2": 1, "second": 1, "3": 2, "third": 2}
-                if text in indices and indices[text] < len(options):
-                    choice = options[indices[text]]
-                if choice:
-                    return self.step(TurnInterpretation(kind="answer", trait_updates=[TraitUpdate("add", [choice])]), state)
+                item = pending.proposed.unresolved[0]
+                if item.target == "intensity":
+                    # The question lists mild first, so these resolve without a model (the NLU baseline cannot read them).
+                    intensity = {"mild": "mild", "harsh": "harsh",
+                                 "1": "mild", "first": "mild", "2": "harsh", "second": "harsh"}.get(text)
+                    if intensity:
+                        return self.step(TurnInterpretation(kind="answer", intensity=intensity), state)
+                else:
+                    options = item.candidates
+                    choice = text if text in options else None
+                    if text in {"yes", "yep", "correct"} and len(options) == 1:
+                        choice = options[0]
+                    indices = {"1": 0, "first": 0, "2": 1, "second": 1, "3": 2, "third": 2}
+                    if text in indices and indices[text] < len(options):
+                        choice = options[indices[text]]
+                    if choice:
+                        return self.step(TurnInterpretation(kind="answer", trait_updates=[TraitUpdate("add", [choice])]), state)
         return None
 
     def _clarify(self, turn, state, expected="choice"):

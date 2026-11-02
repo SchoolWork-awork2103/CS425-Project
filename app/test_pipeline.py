@@ -77,6 +77,11 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(self.planner.plan.call_args_list[0].kwargs["exclude"], ["bright", "night", "day", "say"])
         self.assertEqual(state.last_plan, ["proud", "loud", "wise", "eyes"])
 
+    def test_none_message_is_treated_as_empty(self):
+        reply, state = self.pipeline.respond(None, DialogueState(traits=["wise"]))
+        self.assertIn("Tell me a trait", reply)
+        self.assertEqual(state.traits, ["wise"])
+
 
 if __name__ == "__main__":
     unittest.main()

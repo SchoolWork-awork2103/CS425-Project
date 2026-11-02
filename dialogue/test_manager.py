@@ -100,6 +100,19 @@ class ManagerTest(unittest.TestCase):
         _, reset = self.manager.control("/reset", state)
         self.assertEqual(reset, DialogueState())
 
+    def test_intensity_question_resolves_by_word_and_ordinal(self):
+        _, state = self.manager.step(TurnInterpretation(request_generation=True,
+                                unresolved=[Unresolved("meaner or softer", target="intensity")]),
+                                     DialogueState(traits=["wise"], intensity="mild"))
+        decision, milder = self.manager.control("mild", state)
+        self.assertEqual((decision.kind, milder.intensity), ("generate", "mild"))
+        decision, harsher = self.manager.control("Second", state)
+        self.assertEqual((decision.kind, harsher.intensity), ("generate", "harsh"))
+        decision, _ = self.manager.control("harsh?", state)
+        self.assertEqual((decision.kind, decision.intensity), ("generate", "harsh"))
+        self.assertEqual(self.manager.control("harsh", state)[1].traits, ["wise"])
+        self.assertIsNone(self.manager.control("quite", state))  # unrecognised words still reach the interpreter
+
     def test_invalid_typed_operations_are_rejected(self):
         with self.assertRaises(InterpretationError):
             self.manager.step(turn(["telepathic"]), DialogueState())
