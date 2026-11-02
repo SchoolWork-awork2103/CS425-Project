@@ -17,12 +17,26 @@ log = logging.getLogger(__name__)
 # "Roast" only ever refers to the generated poem in this app. If the interpreter drops an
 # explicit roast request, the policy still requires it to generate; explicit refusals keep the no-op.
 ROAST_REQUEST = re.compile(r"\broast(?:ed|s|ing)?\b", re.IGNORECASE)
-ROAST_REFUSAL = re.compile(r"\b(?:don'?t|do not|no|not|never|stop|quit|without|can'?t|refuse)\s+(?:\w+\s+)?roast", re.IGNORECASE)
+# A denial cue anywhere in the few words before "roast(s|ed|ing)" keeps the safety net silent.
+# Missing a refusal roasts the user against their words, while a false refusal only withholds
+# this fallback - the interpreter's own request_generation flag still generates - so the
+# pattern is deliberately generous. Apostrophes arrive as ASCII or typographic (’).
+_REFUSAL = (r"cannot|can ?not|can['\u2019]?t|ca['\u2019]?n?t|won['\u2019]?t|wont|wouldn['\u2019]?t"
+            r"|couldn['\u2019]?t|don['\u2019]?t|do not|doesn['\u2019]?t|does not|didn['\u2019]?t|did not"
+            r"|never|no|not|without|stop|quit|cease|avoid|refus(?:e|es|ed)|declin(?:e|es|ed)|skip")
+ROAST_REFUSAL = re.compile(rf"\b(?:{_REFUSAL})\b(?:\s+\w+){{0,4}}\s+roast(?:s|ed|ing)?\b", re.IGNORECASE)
 
 # Obvious synonyms of the two real intensity values, accepted when the model outputs the
 # word the user actually used.
 INTENSITY_ALIASES = {"high": "harsh", "strong": "harsh", "meaner": "harsh",
                      "low": "mild", "soft": "mild", "gentle": "mild", "softer": "mild"}
+
+# A bare continuation request cannot describe a trait by construction, but the small
+# model sometimes answers one by inventing an add ("another" -> add outgoing), which
+# silently rewrites the user's settings before an un-echoed generate reply.
+BARE_CONTINUATION = re.compile(
+    r"\A(?:another(?:\s+one(?:\s+roast)?)?|another\s+roast|one\s+more(?:\s+roast)?|next(?:\s+one)?|again"
+    r"|(?:give|write)\s+me\s+another|more(?:\s+of\s+(?:that|those))?|keep\s+going)\s*[.!?,]*\Z", re.IGNORECASE)
 
 
 def _trait_mentioned(key, message, catalogue):
@@ -66,14 +80,15 @@ class Pipeline:
     def _interpreter(self):
         if self.interpreter is None:
             options = self.cfg.get("dialogue", {})
-            if options.get("backend", "qwen") == "nlu":
+            backend = options.get("backend", "qwen")
+            if backend == "nlu":
                 from nlu.joint_model import NLU
                 from nlu.normalize import TraitNormalizer
                 normalizer = TraitNormalizer(self.cfg, local_files_only=options.get("local_files_only", True))
                 nlu = NLU.load(ROOT / self.cfg["paths"]["checkpoints"] / "nlu_joint_best",
                                self.device, normalizer)
                 self.interpreter = NLUInterpreter(nlu, self.catalogue)
-            elif options.get("backend", "qwen") == "qwen":
+            elif backend == "qwen":
                 self.interpreter = QwenInterpreter(
                     self.service, self.catalogue, options.get("validation_retries", 1),
                     options.get("max_input_tokens", 4096), options.get("max_new_tokens", 384),
@@ -179,6 +194,12 @@ class Pipeline:
                 # explicit roast request to generate, so restore the dropped flag here.
                 turn.request_generation = True
                 self.last_trace["roast_request_restored"] = True
+            if BARE_CONTINUATION.match(message.strip()) and (turn.trait_updates or turn.generic_requested):
+                # A bare continuation keeps the settings; nothing it says can change them.
+                self.last_trace["bare_continuation_updates_dropped"] = [
+                    {"mode": u.mode, "traits": list(u.traits)} for u in turn.trait_updates]
+                turn.trait_updates = []
+                turn.generic_requested = False
             self._ground_destructive_updates(turn, message, state)
             self.last_trace["stage"] = "policy"
             decision, new_state = self.manager.step(turn, state)

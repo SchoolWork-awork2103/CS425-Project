@@ -20,6 +20,16 @@ def _keys(value, allowed, limit=40):
     return list(dict.fromkeys(value))
 
 
+def unique_json_pairs(pairs):
+    """object_pairs_hook rejecting duplicate fields, so a model cannot smuggle two meanings."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise InterpretationError("Duplicate JSON field")
+        result[key] = value
+    return result
+
+
 @dataclass
 class TraitUpdate:
     mode: str
@@ -57,7 +67,11 @@ class TurnInterpretation:
         if type(data["request_generation"]) is not bool or type(data["generic_requested"]) is not bool:
             raise InterpretationError("Flags must be booleans")
         intensity = data["intensity"]
-        if intensity is not None and type(intensity) is str and intensity_aliases is not None:
+        if type(intensity) is str:
+            # Case and spacing are not meaning for the two enum values; normalising here
+            # saves a retry when the model echoes the user's own capitalisation.
+            intensity = intensity.strip().casefold()
+        if intensity is not None and intensity_aliases is not None:
             # App-level leniency for obvious synonyms of the two real values; the
             # contract itself stays strict unless aliases are passed in.
             intensity = intensity_aliases.get(intensity, intensity)
@@ -101,15 +115,8 @@ class TurnInterpretation:
     def from_json(cls, text, allowed, intensity_aliases=None):
         if not isinstance(text, str) or len(text) > 12000:
             raise InterpretationError("Interpretation is too long")
-        def unique(pairs):
-            result = {}
-            for key, value in pairs:
-                if key in result:
-                    raise InterpretationError("Duplicate JSON field")
-                result[key] = value
-            return result
         try:
-            data = json.loads(text, object_pairs_hook=unique)
+            data = json.loads(text, object_pairs_hook=unique_json_pairs)
         except (ValueError, TypeError) as exc:
             raise InterpretationError("Expected one JSON object") from exc
         return cls.from_dict(data, allowed, intensity_aliases)

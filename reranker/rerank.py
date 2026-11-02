@@ -95,9 +95,9 @@ class Reranker:
         toxic = self._toxicity(["\n".join(c["lines"]) for c in survivors])
         if len(toxic) != len(survivors):
             raise ValueError("Toxicity scorer returned the wrong number of results")
+        limits = self.cfg["toxicity"]
         filtered = []
         for candidate, scores in zip(survivors, toxic):
-            limits = self.cfg["toxicity"]
             if any(k not in scores or not math.isfinite(float(scores[k])) for k in limits):
                 raise ValueError("Incomplete toxicity scores")
             if any(float(scores[k]) >= threshold for k, threshold in limits.items()):
@@ -115,7 +115,12 @@ class Reranker:
             f = candidate["scaled_features"]
             return sum(self.weights[k] * f.get(k, 0) * (-1 if k in {"repetition", "toxicity"} else 1)
                        for k in self.weights)
-        filtered.sort(key=lambda c: (-score(c), -c["norm_logprob"], tuple(c["lines"])))
+
+        # Ties on the weighted score fall back to the model's own preference, then text order.
+        def rank_key(candidate):
+            return (-score(candidate), -candidate["norm_logprob"], tuple(candidate["lines"]))
+
+        filtered.sort(key=rank_key)
         shortlist = filtered[:settings.get("trait_fit_top_k", 5)]
         if traits and self.trait_fit:
             fits = self.trait_fit.score(traits, [c["lines"] for c in shortlist])
@@ -127,4 +132,4 @@ class Reranker:
                 c["scaled_features"]["trait_fit"] = (value - lo) / (hi - lo) if hi > lo else 0.0
         for candidate in shortlist:
             candidate["score"] = score(candidate)
-        return sorted(shortlist, key=lambda c: (-c["score"], -c["norm_logprob"], tuple(c["lines"])))
+        return sorted(shortlist, key=rank_key)

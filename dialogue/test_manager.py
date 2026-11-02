@@ -1,7 +1,9 @@
+import json
 import unittest
 from .catalogue import TraitCatalogue
 from .manager import DialogueManager
-from .types import DialogueState, InterpretationError, PoemRecord, TraitUpdate, TurnInterpretation, Unresolved
+from .types import (DialogueState, InterpretationError, PendingQuestion, PoemRecord, TraitUpdate,
+                    TurnInterpretation, Unresolved)
 
 
 def turn(traits=(), mode="add", **kwargs):
@@ -159,6 +161,47 @@ class ManagerTest(unittest.TestCase):
     def test_invalid_typed_operations_are_rejected(self):
         with self.assertRaises(InterpretationError):
             self.manager.step(turn(["telepathic"]), DialogueState())
+
+    def test_pending_proposal_stays_bounded(self):
+        # Answers that each add a new clarification must not grow the staged question forever:
+        # session.summary() feeds every interpretation prompt and has a token budget.
+        _, state = self.manager.step(TurnInterpretation(request_generation=True,
+                                unresolved=[Unresolved("alpha")]), DialogueState(traits=["wise"]))
+        for i in range(150):
+            decision, state = self.manager.step(TurnInterpretation(
+                kind="answer", unresolved=[Unresolved(("unknown %d " % (i % 10)) * 23)]), state)
+            self.assertEqual(decision.kind, "clarify")
+        self.assertLessEqual(len(state.awaiting.proposed.unresolved), 8)
+        self.assertLess(len(json.dumps(state.summary())), 10000)
+        # the queue is still functional: resolving the current question stages its answer
+        # and re-asks the next queued description, exactly as before the cap kicked in
+        decision, state = self.manager.step(turn(["loyal"], kind="answer"), state)
+        self.assertEqual(decision.kind, "clarify")
+        self.assertEqual(state.awaiting.proposed.trait_updates, [TraitUpdate("add", ["loyal"])])
+
+    def test_staged_updates_coalesce_without_changing_effects(self):
+        _, state = self.manager.step(TurnInterpretation(request_generation=True,
+                                unresolved=[Unresolved("meaner or softer", target="intensity")]),
+                                     DialogueState(traits=["wise"]))
+        for traits in (["smart"], ["confident"], ["smart"]):  # adjacent same-mode merges, deduped
+            _, state = self.manager.step(turn(traits, kind="answer"), state)
+        self.assertEqual(state.awaiting.proposed.trait_updates, [TraitUpdate("add", ["smart", "confident"])])
+        decision, state = self.manager.step(turn(kind="answer", intensity="mild"), state)
+        self.assertEqual((decision.kind, state.traits), ("generate", ["wise", "smart", "confident"]))
+
+    def test_controls_survive_lookalike_characters_and_punctuation(self):
+        state = DialogueState(traits=["wise"], awaiting=PendingQuestion(
+            TurnInterpretation(request_generation=True,
+                               unresolved=[Unresolved("driven", ["ambitious", "hardworking"])]),
+            "choice", True))
+        _, fresh = self.manager.control("  ｒｅｓｅｔ\u200b... ", DialogueState(traits=["wise"]))
+        self.assertEqual(fresh, DialogueState())
+        _, fresh = self.manager.control("start\u00a0over.", state)
+        self.assertEqual(fresh, DialogueState())
+        # ligature and typographic punctuation still resolve the pending choice / cancel
+        self.assertEqual(self.manager.control("ﬁrst!!", state)[1].traits, ["wise", "ambitious"])
+        self.assertEqual(self.manager.control("no\u200b\u00a0", state)[1].awaiting, None)
+        self.assertIsNone(self.manager.control("ﬁrst I said ambitious", state))  # sentences go to the model
 
 
 if __name__ == "__main__":

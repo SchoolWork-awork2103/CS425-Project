@@ -100,6 +100,27 @@ class PipelineTest(unittest.TestCase):
         self.service.generate.assert_not_called()
         self.assertNotIn("roast_request_restored", self.pipeline.last_trace)
 
+    def test_common_refusal_phrasings_are_not_forced(self):
+        # Each message needs a fresh interpretation object; the policy mutates it.
+        self.interpreter.interpret.side_effect = lambda message, state: TurnInterpretation(
+            request_generation=False, trait_updates=[TraitUpdate("add", ["confident"])])
+        for message in ["you cannot roast me", "I don't want a roast", "won\u2019t roast me",
+                        "I refuse to be roasted", "no more roasts please, thanks"]:
+            with self.subTest(message=message):
+                reply, _ = self.pipeline.respond(message, DialogueState(traits=["wise"]))
+                self.assertIn("Settings updated", reply)
+                self.assertNotIn("roast_request_restored", self.pipeline.last_trace)
+        self.service.generate.assert_not_called()
+
+    def test_roast_requests_are_still_restored(self):
+        # The widened refusal pattern must not silence the safety net on plain requests.
+        self.interpreter.interpret.side_effect = lambda message, state: TurnInterpretation(
+            request_generation=False)
+        for message in ["roast me", "Roast!", "give me a roast please", "one more roast"]:
+            with self.subTest(message=message):
+                reply, _ = self.pipeline.respond(message, DialogueState(traits=["wise"]))
+                self.assertEqual(reply, "\n".join(GOOD))
+
     def test_unanchored_remove_echoing_session_is_dropped(self):
         # "change intensity to harsh" never mentions confident; the model's remove is an echo.
         self.interpreter.interpret.return_value = TurnInterpretation(
@@ -130,6 +151,29 @@ class PipelineTest(unittest.TestCase):
         _, state = self.pipeline.respond("roast me")
         self.assertEqual(state.traits, ["adventurous"])
         self.assertNotIn("ungrounded_updates_dropped", self.pipeline.last_trace)
+
+    def test_bare_continuation_cannot_change_settings(self):
+        # Observed live: for "another" the model invented add outgoing, silently mutating
+        # settings ahead of an un-echoed generate reply. A bare continuation keeps them.
+        self.interpreter.interpret.side_effect = lambda message, state: TurnInterpretation(
+            request_generation=True, trait_updates=[TraitUpdate("add", ["outgoing"])])
+        reply, state = self.pipeline.respond("another", DialogueState(traits=["confident", "athletic"]))
+        self.assertEqual(reply, "\n".join(GOOD))
+        self.assertEqual(state.traits, ["confident", "athletic"])
+        self.assertEqual(self.pipeline.last_trace["bare_continuation_updates_dropped"],
+                         [{"mode": "add", "traits": ["outgoing"]}])
+        # generic_requested on "another" would clear the trait list; it is stripped as well
+        self.interpreter.interpret.side_effect = lambda message, state: TurnInterpretation(
+            request_generation=True, generic_requested=True)
+        _, state = self.pipeline.respond("One more roast!", DialogueState(traits=["confident"]))
+        self.assertEqual((state.traits, state.generic), (["confident"], False))
+        # only exact bare requests: anything with more content keeps the model's edits
+        for message in ["another, but add outgoing", "outgoing", "another one, harsher"]:
+            with self.subTest(message=message):
+                self.interpreter.interpret.side_effect = lambda m, s: TurnInterpretation(
+                    request_generation=True, trait_updates=[TraitUpdate("add", ["outgoing"])])
+                _, state = self.pipeline.respond(message, DialogueState(traits=["confident"]))
+                self.assertEqual(state.traits, ["confident", "outgoing"])
 
     def test_pending_answer_remove_is_exempt_from_grounding(self):
         state = DialogueState(traits=["patient", "confident"],

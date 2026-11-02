@@ -45,12 +45,12 @@ class SharedModelService:
                     raise InterpretationError("Message and session exceed the input budget. Please shorten the message.")
                 encoded = encoded.to(self.device)
                 encoded.pop("token_type_ids", None)  # decoder-only Qwen has no segment embeddings
+                # Greedy JSON output: the null overrides pin down any sampling settings shipped
+                # in a generation_config.json so interpretation stays deterministic.
                 output = self.model.generate(
                     **encoded, do_sample=False, num_beams=1, max_new_tokens=max_new_tokens,
                     temperature=None, top_p=None, top_k=None,
-                    repetition_penalty=1.0, pad_token_id=self.tokenizer.pad_token_id,
-                    return_dict_in_generate=False, output_scores=False, output_logits=False,
-                    use_cache=True)
+                    repetition_penalty=1.0, pad_token_id=self.tokenizer.pad_token_id)
                 return self.tokenizer.decode(output[0, length:], skip_special_tokens=True).strip()
 
     def generate(self, traits, intensity, end_words, **kwargs):

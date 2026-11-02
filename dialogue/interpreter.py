@@ -1,27 +1,37 @@
 """Qwen interpretation and an explicit adapter for the existing NLU baseline."""
+import difflib
 import json
+import re
 
 from .prompts import messages
-from .types import InterpretationError, TraitUpdate, TurnInterpretation, Unresolved
+from .types import (InterpretationError, TraitUpdate, TurnInterpretation, Unresolved,
+                    unique_json_pairs)
+
+VALID_MODES = ("add", "remove", "replace")
 
 
-def _salvage_unknown_traits(text, allowed, intensity_aliases):
+def _user_names(key, message):
+    """True when the user's own words contain the invented key (or a close typo)."""
+    if not key.strip():
+        return False
+    low = message.casefold().replace("_", " ")
+    if key.replace("_", " ") in low:
+        return True
+    words = [w for w in re.findall(r"[a-z]+", low) if len(w) >= 4]
+    return any(difflib.SequenceMatcher(None, key, w).ratio() >= 0.8 for w in words)
+
+
+def _salvage_unknown_traits(text, allowed, intensity_aliases, message=""):
     """Recover an interpretation whose trait_updates name non-catalogue keys.
 
-    The model occasionally invents traits for messages that name none
-    ("roast me" -> add braggart). The whole offending update is dropped and the
-    rest is re-validated; any other failure is left to the retry.
+    Two model behaviours produce this. A genuine unsupported trait ("I am strong"
+    -> add strong) is kept as a clarification question, because silently dropping
+    the trait the user just named loses their request. An invented trait for a
+    message that names none ("roast me" -> add braggart) is dropped. The rest is
+    re-validated; any other failure is left to the retry.
     """
-    def unique(pairs):
-        result = {}
-        for key, value in pairs:
-            if key in result:
-                raise ValueError("Duplicate JSON field")
-            result[key] = value
-        return result
-
     try:
-        data = json.loads(text, object_pairs_hook=unique)
+        data = json.loads(text, object_pairs_hook=unique_json_pairs)
     except (ValueError, TypeError):
         return None
     if type(data) is not dict:
@@ -29,16 +39,36 @@ def _salvage_unknown_traits(text, allowed, intensity_aliases):
     updates = data.get("trait_updates")
     if type(updates) is not list:
         return None
-    kept, changed = [], False
+
+    def wellformed(update):
+        return (type(update) is dict and set(update) == {"mode", "traits"}
+                and update.get("mode") in VALID_MODES and type(update.get("traits")) is list
+                and all(type(t) is str for t in update["traits"]))
+
+    kept, recovered, changed = [], [], False
     for update in updates:
-        if (type(update) is dict and set(update) == {"mode", "traits"}
-                and type(update.get("traits")) is list
-                and all(type(t) is str and t in allowed for t in update["traits"])):
+        if wellformed(update) and all(t in allowed for t in update["traits"]):
             kept.append(update)
-        else:
-            changed = True
+            continue
+        changed = True
+        if not wellformed(update):
+            continue
+        known = [t for t in update["traits"] if t in allowed]
+        if known:
+            kept.append({"mode": update["mode"], "traits": known})
+        for t in update["traits"]:
+            if t not in allowed and _user_names(t, message):
+                recovered.append({"text": t, "candidates": [], "mode": update["mode"], "target": "traits"})
     if not changed:
         return None
+    if recovered:
+        existing = data.get("unresolved")
+        shape_ok = (type(existing) is list
+                    and all(type(u) is dict and set(u) == {"text", "candidates", "mode", "target"}
+                            and u["mode"] in VALID_MODES for u in existing))
+        if not shape_ok:
+            return None  # cannot merge without inventing fields; let the corrected retry try
+        data["unresolved"] = existing + recovered
     data["trait_updates"] = kept
     try:
         return TurnInterpretation.from_dict(data, allowed, intensity_aliases)
@@ -67,7 +97,7 @@ class QwenInterpreter:
             try:
                 return TurnInterpretation.from_json(text, self.catalogue.keys, self.intensity_aliases)
             except InterpretationError:
-                salvaged = _salvage_unknown_traits(text, self.catalogue.keys, self.intensity_aliases)
+                salvaged = _salvage_unknown_traits(text, self.catalogue.keys, self.intensity_aliases, message)
                 if salvaged is not None:
                     self.last_salvaged = True
                     return salvaged
@@ -99,8 +129,11 @@ class NLUInterpreter:
             if found["trait"] in self.catalogue.keys:
                 keys.append(found["trait"])
             else:
+                span = found["span"].strip()[:240]  # a blank span cannot be clarified, and would
+                if not span:                        # fail the whole turn at policy validation
+                    continue
                 nearest = found.get("nearest")
-                unknown.append(Unresolved(found["span"][:240], [nearest] if nearest in self.catalogue.keys else []))
+                unknown.append(Unresolved(span, [nearest] if nearest in self.catalogue.keys else []))
         return TurnInterpretation(kind="answer" if state.awaiting else "request", request_generation=True,
                                   trait_updates=[TraitUpdate("add", keys)] if keys else [],
                                   intensity={"make_meaner": "harsh", "make_softer": "mild"}.get(intent),

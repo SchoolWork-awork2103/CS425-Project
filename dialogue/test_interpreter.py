@@ -5,7 +5,7 @@ from .build_catalogue import build
 from .catalogue import TraitCatalogue
 from .interpreter import QwenInterpreter
 from .prompts import messages
-from .types import DialogueState, InterpretationError, TurnInterpretation
+from .types import (DialogueState, InterpretationError, TraitUpdate, TurnInterpretation)
 
 
 class InterpreterTest(unittest.TestCase):
@@ -66,14 +66,57 @@ class InterpreterTest(unittest.TestCase):
         with self.assertRaises(InterpretationError):
             strict.interpret("change intensity to high and roast me", DialogueState())
 
+    def test_intensity_case_and_padding_are_normalised(self):
+        # Echoed user capitalisation is not a semantic failure and must not burn a retry.
+        for raw, strict_ok in ((" HaRsH ", True), (" high ", False)):
+            text = json.dumps({**self.valid, "intensity": raw})
+            lenient = QwenInterpreter(Mock(interpret=Mock(return_value=text)), self.catalogue,
+                                      intensity_aliases={"high": "harsh"})
+            self.assertEqual(lenient.interpret("roast me harsh", DialogueState()).intensity, "harsh")
+            strict = QwenInterpreter(Mock(interpret=Mock(return_value=text)), self.catalogue)
+            if strict_ok:
+                self.assertEqual(strict.interpret("roast me harsh", DialogueState()).intensity, "harsh")
+            else:
+                with self.assertRaises(InterpretationError):
+                    strict.interpret("roast me high", DialogueState())
+
     def test_unknown_trait_key_is_salvaged_without_retry(self):
         text = json.dumps({**self.valid, "trait_updates": [{"mode": "add", "traits": ["braggart"]}]})
         service = Mock(interpret=Mock(return_value=text))
         interpreter = QwenInterpreter(service, self.catalogue)
         result = interpreter.interpret("roast me", DialogueState())
         self.assertEqual(result.trait_updates, [])
+        self.assertEqual(result.unresolved, [])  # invented for a message that names nothing
         self.assertTrue(interpreter.last_salvaged)
         self.assertEqual(service.interpret.call_count, 1)
+
+    def test_user_named_unknown_trait_becomes_a_clarification(self):
+        # The model names the unsupported trait as a key instead of using unresolved.
+        # Dropping it silently loses what the user just asked for, so salvage keeps it
+        # as a question when the message actually contains the word (or a close typo).
+        from .manager import DialogueManager
+        text = json.dumps({**self.valid, "request_generation": False, "trait_updates": [
+            {"mode": "remove", "traits": ["calm"]}, {"mode": "add", "traits": ["strong"]}]})
+        for message in ("I am not calm but I am strong", "im not calm but im strogn"):
+            with self.subTest(message=message):
+                interpreter = QwenInterpreter(Mock(interpret=Mock(return_value=text)), self.catalogue)
+                turn = interpreter.interpret(message, DialogueState())
+                self.assertTrue(interpreter.last_salvaged)
+                self.assertEqual(turn.trait_updates, [TraitUpdate("remove", ["calm"])])
+                self.assertEqual([(u.text, u.mode) for u in turn.unresolved], [("strong", "add")])
+                decision, state = DialogueManager(self.catalogue).step(turn, DialogueState(traits=["confident", "calm"]))
+                self.assertEqual(decision.kind, "clarify")
+                self.assertIn("strong", decision.text)
+
+    def test_nlu_baseline_never_emits_blank_unresolved(self):
+        from .interpreter import NLUInterpreter
+        nlu = Mock()
+        nlu.parse.return_value = {"intent": "request_generic", "traits": [
+            {"trait": "telepathy", "span": "   ", "nearest": None},
+            {"trait": "guitar", "span": " plays guitar ", "nearest": "musical"}]}
+        turn = NLUInterpreter(nlu, self.catalogue).interpret("telepathy and plays guitar", DialogueState())
+        self.assertEqual([u.text for u in turn.unresolved], ["plays guitar"])
+        TurnInterpretation.from_dict(turn.to_dict(), self.catalogue.keys)  # survives policy validation
 
     def test_salvage_only_fixes_unknown_trait_keys(self):
         text = json.dumps({**self.valid, "trait_updates": [{"mode": "add", "traits": ["braggart"]}]})

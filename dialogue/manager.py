@@ -1,8 +1,36 @@
 """Deterministic policy. All methods return new state; no model calls occur here."""
 from copy import deepcopy
+import unicodedata
+
 from .types import Decision, DialogueState, PendingQuestion, TraitUpdate, TurnInterpretation
 
 RESET_REPLY = "Fresh start. What traits should I roast?"
+
+# The per-turn caps the interpretation contract enforces; a staged proposal may not outgrow them.
+MAX_STAGED_UPDATES, MAX_STAGED_QUESTIONS = 8, 8
+
+
+def _control_text(message):
+    """Normalise a message for the exact-match control path: compatibility characters
+    (full-width, ligatures, NBSP), zero-width joiners, inner whitespace and edge punctuation."""
+    text = unicodedata.normalize("NFKC", message).replace("\u200b", "").replace("\ufeff", "")
+    return " ".join(text.casefold().split()).strip(".!?;:, ")
+
+
+def _compact(proposal):
+    """Keep a staged proposal bounded: adjacent same-mode updates coalesce (same effect,
+    fewer entries) and overflow drops the oldest. Only a pathological answer loop - many
+    answers that each add a new clarification - can reach these caps; without them the
+    pending question grows session.summary() (and therefore every interpretation prompt)
+    until the input budget fails permanently."""
+    merged = []
+    for update in proposal.trait_updates:
+        if merged and merged[-1].mode == update.mode:
+            merged[-1].traits = list(dict.fromkeys([*merged[-1].traits, *update.traits]))
+        else:
+            merged.append(TraitUpdate(update.mode, list(update.traits)))
+    proposal.trait_updates = merged[-MAX_STAGED_UPDATES:]
+    del proposal.unresolved[MAX_STAGED_QUESTIONS:]
 
 
 class DialogueManager:
@@ -17,7 +45,7 @@ class DialogueManager:
 
     def control(self, message, state):
         """Only exact unambiguous controls bypass interpretation."""
-        text = message.strip().casefold().rstrip(".!?")
+        text = _control_text(message)
         if text in {"reset", "/reset", "start over", "clear chat"}:
             return Decision("say", RESET_REPLY), self.initial_state()
         if not text:
@@ -49,6 +77,7 @@ class DialogueManager:
         return None
 
     def _clarify(self, turn, state, expected="choice"):
+        _compact(turn)
         state.awaiting = PendingQuestion(deepcopy(turn), expected, turn.request_generation)
         if expected == "traits":
             text = "What traits should I roast? For example, confident or bookish. You can also ask for a generic roast."
