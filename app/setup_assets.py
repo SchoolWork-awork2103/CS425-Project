@@ -1,7 +1,8 @@
 """Check local project assets; --download prepares public base-model dependencies.
 
-The trained project adapters/classifiers, GRU checkpoint and GloVe vectors must
-be copied from the team's training outputs separately. No inference is run here.
+The trained project adapters/classifiers and GRU checkpoint must be copied from the
+team's training outputs separately. GloVe vectors are derived from the public
+glove.6B.zip. No inference is run here.
 """
 import argparse
 import json
@@ -9,6 +10,9 @@ from pathlib import Path
 
 from dialogue.catalogue import ROOT
 from utils import load_config
+
+GLOVE_ZIP_URL = "https://huggingface.co/stanfordnlp/glove/resolve/main/glove.6B.zip"
+GLOVE_ZIP_SHA256 = "6471382cdd837544bf3ac72497a38715e845897d265b2b424b4761832009c837"
 
 
 def check(cfg):
@@ -70,6 +74,27 @@ def download(cfg, backend):
         torch.hub.download_url_to_file(
             "https://github.com/unitaryai/detoxify/releases/download/v0.1-alpha/toxic_original-c1212f89.ckpt",
             str(target), hash_prefix="c1212f89")
+    _download_glove(cfg)
+
+
+def _download_glove(cfg):
+    """Fetch the public GloVe 6B zip and derive the compact vectors (skipped if already present)."""
+    base = str(ROOT / cfg["paths"]["glove"])
+    if Path(base + ".npy").is_file() and Path(base + ".vocab.txt").is_file():
+        return
+    import importlib.util
+    import tempfile
+
+    import torch
+
+    spec = importlib.util.spec_from_file_location("prepare_glove", ROOT / "data" / "prepare_glove.py")
+    prepare_glove = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(prepare_glove)
+    Path(base).parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        zip_path = Path(tmp) / "glove.6B.zip"
+        torch.hub.download_url_to_file(GLOVE_ZIP_URL, str(zip_path), hash_prefix=GLOVE_ZIP_SHA256)
+        prepare_glove.prepare(str(zip_path), Path(base))
 
 
 def main():

@@ -28,15 +28,15 @@ checkpoints/
 
 Keep the Qwen adapter separate from the base weights. Adapter-disabled interpretation relies on PEFT's [disable_adapter context](https://huggingface.co/docs/peft/en/package_reference/peft_model#peft.PeftModel.disable_adapter). If `adapter_config.json` names a different/local base path, make that exact base available locally.
 
-Prepare the public base model, Detoxify checkpoint and BERT tokenizer/config while online:
+Prepare the public base model, Detoxify checkpoint, BERT tokenizer/config and GloVe vectors while online:
 
 ```powershell
 python -m app.setup_assets --download
 ```
 
-This downloads public dependencies; it does not replace your trained project checkpoints. For the NLU baseline, use `--backend nlu` as well to cache MiniLM. The runtime itself uses local files only. The default Detoxify checkpoint path is `checkpoints/toxic_original-c1212f89.ckpt`; its scores are computed locally from those weights.
+This downloads the public dependencies (base model, tokenizers, Detoxify checkpoint and the ~830 MB GloVe 6B archive, from which the compact vectors in `data/glove/` are derived); it does not replace your trained project checkpoints. For the NLU baseline, use `--backend nlu` as well to cache MiniLM. The runtime itself uses local files only. The default Detoxify checkpoint path is `checkpoints/toxic_original-c1212f89.ckpt`; its scores are computed locally from those weights.
 
-Prepare GloVe from the Stanford `glove.6B.zip` archive, or copy the team's prepared `.npy` and `.vocab.txt` files into `data/glove/`:
+If you were offline during setup, copy the team's prepared GloVe `.npy` and `.vocab.txt` files into `data/glove/` instead, or derive them from a local copy of the Stanford `glove.6B.zip` archive:
 
 ```powershell
 python data/prepare_glove.py path/to/glove.6B.zip
