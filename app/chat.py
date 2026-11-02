@@ -26,9 +26,9 @@ def create_app(pipeline):
 
         for event in (message.submit, send.click):
             event(respond, [message, chat, state, generator], [message, chat, state], concurrency_limit=1,
-                  concurrency_id="shared-model")
+                  concurrency_id="shared-model", show_progress="hidden")
         reset.click(lambda: ("", [], pipeline.manager.initial_state()), outputs=[message, chat, state],
-                    concurrency_limit=1, concurrency_id="shared-model")
+                    concurrency_limit=1, concurrency_id="shared-model", show_progress="hidden")
     return demo
 
 

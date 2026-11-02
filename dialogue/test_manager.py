@@ -100,6 +100,49 @@ class ManagerTest(unittest.TestCase):
         _, reset = self.manager.control("/reset", state)
         self.assertEqual(reset, DialogueState())
 
+    def test_offtopic_edits_in_answer_are_staged(self):
+        _, state = self.manager.step(TurnInterpretation(request_generation=True,
+                                unresolved=[Unresolved("meaner or softer", target="intensity")]),
+                                     DialogueState(traits=["wise"]))
+        decision, state = self.manager.step(TurnInterpretation(kind="answer", intensity="mild",
+                                trait_updates=[TraitUpdate("add", ["confident"])]), state)
+        self.assertEqual((decision.kind, state.traits, state.intensity),
+                         ("generate", ["wise", "confident"], "mild"))
+
+    def test_partial_intensity_answer_survives_reclarification(self):
+        _, state = self.manager.step(TurnInterpretation(request_generation=True,
+                                unresolved=[Unresolved("driven", ["ambitious", "hardworking"])]),
+                                     DialogueState(traits=["wise"], intensity="harsh"))
+        decision, state = self.manager.step(TurnInterpretation(kind="answer", intensity="mild"), state)
+        self.assertEqual(decision.kind, "clarify")
+        self.assertEqual(state.awaiting.proposed.intensity, "mild")
+        decision, state = self.manager.control("first", state)
+        self.assertEqual((decision.kind, state.traits, state.intensity),
+                         ("generate", ["wise", "ambitious"], "mild"))
+
+    def test_noop_edit_keeps_generic_mode(self):
+        decision, state = self.manager.step(turn(["smart"], mode="remove"), DialogueState(generic=True))
+        self.assertEqual((decision.kind, state.traits, state.generic), ("say", [], True))
+        decision, state = self.manager.step(turn(request_generation=True), state)
+        self.assertEqual((decision.kind, state.traits), ("generate", []))
+
+    def test_remove_question_answered_in_its_own_mode(self):
+        _, state = self.manager.step(TurnInterpretation(request_generation=True,
+                                unresolved=[Unresolved("driven", ["ambitious", "hardworking"], "remove")]),
+                                     DialogueState(traits=["wise", "hardworking"]))
+        decision, state = self.manager.step(TurnInterpretation(kind="answer",
+                                trait_updates=[TraitUpdate("remove", ["hardworking"])]), state)
+        self.assertEqual((decision.kind, state.traits), ("generate", ["wise"]))
+
+    def test_unresolvable_answer_reasks_instead_of_dropping(self):
+        _, state = self.manager.step(TurnInterpretation(request_generation=True,
+                                unresolved=[Unresolved("driven", ["ambitious", "hardworking"])]),
+                                     DialogueState(traits=["wise"]))
+        decision, state = self.manager.step(TurnInterpretation(kind="answer",
+                                trait_updates=[TraitUpdate("remove", ["wise"])]), state)
+        self.assertEqual(decision.kind, "clarify")
+        self.assertTrue(state.awaiting)  # the question is still staged, nothing lost
+
     def test_intensity_question_resolves_by_word_and_ordinal(self):
         _, state = self.manager.step(TurnInterpretation(request_generation=True,
                                 unresolved=[Unresolved("meaner or softer", target="intensity")]),
