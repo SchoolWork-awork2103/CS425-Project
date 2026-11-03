@@ -1,24 +1,3 @@
-# Paper Overview
-
-| Attribute | Details |
-| :--- | :--- |
-| **Title** | *Machine Learning for Source Code Vulnerability Detection: What Works and What Isn't There Yet* |
-| **Authors** | Tina Marjanov, Ivan Pashchenko, Fabio Massacci |
-| **Venue / Year** | IEEE Security & Privacy (2022) |
-| **Corpus** | 40 Empirical Studies (2015–2022) |
-| **Core Focus** | Static Source Code Vulnerability Detection & Repair |
-
----
-
-### Paper Structure (Marjanov et al., 2022)
-* **1. Introduction** (Traditional SAST limitations & the ML shift)
-* **2. From Detection to Correction** (Syntactic vs. Semantic vs. Security)
-* **3. Enter ML for Source Code** (Tokens, ASTs, and Graphs)
-* **4. Methodology** (Grounded Theory & Atlas.ti qualitative coding)
-* **5. Analysis of Recent Works** (Empirical synthesis of 40 papers)
-* **6. Discussion** (Structural flattening & dataset realism deficit)
-* **7. Challenges and Future Directions** (Polyglot gap & benchmarks)
-
 # Overview
 
 **What this is:** the plan for **System E**, a GPT-2 small (124M) generator that starts from a checkpoint already
