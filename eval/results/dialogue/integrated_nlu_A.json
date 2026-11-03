@@ -6,9 +6,12 @@
   "prompt_version": "trait-operations-v4",
   "fixture_sha256": "bfcc7da8b5314991840d9bde5551b70589460e0a90adff16e093b08453c221a6",
   "catalogue_sha256": "88cea1668cbf4874985324bdece494698b339fdd09d8ae7d5475f663e2c35e79",
-  "checkpoint": "C:\\Users\\ngjac\\OneDrive\\Desktop\\Y4S1\\CS425\\Project\\CS425-Project\\checkpoints\\gen_D_1.5b_best",
-  "adapter_config_sha256": "c1653f63378a54b27069c03916fe69a4f4d539353afc38a25344a4640a57c6f7",
-  "adapter_weights_sha256": "d864d9de5bb654b87a66a79b3c0189ae705e471bae5056900bd99e48d26c014e",
+  "checkpoints": {
+    "A": {
+      "path": "C:\\Users\\ngjac\\OneDrive\\Desktop\\Y4S1\\CS425\\Project\\CS425-Project\\checkpoints\\gen_A_rev_stage2_best.pt",
+      "sha256": "3f4d853e0d0226eda34ec0b9feef92c01c9985ca29bf798d663a413776c5cfad"
+    }
+  },
   "settings": {
     "dialogue": {
       "backend": "nlu",
@@ -62,8 +65,10 @@
     "gpu": null
   },
   "versions": {
-    "torch": "2.14.1+cpu",
-    "transformers": "5.20.2",
+    "torch": "2.14.1+cu126",
+    "transformers": "5.21.0",
+    "peft": "0.21.2",
+    "gradio": "5.50.0",
     "detoxify": "0.5.4"
   },
   "counts": {
@@ -88,15 +93,15 @@
   "state_accuracy": 0.5901639344262295,
   "conversation_completion": 0.375,
   "latency_seconds": {
-    "median": 4.193640700001197,
-    "p95": 4.606824099999358
+    "median": 3.871312899998884,
+    "p95": 4.574623399999837
   },
   "interpretation_seconds": {
-    "median": 0.025562300000274263,
-    "p95": 0.05078490000050806
+    "median": 0.02493739999954414,
+    "p95": 0.05537199999889708
   },
   "peak_cuda_memory_bytes": null,
-  "peak_process_memory_bytes": 2024034304,
+  "peak_process_memory_bytes": 2741374976,
   "details": [
     {
       "conversation": "collect-and-adjust",
@@ -129,7 +134,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 17.15071640000133,
+      "seconds": 10.713502200000221,
       "attempts": 1
     },
     {
@@ -160,7 +165,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 10.917679700000008,
+      "seconds": 8.086242100000163,
       "attempts": 1
     },
     {
@@ -183,7 +188,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.498563399998602,
+      "seconds": 2.993356799999674,
       "attempts": 1
     },
     {
@@ -206,7 +211,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.447170499999629,
+      "seconds": 2.527593799999522,
       "attempts": 1
     },
     {
@@ -236,7 +241,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.223156399999425,
+      "seconds": 2.591870899999776,
       "attempts": 1
     },
     {
@@ -266,7 +271,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.049368899999536,
+      "seconds": 2.376988699999856,
       "attempts": 1
     },
     {
@@ -296,7 +301,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.048986799998602,
+      "seconds": 2.5148865999999543,
       "attempts": 1
     },
     {
@@ -326,7 +331,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.406632799998988,
+      "seconds": 2.6527795999991213,
       "attempts": 1
     },
     {
@@ -356,7 +361,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.412050200000522,
+      "seconds": 2.6073099999994156,
       "attempts": 1
     },
     {
@@ -386,7 +391,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.131705100000545,
+      "seconds": 2.887834799999837,
       "attempts": 1
     },
     {
@@ -427,7 +432,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0257339999989199,
+      "seconds": 0.02035729999988689,
       "attempts": 1
     },
     {
@@ -457,7 +462,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.087023599999156,
+      "seconds": 2.607961099998647,
       "attempts": 1
     },
     {
@@ -487,7 +492,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.189838099999179,
+      "seconds": 2.7795091999996657,
       "attempts": 1
     },
     {
@@ -510,7 +515,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.01890330000060203,
+      "seconds": 0.015051200000016252,
       "attempts": 1
     },
     {
@@ -540,7 +545,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.288192099998923,
+      "seconds": 2.795147000000725,
       "attempts": 1
     },
     {
@@ -563,7 +568,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 3.8993474999988393,
+      "seconds": 2.55600670000058,
       "attempts": 1
     },
     {
@@ -586,7 +591,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.123623100000259,
+      "seconds": 2.9999638000008417,
       "attempts": 1
     },
     {
@@ -616,7 +621,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.483812099999341,
+      "seconds": 4.574623399999837,
       "attempts": 1
     },
     {
@@ -646,7 +651,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.555521299998873,
+      "seconds": 4.275034700000106,
       "attempts": 1
     },
     {
@@ -669,7 +674,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.499224500001219,
+      "seconds": 4.225236000000223,
       "attempts": 1
     },
     {
@@ -699,7 +704,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.672607100001187,
+      "seconds": 4.176783000000796,
       "attempts": 1
     },
     {
@@ -729,7 +734,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.193640700001197,
+      "seconds": 4.449808999999732,
       "attempts": 1
     },
     {
@@ -759,7 +764,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.57441000000108,
+      "seconds": 4.263069499998892,
       "attempts": 1
     },
     {
@@ -789,7 +794,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.323187699999835,
+      "seconds": 4.173928199999864,
       "attempts": 1
     },
     {
@@ -819,7 +824,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.224687100000665,
+      "seconds": 6.107710700000098,
       "attempts": 1
     },
     {
@@ -849,7 +854,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.393092399999659,
+      "seconds": 4.170658299999559,
       "attempts": 1
     },
     {
@@ -872,7 +877,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 3.9595814000003884,
+      "seconds": 3.990024299999277,
       "attempts": 1
     },
     {
@@ -895,7 +900,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.131051999998817,
+      "seconds": 3.871312899998884,
       "attempts": 1
     },
     {
@@ -918,7 +923,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 3.776902899999186,
+      "seconds": 3.962767900000472,
       "attempts": 1
     },
     {
@@ -941,7 +946,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.02358050000111689,
+      "seconds": 0.024323400000866968,
       "attempts": 1
     },
     {
@@ -971,7 +976,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 3.9725266999994346,
+      "seconds": 4.179785799999081,
       "attempts": 1
     },
     {
@@ -994,7 +999,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.025860499999907915,
+      "seconds": 0.024113499999657506,
       "attempts": 1
     },
     {
@@ -1017,7 +1022,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.02024150000033842,
+      "seconds": 0.02063839999937045,
       "attempts": 1
     },
     {
@@ -1047,7 +1052,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.013449000000037,
+      "seconds": 3.8303754000007757,
       "attempts": 1
     },
     {
@@ -1063,7 +1068,7 @@
       "prediction": null,
       "error": null,
       "stage": "control",
-      "seconds": 4.179999996267725e-05,
+      "seconds": 3.199999991920777e-05,
       "attempts": 0
     },
     {
@@ -1097,7 +1102,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.02546040000015637,
+      "seconds": 0.021851400000741705,
       "attempts": 1
     },
     {
@@ -1134,7 +1139,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.218910399999004,
+      "seconds": 3.9343527000000904,
       "attempts": 1
     },
     {
@@ -1164,7 +1169,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.217016300000978,
+      "seconds": 3.0800273999993806,
       "attempts": 1
     },
     {
@@ -1187,7 +1192,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.4671103000000585,
+      "seconds": 3.7692103999997926,
       "attempts": 1
     },
     {
@@ -1217,7 +1222,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.216720599999462,
+      "seconds": 4.375275599999441,
       "attempts": 1
     },
     {
@@ -1253,7 +1258,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.25217960000009,
+      "seconds": 4.1982858999999735,
       "attempts": 1
     },
     {
@@ -1283,7 +1288,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 3.9526356000005762,
+      "seconds": 2.4459509999996953,
       "attempts": 1
     },
     {
@@ -1313,7 +1318,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 3.9598143999992317,
+      "seconds": 3.8959869999998773,
       "attempts": 1
     },
     {
@@ -1343,7 +1348,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.338392399999066,
+      "seconds": 4.511088199998994,
       "attempts": 1
     },
     {
@@ -1366,7 +1371,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 3.9978002999996534,
+      "seconds": 3.8533953000005567,
       "attempts": 1
     },
     {
@@ -1396,7 +1401,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.123133000000962,
+      "seconds": 4.174096099999588,
       "attempts": 1
     },
     {
@@ -1444,7 +1449,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.028050200000507175,
+      "seconds": 0.026201599999694736,
       "attempts": 1
     },
     {
@@ -1467,7 +1472,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.240886400000818,
+      "seconds": 4.343978900000366,
       "attempts": 1
     },
     {
@@ -1498,7 +1503,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.2155094999998255,
+      "seconds": 4.170958200000314,
       "attempts": 1
     },
     {
@@ -1534,7 +1539,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.089617699999508,
+      "seconds": 4.370646999999735,
       "attempts": 1
     },
     {
@@ -1564,7 +1569,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.606824099999358,
+      "seconds": 4.255456599999889,
       "attempts": 1
     },
     {
@@ -1594,7 +1599,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.209885500000382,
+      "seconds": 4.273862099998951,
       "attempts": 1
     },
     {
@@ -1624,7 +1629,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.350248900000224,
+      "seconds": 4.449121599998762,
       "attempts": 1
     },
     {
@@ -1640,7 +1645,7 @@
       "prediction": null,
       "error": null,
       "stage": "control",
-      "seconds": 5.160000000614673e-05,
+      "seconds": 7.010000081209e-05,
       "attempts": 0
     },
     {
@@ -1674,7 +1679,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.025488000001132605,
+      "seconds": 0.0250346000011632,
       "attempts": 1
     },
     {
@@ -1708,7 +1713,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.01916010000059032,
+      "seconds": 0.019292299999506213,
       "attempts": 1
     },
     {
@@ -1724,7 +1729,7 @@
       "prediction": null,
       "error": null,
       "stage": "control",
-      "seconds": 9.830000090005342e-05,
+      "seconds": 0.0001007999999274034,
       "attempts": 0
     },
     {
@@ -1754,7 +1759,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.236107799999445,
+      "seconds": 3.9846876000010525,
       "attempts": 1
     },
     {
@@ -1785,7 +1790,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.357070899999599,
+      "seconds": 4.425150900000517,
       "attempts": 1
     },
     {
@@ -1821,7 +1826,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.072762800000419,
+      "seconds": 4.115461599998525,
       "attempts": 1
     },
     {
@@ -1851,7 +1856,7 @@
       },
       "error": null,
       "stage": "complete",
-      "seconds": 4.27327250000053,
+      "seconds": 4.291140699999232,
       "attempts": 1
     }
   ]

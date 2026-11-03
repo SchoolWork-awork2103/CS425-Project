@@ -6,9 +6,7 @@
   "prompt_version": "trait-operations-v4",
   "fixture_sha256": "bfcc7da8b5314991840d9bde5551b70589460e0a90adff16e093b08453c221a6",
   "catalogue_sha256": "88cea1668cbf4874985324bdece494698b339fdd09d8ae7d5475f663e2c35e79",
-  "checkpoint": "C:\\Users\\ngjac\\OneDrive\\Desktop\\Y4S1\\CS425\\Project\\CS425-Project\\checkpoints\\gen_D_1.5b_best",
-  "adapter_config_sha256": "c1653f63378a54b27069c03916fe69a4f4d539353afc38a25344a4640a57c6f7",
-  "adapter_weights_sha256": "d864d9de5bb654b87a66a79b3c0189ae705e471bae5056900bd99e48d26c014e",
+  "checkpoints": {},
   "settings": {
     "dialogue": {
       "backend": "nlu",
@@ -62,8 +60,10 @@
     "gpu": null
   },
   "versions": {
-    "torch": "2.14.1+cpu",
-    "transformers": "5.20.2",
+    "torch": "2.14.1+cu126",
+    "transformers": "5.21.0",
+    "peft": "0.21.2",
+    "gradio": "5.50.0",
     "detoxify": "0.5.4"
   },
   "counts": {
@@ -88,15 +88,15 @@
   "state_accuracy": 0.5901639344262295,
   "conversation_completion": 0.375,
   "latency_seconds": {
-    "median": 0.027962699999989127,
-    "p95": 0.04685389999940526
+    "median": 0.018212299999504467,
+    "p95": 0.0398657000005187
   },
   "interpretation_seconds": {
-    "median": 0.0282004999999117,
-    "p95": 0.046421600000030594
+    "median": 0.018134850000024016,
+    "p95": 0.03970099999969534
   },
   "peak_cuda_memory_bytes": null,
-  "peak_process_memory_bytes": 1095516160,
+  "peak_process_memory_bytes": 1905758208,
   "details": [
     {
       "conversation": "collect-and-adjust",
@@ -129,7 +129,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 20.476978900000177,
+      "seconds": 12.821098799999163,
       "attempts": 1
     },
     {
@@ -160,7 +160,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.06530240000029153,
+      "seconds": 0.04068879999977071,
       "attempts": 1
     },
     {
@@ -183,7 +183,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02895119999993767,
+      "seconds": 0.017869100000098115,
       "attempts": 1
     },
     {
@@ -206,7 +206,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.027835099999720114,
+      "seconds": 0.01840719999927387,
       "attempts": 1
     },
     {
@@ -236,7 +236,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.04671609999968496,
+      "seconds": 0.044159299999591894,
       "attempts": 1
     },
     {
@@ -266,7 +266,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02501279999887629,
+      "seconds": 0.01610849999997299,
       "attempts": 1
     },
     {
@@ -296,7 +296,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.04319519999990007,
+      "seconds": 0.02771260000008624,
       "attempts": 1
     },
     {
@@ -326,7 +326,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.028246699999726843,
+      "seconds": 0.016870100000232924,
       "attempts": 1
     },
     {
@@ -356,7 +356,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.039535100000648526,
+      "seconds": 0.03225650000058522,
       "attempts": 1
     },
     {
@@ -386,7 +386,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.024317499999597203,
+      "seconds": 0.01803479999944102,
       "attempts": 1
     },
     {
@@ -427,7 +427,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.028621400000702124,
+      "seconds": 0.02118059999884281,
       "attempts": 1
     },
     {
@@ -457,7 +457,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02454790000047069,
+      "seconds": 0.01390979999996489,
       "attempts": 1
     },
     {
@@ -487,7 +487,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.045905700000730576,
+      "seconds": 0.02783600000111619,
       "attempts": 1
     },
     {
@@ -510,7 +510,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.026139200001125573,
+      "seconds": 0.012348399999609683,
       "attempts": 1
     },
     {
@@ -540,7 +540,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.04685389999940526,
+      "seconds": 0.027928499999688938,
       "attempts": 1
     },
     {
@@ -563,7 +563,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.030537599999661325,
+      "seconds": 0.020227999999406165,
       "attempts": 1
     },
     {
@@ -586,7 +586,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.024156700001185527,
+      "seconds": 0.015516899999056477,
       "attempts": 1
     },
     {
@@ -616,7 +616,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.03520419999949809,
+      "seconds": 0.01990540000042529,
       "attempts": 1
     },
     {
@@ -646,7 +646,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.041356600000654,
+      "seconds": 0.028374699999403674,
       "attempts": 1
     },
     {
@@ -669,7 +669,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.0194549999996525,
+      "seconds": 0.013090700000248034,
       "attempts": 1
     },
     {
@@ -699,7 +699,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.03752040000108536,
+      "seconds": 0.0274807999994664,
       "attempts": 1
     },
     {
@@ -729,7 +729,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.027527199999894947,
+      "seconds": 0.020703000000139582,
       "attempts": 1
     },
     {
@@ -759,7 +759,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.04155249999894295,
+      "seconds": 0.02901179999935266,
       "attempts": 1
     },
     {
@@ -789,7 +789,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.029424299998936476,
+      "seconds": 0.020475600000281702,
       "attempts": 1
     },
     {
@@ -819,7 +819,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.043401800001447555,
+      "seconds": 0.028705599999739206,
       "attempts": 1
     },
     {
@@ -849,7 +849,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.026838699999643723,
+      "seconds": 0.018652999999176245,
       "attempts": 1
     },
     {
@@ -872,7 +872,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.0267160999992484,
+      "seconds": 0.018212299999504467,
       "attempts": 1
     },
     {
@@ -895,7 +895,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.023791999999957625,
+      "seconds": 0.015524399999776506,
       "attempts": 1
     },
     {
@@ -918,7 +918,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02260750000095868,
+      "seconds": 0.01540019999993092,
       "attempts": 1
     },
     {
@@ -941,7 +941,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.023012100000414648,
+      "seconds": 0.013131600000633625,
       "attempts": 1
     },
     {
@@ -971,7 +971,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.021362800000133575,
+      "seconds": 0.015154700000493904,
       "attempts": 1
     },
     {
@@ -994,7 +994,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.024624599998787744,
+      "seconds": 0.01721490000090853,
       "attempts": 1
     },
     {
@@ -1017,7 +1017,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.019214200001442805,
+      "seconds": 0.012552700000014738,
       "attempts": 1
     },
     {
@@ -1047,7 +1047,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.027962699999989127,
+      "seconds": 0.01794990000053076,
       "attempts": 1
     },
     {
@@ -1063,7 +1063,7 @@
       "prediction": null,
       "error": null,
       "stage": "interpreter",
-      "seconds": 9.199999112752266e-06,
+      "seconds": 1.1699999959091656e-05,
       "attempts": 0
     },
     {
@@ -1097,7 +1097,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02290300000095158,
+      "seconds": 0.016941900001256727,
       "attempts": 1
     },
     {
@@ -1134,7 +1134,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.04551530000026105,
+      "seconds": 0.0398657000005187,
       "attempts": 1
     },
     {
@@ -1164,7 +1164,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.04038869999931194,
+      "seconds": 0.0329105000000709,
       "attempts": 1
     },
     {
@@ -1187,7 +1187,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.026594199998726253,
+      "seconds": 0.018214600000646897,
       "attempts": 1
     },
     {
@@ -1217,7 +1217,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.026847600000110106,
+      "seconds": 0.017471500001192908,
       "attempts": 1
     },
     {
@@ -1253,7 +1253,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.025558600000294973,
+      "seconds": 0.017575800000486197,
       "attempts": 1
     },
     {
@@ -1283,7 +1283,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.040999200000442215,
+      "seconds": 0.03037140000014915,
       "attempts": 1
     },
     {
@@ -1313,7 +1313,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.043073099999674014,
+      "seconds": 0.028833399999712128,
       "attempts": 1
     },
     {
@@ -1343,7 +1343,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.03753830000096059,
+      "seconds": 0.02941370000007737,
       "attempts": 1
     },
     {
@@ -1366,7 +1366,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.026499399999011075,
+      "seconds": 0.020706499999505468,
       "attempts": 1
     },
     {
@@ -1396,7 +1396,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02384629999869503,
+      "seconds": 0.01752459999988787,
       "attempts": 1
     },
     {
@@ -1444,7 +1444,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02675439999984519,
+      "seconds": 0.01830550000158837,
       "attempts": 1
     },
     {
@@ -1467,7 +1467,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.023663600000872975,
+      "seconds": 0.01654419999977108,
       "attempts": 1
     },
     {
@@ -1498,7 +1498,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.025695799999084556,
+      "seconds": 0.017442700000174227,
       "attempts": 1
     },
     {
@@ -1534,7 +1534,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02596850000008999,
+      "seconds": 0.016395299999203417,
       "attempts": 1
     },
     {
@@ -1564,7 +1564,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.042716899999504676,
+      "seconds": 0.029274200000145356,
       "attempts": 1
     },
     {
@@ -1594,7 +1594,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.04521600000043691,
+      "seconds": 0.026828500000192435,
       "attempts": 1
     },
     {
@@ -1624,7 +1624,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.029181900001276517,
+      "seconds": 0.014794700000493322,
       "attempts": 1
     },
     {
@@ -1640,7 +1640,7 @@
       "prediction": null,
       "error": null,
       "stage": "interpreter",
-      "seconds": 4.720000106317457e-05,
+      "seconds": 1.990000055229757e-05,
       "attempts": 0
     },
     {
@@ -1674,7 +1674,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.03444889999991574,
+      "seconds": 0.017075100000511156,
       "attempts": 1
     },
     {
@@ -1708,7 +1708,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.02568500000052154,
+      "seconds": 0.012255199999344768,
       "attempts": 1
     },
     {
@@ -1724,7 +1724,7 @@
       "prediction": null,
       "error": null,
       "stage": "interpreter",
-      "seconds": 6.22000006842427e-05,
+      "seconds": 4.090000038559083e-05,
       "attempts": 0
     },
     {
@@ -1754,7 +1754,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.032646999999997206,
+      "seconds": 0.015280100000381935,
       "attempts": 1
     },
     {
@@ -1785,7 +1785,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.033242400000744965,
+      "seconds": 0.020095699999728822,
       "attempts": 1
     },
     {
@@ -1821,7 +1821,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.049259199999141856,
+      "seconds": 0.030031799999051145,
       "attempts": 1
     },
     {
@@ -1851,7 +1851,7 @@
       },
       "error": null,
       "stage": "interpreter",
-      "seconds": 0.045416999999360996,
+      "seconds": 0.012631399999008863,
       "attempts": 1
     }
   ]

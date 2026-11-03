@@ -6,9 +6,7 @@
   "prompt_version": "trait-operations-v4",
   "fixture_sha256": "bfcc7da8b5314991840d9bde5551b70589460e0a90adff16e093b08453c221a6",
   "catalogue_sha256": "88cea1668cbf4874985324bdece494698b339fdd09d8ae7d5475f663e2c35e79",
-  "checkpoint": "C:\\Users\\ngjac\\OneDrive\\Desktop\\Y4S1\\CS425\\Project\\CS425-Project\\checkpoints\\gen_D_1.5b_best",
-  "adapter_config_sha256": "c1653f63378a54b27069c03916fe69a4f4d539353afc38a25344a4640a57c6f7",
-  "adapter_weights_sha256": "d864d9de5bb654b87a66a79b3c0189ae705e471bae5056900bd99e48d26c014e",
+  "checkpoints": {},
   "settings": {
     "dialogue": {
       "backend": "nlu",
@@ -62,8 +60,10 @@
     "gpu": null
   },
   "versions": {
-    "torch": "2.14.1+cpu",
-    "transformers": "5.20.2",
+    "torch": "2.14.1+cu126",
+    "transformers": "5.21.0",
+    "peft": "0.21.2",
+    "gradio": "5.50.0",
     "detoxify": "0.5.4"
   },
   "counts": {
@@ -78,15 +78,15 @@
   "state_accuracy": 1.0,
   "conversation_completion": 1.0,
   "latency_seconds": {
-    "median": 0.00011189999895577785,
-    "p95": 0.0001914000004035188
+    "median": 9.859999954642262e-05,
+    "p95": 0.00016839999989315402
   },
   "interpretation_seconds": {
     "median": null,
     "p95": null
   },
   "peak_cuda_memory_bytes": null,
-  "peak_process_memory_bytes": 36917248,
+  "peak_process_memory_bytes": 36847616,
   "details": [
     {
       "conversation": "collect-and-adjust",
@@ -119,7 +119,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001627000001462875,
+      "seconds": 0.0001573999998072395,
       "attempts": 0
     },
     {
@@ -149,7 +149,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00017250000018975697,
+      "seconds": 0.0001902999993035337,
       "attempts": 0
     },
     {
@@ -172,7 +172,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00012559999959194101,
+      "seconds": 0.00013620000027003698,
       "attempts": 0
     },
     {
@@ -195,7 +195,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001426999988325406,
+      "seconds": 0.0001506000007793773,
       "attempts": 0
     },
     {
@@ -225,7 +225,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 9.949999912350904e-05,
+      "seconds": 9.859999954642262e-05,
       "attempts": 0
     },
     {
@@ -255,7 +255,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00018989999989571515,
+      "seconds": 0.00018079999972542282,
       "attempts": 0
     },
     {
@@ -285,7 +285,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00016400000095018186,
+      "seconds": 0.00016629999845463317,
       "attempts": 0
     },
     {
@@ -315,7 +315,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001551000004837988,
+      "seconds": 9.59999997576233e-05,
       "attempts": 0
     },
     {
@@ -345,7 +345,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00019120000069960952,
+      "seconds": 0.0001229999998031417,
       "attempts": 0
     },
     {
@@ -375,7 +375,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00011210000047867652,
+      "seconds": 9.250000039173756e-05,
       "attempts": 0
     },
     {
@@ -416,7 +416,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00014869999904476572,
+      "seconds": 9.159999899566174e-05,
       "attempts": 0
     },
     {
@@ -446,7 +446,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00018790000103763305,
+      "seconds": 0.00016839999989315402,
       "attempts": 0
     },
     {
@@ -498,7 +498,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00010309999925084412,
+      "seconds": 9.779999891179614e-05,
       "attempts": 0
     },
     {
@@ -514,7 +514,7 @@
       "prediction": null,
       "error": null,
       "stage": "policy",
-      "seconds": 0.00014100000043981709,
+      "seconds": 0.00012869999955000822,
       "attempts": 0
     },
     {
@@ -544,7 +544,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 9.339999996882398e-05,
+      "seconds": 9.180000051856041e-05,
       "attempts": 0
     },
     {
@@ -614,7 +614,7 @@
       "prediction": null,
       "error": null,
       "stage": "policy",
-      "seconds": 0.00014509999891743064,
+      "seconds": 0.00015280000116035808,
       "attempts": 0
     },
     {
@@ -644,7 +644,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.270000034826808e-05,
+      "seconds": 9.649999992689118e-05,
       "attempts": 0
     },
     {
@@ -692,7 +692,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00011210000047867652,
+      "seconds": 0.00010169999950448982,
       "attempts": 0
     },
     {
@@ -708,7 +708,7 @@
       "prediction": null,
       "error": null,
       "stage": "policy",
-      "seconds": 5.419999979494605e-05,
+      "seconds": 0.00010929999916697852,
       "attempts": 0
     },
     {
@@ -756,7 +756,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 7.670000013604295e-05,
+      "seconds": 9.330000102636404e-05,
       "attempts": 0
     },
     {
@@ -786,7 +786,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001331999992544297,
+      "seconds": 0.00011550000090210233,
       "attempts": 0
     },
     {
@@ -816,7 +816,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.460000026389025e-05,
+      "seconds": 8.519999937561806e-05,
       "attempts": 0
     },
     {
@@ -846,7 +846,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00014040000132808927,
+      "seconds": 0.00012109999988751952,
       "attempts": 0
     },
     {
@@ -877,7 +877,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00010550000115472358,
+      "seconds": 8.97999998414889e-05,
       "attempts": 0
     },
     {
@@ -907,7 +907,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00020709999989776406,
+      "seconds": 0.00012380000043776818,
       "attempts": 0
     },
     {
@@ -930,7 +930,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00010850000035134144,
+      "seconds": 7.03999994584592e-05,
       "attempts": 0
     },
     {
@@ -953,7 +953,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00015100000018719584,
+      "seconds": 0.00010099999963131268,
       "attempts": 0
     },
     {
@@ -983,7 +983,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001914000004035188,
+      "seconds": 0.00014929999997548293,
       "attempts": 0
     },
     {
@@ -1006,7 +1006,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 5.7499999456922524e-05,
+      "seconds": 4.179999996267725e-05,
       "attempts": 0
     },
     {
@@ -1036,7 +1036,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00029270000050019007,
+      "seconds": 8.509999861416873e-05,
       "attempts": 0
     },
     {
@@ -1059,7 +1059,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001475000008213101,
+      "seconds": 5.79999996261904e-05,
       "attempts": 0
     },
     {
@@ -1082,7 +1082,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00011189999895577785,
+      "seconds": 5.549999877985101e-05,
       "attempts": 0
     },
     {
@@ -1112,7 +1112,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00012599999899975955,
+      "seconds": 8.84000000951346e-05,
       "attempts": 0
     },
     {
@@ -1128,7 +1128,7 @@
       "prediction": null,
       "error": null,
       "stage": "policy",
-      "seconds": 5.300000339047983e-06,
+      "seconds": 4.100000296602957e-06,
       "attempts": 0
     },
     {
@@ -1162,7 +1162,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 6.720000055793207e-05,
+      "seconds": 5.370000144466758e-05,
       "attempts": 0
     },
     {
@@ -1192,7 +1192,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.329999945999589e-05,
+      "seconds": 8.369999886781443e-05,
       "attempts": 0
     },
     {
@@ -1222,7 +1222,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.399999933317304e-05,
+      "seconds": 9.019999924930744e-05,
       "attempts": 0
     },
     {
@@ -1245,7 +1245,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00010579999980109278,
+      "seconds": 0.00010099999963131268,
       "attempts": 0
     },
     {
@@ -1276,7 +1276,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.940000043367036e-05,
+      "seconds": 9.329999920737464e-05,
       "attempts": 0
     },
     {
@@ -1312,7 +1312,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00013070000022707973,
+      "seconds": 0.00014120000014372636,
       "attempts": 0
     },
     {
@@ -1360,7 +1360,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.350000098289456e-05,
+      "seconds": 8.560000060242601e-05,
       "attempts": 0
     },
     {
@@ -1390,7 +1390,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001339999998890562,
+      "seconds": 0.0001336999994236976,
       "attempts": 0
     },
     {
@@ -1438,7 +1438,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 7.270000060088933e-05,
+      "seconds": 7.900000127847306e-05,
       "attempts": 0
     },
     {
@@ -1461,7 +1461,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00014800000099057797,
+      "seconds": 0.00013790000048174988,
       "attempts": 0
     },
     {
@@ -1491,7 +1491,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.070000149018597e-05,
+      "seconds": 8.619999971415382e-05,
       "attempts": 0
     },
     {
@@ -1539,7 +1539,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.600000001024455e-05,
+      "seconds": 0.00010010000005422626,
       "attempts": 0
     },
     {
@@ -1562,7 +1562,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001436000002286164,
+      "seconds": 0.00015019999955256935,
       "attempts": 0
     },
     {
@@ -1593,7 +1593,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.129999878292438e-05,
+      "seconds": 8.909999996831175e-05,
       "attempts": 0
     },
     {
@@ -1629,7 +1629,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001229999998031417,
+      "seconds": 0.00013999999828229193,
       "attempts": 0
     },
     {
@@ -1689,7 +1689,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0001038999998854706,
+      "seconds": 0.00010380000094301067,
       "attempts": 0
     },
     {
@@ -1744,7 +1744,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00015139999959501438,
+      "seconds": 0.00014870000086375512,
       "attempts": 0
     },
     {
@@ -1774,7 +1774,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00015040000107546803,
+      "seconds": 0.0001460999992559664,
       "attempts": 0
     },
     {
@@ -1790,7 +1790,7 @@
       "prediction": null,
       "error": null,
       "stage": "policy",
-      "seconds": 1.3299999409355223e-05,
+      "seconds": 1.4199998986441642e-05,
       "attempts": 0
     },
     {
@@ -1824,7 +1824,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 5.229999987932388e-05,
+      "seconds": 5.480000072566327e-05,
       "attempts": 0
     },
     {
@@ -1858,7 +1858,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 7.449999975506216e-05,
+      "seconds": 8.060000072873663e-05,
       "attempts": 0
     },
     {
@@ -1874,7 +1874,7 @@
       "prediction": null,
       "error": null,
       "stage": "policy",
-      "seconds": 2.7599999157246202e-05,
+      "seconds": 4.070000068168156e-05,
       "attempts": 0
     },
     {
@@ -1904,7 +1904,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.369999886781443e-05,
+      "seconds": 9.230000068782829e-05,
       "attempts": 0
     },
     {
@@ -1935,7 +1935,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 8.200000047509093e-05,
+      "seconds": 8.859999979904387e-05,
       "attempts": 0
     },
     {
@@ -1997,7 +1997,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.00010889999975915998,
+      "seconds": 0.00012240000069141388,
       "attempts": 0
     },
     {
@@ -2027,7 +2027,7 @@
       },
       "error": null,
       "stage": "policy",
-      "seconds": 0.0002395999999862397,
+      "seconds": 0.00018170000112149864,
       "attempts": 0
     }
   ]

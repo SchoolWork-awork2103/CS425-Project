@@ -143,17 +143,28 @@ def run(fixtures, mode="policy", backend=None, system="D", device="cpu", cfg=Non
         import torch
         if device == "cuda":
             memory, gpu = torch.cuda.max_memory_allocated(), torch.cuda.get_device_name()
-    adapter = ROOT / cfg["paths"]["checkpoints"] / cfg["reranker"]["tuning"]["checkpoints"]["D"]
-    adapter_cfg = adapter / "adapter_config.json"
-    weights = adapter / "adapter_model.safetensors"
-    if not weights.is_file():
-        weights = adapter / "adapter_model.bin"
+    # Only the checkpoints this run loaded: the D adapter backs both System D and the Qwen interpreter.
+    used = set()
+    if mode != "policy" and backend == "qwen":
+        used.add("D")
+    if mode == "integrated":
+        used.add(system)
+    checkpoints = {}
+    for name in sorted(used):
+        path = ROOT / cfg["paths"]["checkpoints"] / cfg["reranker"]["tuning"]["checkpoints"][name]
+        if name == "A":
+            checkpoints[name] = {"path": str(path), "sha256": file_hash(path)}
+        else:
+            weights = path / "adapter_model.safetensors"
+            if not weights.is_file():
+                weights = path / "adapter_model.bin"
+            checkpoints[name] = {"path": str(path), "adapter_config_sha256": file_hash(path / "adapter_config.json"),
+                                 "adapter_weights_sha256": file_hash(weights)}
     return {"mode": mode, "backend": backend, "system": system,
             "model_inference_run": mode != "policy" and counts["interpreted"] > 0, "prompt_version": PROMPT_VERSION,
             "fixture_sha256": hashlib.sha256(Path(fixtures).read_bytes()).hexdigest(),
             "catalogue_sha256": pipeline.catalogue.fingerprint,
-            "checkpoint": str(adapter), "adapter_config_sha256": file_hash(adapter_cfg),
-            "adapter_weights_sha256": file_hash(weights),
+            "checkpoints": checkpoints,
             "settings": {"dialogue": cfg["dialogue"], "sampling": cfg.get("sampling"), "reranker": cfg["reranker"]},
             "hardware": {"platform": platform.platform(), "processor": platform.processor(), "device": device, "gpu": gpu},
             "versions": versions, "counts": dict(counts),

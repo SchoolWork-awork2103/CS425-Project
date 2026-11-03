@@ -392,7 +392,7 @@ DialogueState(traits=[], intensity="mild", awaiting=None, history=[], last_plan=
    - Only the poem sent is added to `history`, with its planned and actual end words.
    - Missing models or files give a recoverable message, and the state is unchanged.
 2. Gradio chat UI (`python -m app.chat`, Blocks) with a dropdown to pick the generator, a reset button and the state kept per browser session.
-3. Confirm it runs on a laptop CPU and measure the average response time per system. System A with the NLU on CPU: median 4.2 s per turn (p95 4.6 s) over the 61 test turns, almost all of it generation and reranking; the NLU takes 0.03 s. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU (`--device cuda`) with a CUDA build of PyTorch. Not measured yet.
+3. Confirm it runs on a laptop CPU and measure the average response time per system. System A with the NLU on CPU: median 3.9 s per turn (p95 4.6 s) over the 61 test turns, almost all of it generation and reranking; the NLU takes 0.03 s. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU (`--device cuda`) with a CUDA build of PyTorch. Not measured yet.
 4. One-command run script and a README with setup steps, which covers the brief's "executable conditions": `README.md`, `python -m app.setup_assets` (checks the files, and `--download` fetches the public ones), `python -m app.chat --device cuda`.
 
 ---
