@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-03",
+  "items": 150,
+  "prompts": 30,
+  "raters": [
+    "rater_1",
+    "rater_2"
+  ],
+  "agreement": {
+    "rater_1 vs rater_2": {
+      "spearman": 0.2217,
+      "spearman_within_prompt": 0.1544,
+      "prompts_with_within": 8,
+      "exact": 0.72,
+      "within_1": 0.9
+    }
+  },
+  "rating_counts": {
+    "rater_1": {
+      "1": 131,
+      "2": 13,
+      "3": 6
+    },
+    "rater_2": {
+      "1": 114,
+      "2": 20,
+      "3": 11,
+      "4": 3,
+      "5": 2
+    }
+  },
+  "mean_by_system": {
+    "A": 1.05,
+    "D": 1.395
+  }
+}

@@ -6,6 +6,7 @@ https://huggingface.co/stanfordnlp/glove) and keeps the most frequent words (Glo
   <prefix>.vocab.txt  the words, one per line, in row order
 
 Run from the project root:  python data/prepare_glove.py path/to/glove.6B.zip
+`app.setup_assets --download` fetches the official archive and calls prepare() automatically.
 """
 import io, json, sys, zipfile
 from datetime import date
@@ -19,14 +20,14 @@ from utils import load_config, project_path
 MEMBER, DIM, KEEP = "glove.6B.300d.txt", 300, 100_000
 
 
-def main():
-    if len(sys.argv) != 2:
-        sys.exit(__doc__)
-    prefix = project_path(load_config()["paths"]["glove"])
+def prepare(zip_path, prefix=None):
+    if prefix is None:
+        prefix = project_path(load_config()["paths"]["glove"])
+    prefix = Path(prefix)
     prefix.parent.mkdir(parents=True, exist_ok=True)
 
     words, rows = [], np.empty((KEEP, DIM), dtype=np.float16)
-    with zipfile.ZipFile(sys.argv[1]) as z, io.TextIOWrapper(z.open(MEMBER), encoding="utf-8") as f:
+    with zipfile.ZipFile(zip_path) as z, io.TextIOWrapper(z.open(MEMBER), encoding="utf-8") as f:
         for line in f:
             parts = line.rstrip().split(" ")
             if len(parts) != DIM + 1:
@@ -36,12 +37,21 @@ def main():
             if len(words) == KEEP:
                 break
 
+    if len(words) < KEEP:
+        raise ValueError(f"expected {KEEP} GloVe words in {MEMBER}; found {len(words)}")
     np.save(f"{prefix}.npy", rows[:len(words)])
     Path(f"{prefix}.vocab.txt").write_text("\n".join(words) + "\n", encoding="utf-8")
     meta = {"date": date.today().isoformat(), "source": "glove.6B.zip / " + MEMBER, "dim": DIM, "words": len(words),
             "dtype": "float16"}
     json.dump(meta, open(f"{prefix}.meta.json", "w"), indent=2)
     print(f"kept {len(words):,} words x {DIM} -> {prefix}.npy")
+    return len(words)
+
+
+def main():
+    if len(sys.argv) != 2:
+        sys.exit(__doc__)
+    prepare(sys.argv[1])
 
 
 if __name__ == "__main__":

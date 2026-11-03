@@ -53,14 +53,14 @@ def other_form(word, key):
 
 
 class TraitNormalizer:
-    def __init__(self, cfg=None, threshold=None, encoder=None):
+    def __init__(self, cfg=None, threshold=None, encoder=None, local_files_only=False):
         from sentence_transformers import SentenceTransformer
         cfg = cfg or load_config()
         self.traits = json.load(open(project_path(cfg["paths"]["traits"]), encoding="utf-8"))
         self.threshold = cfg["nlu"]["unknown_threshold"] if threshold is None else threshold
         self.synonyms = sorted(((" ".join(WORD.findall(s.lower())), t) for t, v in self.traits.items()
                                 for s in v["synonyms"]), key=lambda x: -len(x[0]))
-        self.encoder = encoder or SentenceTransformer(cfg["nlu"]["span_encoder"])
+        self.encoder = encoder or SentenceTransformer(cfg["nlu"]["span_encoder"], local_files_only=local_files_only)
         self.names = list(self.traits)
         self.desc_vecs = self.embed([f"{t}: {', '.join(v['synonyms'])}" for t, v in self.traits.items()])
         # labelled spans from the NLU training split only, so val and test spans are never looked up
