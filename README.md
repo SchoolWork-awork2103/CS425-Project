@@ -1,6 +1,6 @@
 # Four-line roast chatbot
 
-A local chatbot: tell it traits you're proud of, and it roasts you in an AABB quatrain. Each message goes through the NLU (DistilBERT intent and trait tagger), a rule-based dialogue manager, the rhyme planner, a generator (System A, the GRU, or System D, Qwen2.5-1.5B + LoRA) and the reranker. Nothing calls an API at run time.
+A local chatbot: tell it traits you're proud of, and it roasts you in an AABB quatrain. Each message goes through the NLU (DistilBERT intent and trait tagger), a rule-based dialogue manager, the rhyme planner, a generator (System A, the GRU; System D, Qwen2.5-1.5B + LoRA; or System E, GPT-2 small) and the reranker. Nothing calls an API at run time.
 
 The design and results are in [pipeline.md](pipeline.md); [ARCHITECTURE.md](ARCHITECTURE.md) maps it to the code and lists what is left.
 
@@ -24,6 +24,7 @@ checkpoints/
   trait_fit_best/            # reranker trait-fit classifier (Phase 5)
   gen_A_rev_stage2_best.pt   # System A
   gen_D_1.5b_best/           # System D adapter
+  gen_E_base_stage2_best/    # System E (optional)
 ```
 
 Then fetch the public files (Qwen2.5-1.5B-Instruct base, the MiniLM span encoder, the Detoxify checkpoint, BERT tokenizer files and the GloVe 6B archive, from which `data/glove/` is built) and check that everything is in place:
@@ -41,7 +42,7 @@ The check exits nonzero if something required is missing. The Qwen base is only 
 python -m app.chat --device cuda      # or --device cpu
 ```
 
-System D is the default generator (`--system A` to start on the GRU); you can switch in the UI, and switching keeps the conversation's settings. System A runs fine on a CPU (about 4 s per roast); System D is meant for the GPU and is much slower on a CPU. A conversation to try:
+System D is the default generator (`--system A` to start on the GRU, `--system E` on GPT-2 small); you can switch in the UI, and switching keeps the conversation's settings. System A runs fine on a CPU (about 4 s per roast); System D is meant for the GPU and is much slower on a CPU. A conversation to try:
 
 1. `Roast me, I'm confident and musical`
 2. `Another one, but harsher`

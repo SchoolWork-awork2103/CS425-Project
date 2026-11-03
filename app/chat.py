@@ -1,7 +1,7 @@
 """Launch locally with `python -m app.chat --device cuda` (or cpu)."""
 import argparse
 import warnings
-from .pipeline import Pipeline
+from .pipeline import GENERATORS, Pipeline
 
 
 def create_app(pipeline):
@@ -14,7 +14,8 @@ def create_app(pipeline):
                    css=".meta-text { display: none; } footer { display: none !important; }") as demo:
         gr.Markdown("# AABB roast bot\nTell me traits you're proud of, then ask for another roast or change the intensity.")
         state = gr.State(pipeline.manager.initial_state())
-        generator = gr.Dropdown(["A", "D"], value=pipeline.system, label="Poem generator")
+        generator = gr.Dropdown([(label, key) for key, label in GENERATORS.items()], value=pipeline.system,
+                                label="Poem generator")
         # Gradio 5.50 emits this warning even when False is explicitly supplied.
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning,
@@ -40,7 +41,7 @@ def create_app(pipeline):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
-    parser.add_argument("--system", choices=["A", "D"], default="D")
+    parser.add_argument("--system", choices=list(GENERATORS), default="D")
     parser.add_argument("--backend", choices=["qwen", "nlu"], default=None)
     args = parser.parse_args()
     from utils import load_config

@@ -14,6 +14,11 @@ from .device import validate_device
 
 log = logging.getLogger(__name__)
 
+# The poem generators, with their labels in the UI dropdown.
+GENERATORS = {"A": "A: GRU, 9M (from scratch)",
+              "D": "D: Qwen2.5-1.5B + LoRA",
+              "E": "E: GPT-2 small, 124M (full fine-tune)"}
+
 # "Roast" only ever refers to the generated poem in this app. If the interpreter drops an
 # explicit roast request, the policy still requires it to generate; explicit refusals keep the no-op.
 ROAST_REQUEST = re.compile(r"\broast(?:ed|s|ing)?\b", re.IGNORECASE)
@@ -59,12 +64,12 @@ def _trait_mentioned(key, message, catalogue):
 
 class Pipeline:
     def __init__(self, cfg=None, system="D", device="cpu", *, catalogue=None, interpreter=None,
-                 service=None, planner=None, reranker=None, generator_a=None):
+                 service=None, planner=None, reranker=None, generator_a=None, generator_e=None):
         if cfg is None:
             from utils import load_config
             cfg = load_config()
-        if system not in {"A", "D"}:
-            raise ValueError("Generator must be A or D")
+        if system not in GENERATORS:
+            raise ValueError(f"Generator must be one of {', '.join(GENERATORS)}")
         validate_device(device)
         self.cfg, self.system, self.device = cfg, system, device
         self.catalogue = catalogue or TraitCatalogue.load(ROOT / cfg["paths"].get("trait_catalogue", "data/trait_catalogue.json"))
@@ -73,7 +78,8 @@ class Pipeline:
                                        options.get("default_intensity", "mild"))
         self.service = service if service is not None else SharedModelService(cfg, device)
         self.interpreter = interpreter
-        self.planner, self.reranker, self.generator_a = planner, reranker, generator_a
+        self.planner, self.reranker = planner, reranker
+        self.generator_a, self.generator_e = generator_a, generator_e
         self._lock = threading.RLock()
         self.last_trace = {}
 
@@ -127,6 +133,15 @@ class Pipeline:
         kwargs["n"] = self.cfg["reranker"]["tuning"]["per_plan"]
         if system == "D":
             return self.service.generate(traits, intensity, end_words, **kwargs)
+        if system == "E":
+            if self.generator_e is None:
+                from generation.gpt2_lm import load_base, generate
+                checkpoint = ROOT / self.cfg["paths"]["checkpoints"] / self.cfg["gpt2"]["checkpoint"]
+                if not (checkpoint / "config.json").is_file():
+                    raise FileNotFoundError(f"Missing System E checkpoint: {checkpoint}")
+                model, tok = load_base(str(checkpoint), self.device)
+                self.generator_e = lambda ts, intensity, ends, **kw: generate(model, tok, ts, intensity, ends, device=self.device, **kw)
+            return self.generator_e(traits, intensity, end_words, **kwargs)
         if self.generator_a is None:
             from generation.gru_lm import load_generator, generate
             checkpoint = ROOT / self.cfg["paths"]["checkpoints"] / self.cfg["reranker"]["tuning"]["checkpoints"]["A"]
@@ -182,8 +197,8 @@ class Pipeline:
             return reply, new_state
 
     def _respond(self, message, state, system):
-        if system not in {"A", "D"}:
-            raise ValueError("Generator must be A or D")
+        if system not in GENERATORS:
+            raise ValueError(f"Generator must be one of {', '.join(GENERATORS)}")
         control = self.manager.control(message, state)
         if control:
             decision, state = control

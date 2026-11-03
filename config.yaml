@@ -97,6 +97,7 @@ gpt2:                             # System E full fine-tune (generation/gpt2_lm.
     crpo: andreipb/gpt2-poetry-model-crpo    # pretrained on the Gutenberg Poetry Corpus
     base: gpt2                               # control: no poetry
   # checkpoint names: gen_E_{poems|crpo|base}_stage{1|2}_best/, in paths.checkpoints and the shared Drive folder
+  checkpoint: gen_E_base_stage2_best         # the System E model the app loads (eval/results/gen_E/README.md)
   lr: [5.0e-5, 1.0e-5]            # Stage 1 (quatrains), Stage 2 (disses): about 1/5, as for System A
   epochs: 5                       # keeps the epoch with the best val loss
   patience: 2

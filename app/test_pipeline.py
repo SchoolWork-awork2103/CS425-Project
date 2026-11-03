@@ -91,6 +91,14 @@ class PipelineTest(unittest.TestCase):
         _, reset = self.pipeline.respond("reset", state)
         self.assertEqual(reset, DialogueState())
 
+    def test_generator_e(self):
+        self.pipeline.generator_e = Mock(return_value=[{"lines": GOOD, "norm_logprob": -1.0}])
+        _, state = self.pipeline.respond("roast my confidence", system="E")
+        self.assertEqual(state.history[0].system, "E")
+        self.service.generate.assert_not_called()
+        with self.assertRaises(ValueError):
+            Pipeline(self.cfg, system="B", interpreter=self.interpreter, service=self.service)
+
     def test_missing_assets_are_recoverable(self):
         self.planner.plan.side_effect = FileNotFoundError("missing GloVe")
         with self.assertLogs("app.pipeline", level="ERROR"):

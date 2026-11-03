@@ -63,6 +63,9 @@ def check(cfg):
     results["System A checkpoint (optional)"] = {
         "path": str(checkpoints / cfg["reranker"]["tuning"]["checkpoints"]["A"]),
         "present": (checkpoints / cfg["reranker"]["tuning"]["checkpoints"]["A"]).is_file(), "optional": True}
+    results["System E checkpoint (optional)"] = {
+        "path": str(checkpoints / cfg["gpt2"]["checkpoint"]),
+        "present": (checkpoints / cfg["gpt2"]["checkpoint"] / "model.safetensors").is_file(), "optional": True}
     return results
 
 
