@@ -1,6 +1,6 @@
 # Architecture and status
 
-How the finished product is meant to fit together, and where each piece stands. The design is in [pipeline.md](pipeline.md); this file maps it to code. Status was checked against the repo on **2026-11-01** (branch `feat/phase0`, commit `7af65db`).
+How the finished product is meant to fit together, and where each piece stands. The design is in [pipeline.md](pipeline.md); this file maps it to code. Status was checked against the repo on **2026-11-03** (branch `feat/dialogue-integration`: `feat/phase0` at `a7beb01` with the dialogue manager from `feat/phase0-david` merged in).
 
 **Legend:** ✅ done · 🟡 partly done · ⬜ not started · ➖ optional, not planned unless there is time
 
@@ -14,7 +14,7 @@ A user chats with the bot, names traits they're proud of, and gets back an AABB 
 flowchart LR
     U([User message]) --> NLU
     subgraph RT[Run time: Pipeline.respond]
-        NLU["NLU<br/>intent + TRAIT spans<br/>→ trait keys"] --> DM["Dialogue manager<br/>state: traits, intensity,<br/>history, last plan"]
+        NLU["NLU + keyword rules<br/>intent + TRAIT spans<br/>→ trait edits, intensity"] --> DM["Dialogue manager<br/>state: traits, intensity,<br/>history, last plan"]
         DM -->|generate| PL["Rhyme planner<br/>top 2 plans<br/>(4 end words each)"]
         PL --> RET["Retrieval (optional)<br/>BM25 top 3 disses"]
         PL --> GEN["Generator A or D<br/>10 samples × 2 plans<br/>≈ 20 candidates"]
@@ -29,8 +29,8 @@ flowchart LR
 The same chain as text:
 
 ```
-message ─► NLU.parse ─► DialogueManager.step ─┬─► (no generation) canned reply
-                                              └─► plan_rhymes ─► generator ─► Reranker.rank ─► reply
+message ─► NLUInterpreter.interpret ─► DialogueManager.step ─┬─► (no generation) canned reply / question
+                                                              └─► RhymePlanner.plan ─► generator ─► Reranker.rerank ─► reply
 ```
 
 ## 2. How the models are built (offline)
@@ -72,7 +72,7 @@ Phonetics (`phonetics/`, `data/form_checks.py`) sits under all of this: it filte
 | # | Component | Code | Inputs → outputs | Status |
 |---|---|---|---|---|
 | 0 | Config, seeds, paths | [config.yaml](config.yaml), [utils.py](utils.py) | | ✅ |
-| 0 | Traits | [data/traits.json](data/traits.json) | 40 traits with `flip`, `synonyms`, `heldout` (eloquent, punctual, patient, worldly, frugal) | ✅ |
+| 0 | Traits | [data/traits.json](data/traits.json) | 40 traits with `description`, `flip`, `synonyms`, `heldout` (eloquent, punctual, patient, worldly, frugal); [data/trait_catalogue.json](data/trait_catalogue.json) adds training counts (`python -m dialogue.build_catalogue`) | ✅ |
 | 0 | Frozen eval prompts | [eval/prompts.json](eval/prompts.json) | 50 prompts (single / multi / held-out / unclear) | ✅ |
 | 1a | Quatrain corpus | [data/quatrains/](data/quatrains/) | 20,000 generated → 18,850 train / 1,000 val (split by topic group) | ✅ |
 | 1b | Diss corpus | [data/disses/](data/disses/) | 4,374 after filters → 3,382 / 423 / 569 (146 held-out in test) | ✅ (manual review skipped by design) |
@@ -88,16 +88,17 @@ Phonetics (`phonetics/`, `data/form_checks.py`) sits under all of this: it filte
 | 3 | System D: Qwen2.5-1.5B + LoRA | [generation/qwen_lora.py](generation/qwen_lora.py) | `generate(model, tok, traits, intensity, end_words, n)` | ✅ 1.5B (`gen_D_1.5b_best/`); 0.5B / 3B size comparison ➖ |
 | 4 | Retrieval (BM25) | [retrieval/](retrieval/) (empty) | `retrieve(traits, k=3)` | ➖ not started |
 | 5 | Trait-fit classifier | [reranker/trait_fit.py](reranker/trait_fit.py) | `TraitFit.score(traits, poems)` → probabilities | ✅ test AUC 0.984, held-out 0.966 |
-| 5 | Combined reranker | `reranker/rerank.py` (missing) | candidates → best poem | ⬜ |
-| 5 | Weight tuning | [reranker/rating_pool.py](reranker/rating_pool.py) | 150 rated candidates → weights | 🟡 see §5 |
+| 5 | Combined reranker | [reranker/rerank.py](reranker/rerank.py) | `Reranker().rerank(traits, candidates, history)` → kept candidates, best first | ✅ (history repeat check added; 3 tests) |
+| 5 | Weight tuning | [reranker/rating_pool.py](reranker/rating_pool.py), [tune_weights.py](reranker/tune_weights.py) | 150 rated candidates → weights | ✅ inconclusive, equal weights kept (pipeline.md, Phase 5) |
 | 6 | Joint NLU | [nlu/joint_model.py](nlu/joint_model.py) | `NLU.parse(text)` → intent, spans, traits | ✅ intent acc 0.938 |
 | 6 | Trait normalizer | [nlu/normalize.py](nlu/normalize.py) | span → trait key / unknown + nearest | ✅ (weakest step: 0.44–0.49 strict on gold spans) |
-| 7 | Dialogue manager | [dialogue/](dialogue/) (empty) | `(nlu result, state)` → action + new state | ⬜ |
-| 8 | Pipeline + Gradio UI | [app/](app/) (empty) | `Pipeline.respond(message, state)`, `gr.ChatInterface` | ⬜ |
-| 8 | Run script + README | | one command to launch the demo | ⬜ |
+| 7 | Dialogue manager | [dialogue/manager.py](dialogue/manager.py), [types.py](dialogue/types.py) | `step(turn, state)` → `Decision` + new state | ✅ (61/61 on the gold turns) |
+| 7 | Interpreter | [dialogue/interpreter.py](dialogue/interpreter.py) | `NLUInterpreter` (default) or `QwenInterpreter` (comparison): message → validated turn | ✅ NLU 36/61 turns; Qwen ⬜ not measured on these fixtures |
+| 8 | Pipeline + Gradio UI | [app/pipeline.py](app/pipeline.py), [app/chat.py](app/chat.py) | `Pipeline.respond(message, state, system)`, Gradio Blocks | ✅ A on CPU: 48/48 roasts, median 4.2 s; D on GPU ⬜ not run |
+| 8 | Run script + README | [README.md](README.md), [app/setup_assets.py](app/setup_assets.py) | `python -m app.chat --device cuda` | ✅ |
 | 9 | Automatic eval on 50 prompts | | main results table | ⬜ |
 | 9 | Ablations | | with/without Stage 1, planner, reranker, retrieval; quality vs. candidates | 🟡 only A forward vs. reversed exists |
-| 9 | Dialogue eval | | 20 scripted conversations | ⬜ |
+| 9 | Dialogue eval | [eval/run_dialogue_eval.py](eval/run_dialogue_eval.py), [eval/dialogue_test.jsonl](eval/dialogue_test.jsonl) | 24 conversations / 61 turns → `eval/results/dialogue/` | 🟡 NLU done; Qwen and System D not run |
 | 9 | Human eval | | 30 prompts × 4 configs, 3–5 outside raters | ⬜ |
 | 10 | Report and demo | | | ⬜ |
 
@@ -107,105 +108,50 @@ Checkpoints in `checkpoints/` (git-ignored, mirrored to Drive): `gen_A_*`, `gen_
 
 ## 4. Run-time flow in detail
 
-What happens inside `Pipeline.respond(message, state)` once it exists. Steps marked ⬜ are the ones still to write.
+What happens inside `Pipeline.respond(message, state)` ([app/pipeline.py](app/pipeline.py)). Design and results are in pipeline.md, Phases 7 and 8.
 
-1. **NLU** ✅ — `NLU.parse(message)` returns the intent, the `TRAIT` spans and their normalized trait keys. Spans one word apart are joined. A span below 0.4 similarity to everything comes back as unknown, with its nearest trait.
-2. **Dialogue manager** ⬜ — updates `state = {traits, intensity, history, last_plan, awaiting}` and picks an action:
-
-   | Intent / situation | Action |
-   |---|---|
-   | `request_diss` with traits | set traits → generate |
-   | `request_diss` without traits | ask for traits (`awaiting = "traits"`) |
-   | `another_one` | generate with the same state, avoid `history` and `last_plan` |
-   | `make_meaner` / `make_softer` | set intensity to harsh / mild → generate |
-   | new traits mid-conversation | add, or replace if the user says so |
-   | unknown trait | use the nearest trait and say so, or a fallback diss (empty traits) |
-   | `greet` / `goodbye` / `out_of_scope` | canned reply, redirect to purpose |
-
-   Check meaner/softer keywords before trusting the intent head (`make_meaner` is the weakest intent, 0.77).
-3. **Rhyme planner** ✅ — `plan_rhymes(traits, k=2, exclude=last_plan)`.
-4. **Retrieval** ➖ — `retrieve(traits, k=3)` for few-shot examples in D's prompt and as extra candidates.
-5. **Generator** ✅ — 10 samples per plan at temperature 0.8, top-p 0.9, repetition penalty 1.2, so about 20 candidates, each with its length-normalized log-probability. A forces the end words (reversed lines); D does not, so its rhyme depends on the reranker.
-6. **Reranker** ⬜ (`TraitFit` ✅)
-   - hard filters: exactly 4 lines, Detoxify limits from `config.yaml`, `lexical_score ≥ 0.8`
-   - instant features on every survivor: `norm_logprob`, `aabb_score`, `syllable_score`, `lexical_score`, repetition, ROUGE-L > 0.5 against `history`
-   - `TraitFit.score` on the top 5 only
-   - `score = w1·logprob + w2·aabb + w3·syllable + w4·lexical + w5·trait_fit − w6·repetition − w7·toxicity`, features scaled within the request, `w3 = w2`
-7. **Reply** ⬜ — format the four lines, append to `history`, store the plan as `last_plan`, add a note if a trait was guessed.
-
-### Interfaces still to define
-
-These are suggestions that match the code already there; rename freely.
+1. **Control** — exact commands skip the interpreter: "reset", "cancel" and numbered or yes answers to a pending question.
+2. **Interpret** — `NLUInterpreter.interpret(message, state)` runs `NLU.parse` and the keyword rules: meaner/softer words before the intent head, missed trait words, remove / replace / generic cues, and a note for a trait guessed by similarity. The result is a `TurnInterpretation`, validated in `dialogue/types.py`. `dialogue.backend: qwen` swaps in `QwenInterpreter`.
+3. **Dialogue manager** — `DialogueManager.step(turn, state)` applies the trait edits and intensity, and either replies (canned / settings), asks (`clarify`, stored in `state.awaiting`) or decides to `generate`.
+4. **Rhyme planner** — `RhymePlanner.plan(traits, k=2, exclude=last_plan)`, falling back to any plan if the exclusion leaves none.
+5. **Retrieval** ➖ — not built.
+6. **Generator** — 10 samples per plan at temperature 0.8, top-p 0.9, repetition penalty 1.2, so 20 candidates, each with its length-normalized log-probability. A forces the end words (reversed lines); D does not, so its rhyme depends on the reranker. D runs in `app/model_service.py`, which shares one Qwen model with the Qwen interpreter.
+7. **Reranker** — `Reranker.rerank(traits, candidates, history)`: hard filters (4 lines, Detoxify limits, lexical ≥ 0.8, no exact repeat of `history`), instant features plus the ROUGE-L history penalty, `TraitFit` on the top 5, equal weights.
+8. **Reply** — the best full-AABB candidate (one more batch if none, then the best of any rhyme), with the guessed-trait note above it. Only that poem is added to `history`, and its plan becomes `last_plan`.
 
 ```python
-# reranker/rerank.py
-class Reranker:
-    def __init__(self, cfg, weights, trait_fit=None, toxicity=None): ...
-    def rank(self, traits, candidates, history=()) -> list[dict]:   # candidates: {"lines", "norm_logprob", ...}
-
-# dialogue/manager.py
-class DialogueManager:
-    def step(self, parsed, state) -> tuple[dict, dict]:   # (action, new_state); action: {"kind": "generate" | "say", ...}
-
-# app/pipeline.py
-class Pipeline:
-    def __init__(self, cfg, system="D", device="cpu"): ...   # loads NLU, planner, generator, reranker once
-    def respond(self, message, state) -> tuple[str, dict]: ...
-
-# app/chat.py: gr.ChatInterface with a generator dropdown (A / D)
-# eval/run_auto_eval.py: frozen prompts → eval/results/auto/{system}_{config}.json
+pipeline = Pipeline(cfg, system="D", device="cuda")    # D is the default; models load on first use
+reply, state = pipeline.respond("roast me, I'm confident", pipeline.manager.initial_state())
+pipeline.last_trace                                    # stage, interpretation, candidates, survivors, timings
 ```
 
 ---
 
 ## 5. Where things stand right now
 
-### Reranker weight tuning (the item in progress)
+### Dialogue (just merged)
 
-| Step | Command | Status |
-|---|---|---|
-| Prompts with the fixed planner | `rating_pool.py prompts --force` | ✅ committed in `7af65db` |
-| System A candidates | `rating_pool.py generate --system A` | ✅ committed (200) |
-| System D candidates | `rating_pool_D.ipynb` on Colab | ✅ `candidates_D.jsonl` (400), **not committed** |
-| Rating sheets | `rating_pool.py sheets --force` | ⚠️ **stale**: `sheets/`, `items.jsonl` and `sheets_meta.json` were built at 23:07, before the new prompts (23:22) and candidates. Only 3 of their 31 plans match the current prompts. Rebuild before anyone rates. |
-| Ratings | two raters fill `rater_1.csv`, `rater_2.csv` | ⬜ (0 / 150 each) |
-| Collect + agreement | `rating_pool.py collect` | ⬜ |
-| Grid search | `reranker/rerank.py` | ⬜ |
-
-A quick check of the new candidates with `aabb_score` (both couplets an exact rhyme):
-
-| | Candidates | Full AABB | Line ends on planned word |
-|---|---|---|---|
-| A (fixed planner) | 200 | 100% | 100% |
-| D (fixed planner) | 400 | 54% | 85% |
-
-pipeline.md reports D at 49% with the old planner and 81% with real diss end words, so the planner fix helped D only a little. This is worth a look before rating: either the plans are still harder than real diss end words, or this count is stricter than the one in `eval/results/gen_D/`.
+- **Interpreter choice.** `feat/phase0-david` made the Qwen interpreter the default. Here the NLU is the default again, as the architecture specifies, and Qwen is kept as the comparison. Qwen still has to be run on the 24 test conversations (`--mode interpreter --backend qwen --device cuda`, needs the base model download, about 3 GB). An earlier run on an older prompt and fixture set got 16/58.
+- **Gold turns written for Qwen.** For unknown traits ("telepathy") they expect a clarification question, while the NLU path uses the nearest trait and says so (pipeline.md, Phase 7). Either rewrite those 6 gold turns or report the difference.
+- **System D in the chat** has not been run end to end (needs the GPU and the base model).
 
 ### Other open items
 
 - **NLU spot check**: 348 rows in `data/nlu/corpus/spot_check.csv` were checked by Claude only (42 marked wrong); the team still has to confirm.
-- **System checkpoint for Week 10** ("every system produces readable quatrains for the 50 evaluation prompts"): not yet run on `eval/prompts.json`. Note that those prompts carry `intensity: null`, so the eval needs a default.
-- **Intensity values don't line up**: the dialogue sketch in pipeline.md starts at `"normal"`, but the generators only know `mild`, `harsh` (and `none` from Stage 1). Pick one default, probably `mild`, and use it in the dialogue manager and the eval.
-- **`requirements.txt`** is missing packages the code already imports (`peft`, `scipy`) and ones the remaining phases need (`gradio`, and `rank_bm25` if retrieval is built).
+- **System checkpoint for Week 10** ("every system produces readable quatrains for the 50 evaluation prompts"): not yet run on `eval/prompts.json`. Those prompts carry `intensity: null`; use `mild`, the dialogue default.
 - **Legacy files**: `Datasets/` (sonnets, old diss CSV) and `Train.ipynb` are from before the current pipeline and are not used by it. Archive or delete them before submission.
-- **Untracked**: `data/rerank_ratings/candidates_D.jsonl`, and the stale sheets (which should be rebuilt rather than committed).
 
 ---
 
 ## 6. What's left, in order
 
-The critical path to a demo-able product, then the evaluation the report needs.
+The evaluation the report needs, now that the product runs end to end.
 
-1. **Rebuild the rating sheets** (`python reranker/rating_pool.py sheets --force`) with the current candidates; look at D's 54% AABB first.
-2. **`reranker/rerank.py`**: hard filters, features, combined score, top-5 trait-fit. It can run with hand-set weights before the ratings come back.
-3. **Rate, collect, grid search** → final weights into `config.yaml`.
-4. **`dialogue/manager.py`**: the rule table in §4, keyword check for meaner/softer, repeat avoidance.
-5. **`app/pipeline.py` + `app/chat.py`**: chain everything, Gradio UI with A/D dropdown, measure response time on CPU (A) and laptop GPU (D).
-6. **Run script + README** for the "executable conditions" in the brief; fix `requirements.txt`.
-7. **Automatic eval** on the 50 frozen prompts for A and D (rhyme, syllables, format, lexical, trait-fit, distinct-1/2, 4-gram memorization, perplexity, time).
-8. **Ablations**: no Stage 1 (A), no planner (unconstrained end words), no reranker (first candidate), and quality against 5/10/20/40 candidates.
-9. **Dialogue eval**: write 20 scripted conversations and score task success per turn.
-10. **Human eval**: 30 prompts × 4 configs (A-base, A-full, D-base, D-full), 3–5 raters outside the team, Krippendorff's alpha and Wilcoxon tests, held-out traits reported apart.
-11. **Report and demo.**
+1. **System D in the chat** on the laptop GPU: response time, and a look at its replies.
+2. **Qwen interpreter** on the dialogue test set, against the NLU's 36/61, before the report says which one is used.
+3. **Automatic eval** on the 50 frozen prompts for A and D (rhyme, syllables, format, lexical, trait-fit, distinct-1/2, 4-gram memorization, perplexity, time).
+4. **Ablations**: no Stage 1 (A), no planner (unconstrained end words), no reranker (first candidate), and quality against 5/10/20/40 candidates.
+5. **Human eval**: 30 prompts × 4 configs (A-base, A-full, D-base, D-full), 3–5 raters outside the team, Krippendorff's alpha and Wilcoxon tests, held-out traits reported apart.
+6. **Report and demo.**
 
-Optional, only if time allows: retrieval (Phase 4), Systems B and C, the D size comparison (0.5B / 3B), and an LLM second judge.
+Optional, only if time allows: retrieval (Phase 4), Systems B and C, the D size comparison (0.5B / 3B), an LLM second judge, and a second round of reranker ratings once the poems are better.

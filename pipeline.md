@@ -5,7 +5,7 @@
 **Pipeline at run time** (no API calls anywhere):
 user message → NLU → dialogue manager → rhyme planner → retrieval → generator (several candidates) → reranker → reply
 
-**Where an LLM is used** (offline, before training only): generating the modern AABB quatrain corpus for pretraining, the diss data, the NLU training data, intensity labels and two kinds of reranker negatives (flat and non-rhyming), and optionally as a second judge in evaluation. All of it uses Qwen3-32B-FP8 with thinking off.
+**Where an LLM is used** (offline, before training only): generating the modern AABB quatrain corpus for pretraining, the diss data, the NLU training data, intensity labels and two kinds of reranker negatives (flat and non-rhyming), and optionally as a second judge in evaluation. All of it uses Qwen3-32B-FP8 with thinking off. At run time the only LLM is System D's own Qwen2.5-1.5B, run locally; with its poem adapter turned off it can also stand in for the NLU, as a comparison (Phase 7).
 
 **Priority tags**
 - **[Core]**: needed for a working, valid project
@@ -268,11 +268,11 @@ Then add:
          + w4·lexical_score + w5·trait_fit − w6·repetition − w7·toxicity
    ```
    Normalize log-probability by length, otherwise short poems win.
-   - **Code:** `reranker/rerank.py`: `Reranker().rerank(traits, candidates)` takes the generators' `generate()` output (dicts with `lines` and `norm_logprob`) and returns the kept candidates best first, each with its `score` and `features`. Weights are `reranker.weights` in `config.yaml`.
-   - **Features**, all in [0, 1]: `logprob` is the length-normalized log-probability min-max scaled over the request's candidates (A's and D's are on different scales, and only the order within a request matters); `aabb`, `syllables` and `lexical` from the phonetic module (lexical with the GloVe vocabulary); `trait_fit` from the classifier, 0.5 for every candidate when the request has no traits; `repetition` is the share of content words that repeat an earlier one in the poem; `toxicity` is the highest of the Detoxify scores that have a limit in `toxicity`.
+   - **Code:** `reranker/rerank.py`: `Reranker().rerank(traits, candidates, history=())` takes the generators' `generate()` output (dicts with `lines` and `norm_logprob`) and returns the kept candidates best first, each with its `score` and `features`. Weights are `reranker.weights` in `config.yaml`. `history` is the conversation's earlier replies (Phase 7).
+   - **Features**, all in [0, 1]: `logprob` is the length-normalized log-probability min-max scaled over the request's candidates (A's and D's are on different scales, and only the order within a request matters); `aabb`, `syllables` and `lexical` from the phonetic module (lexical with the GloVe vocabulary); `trait_fit` from the classifier, 0.5 for every candidate when the request has no traits; `repetition` is the share of content words that repeat an earlier one in the poem; `toxicity` is the highest of the Detoxify scores that have a limit in `toxicity`. With a history, `history` is the highest ROUGE-L against an earlier reply when above 0.5 (`reranker.history_rouge`), else 0, subtracted with weight 1 (not tuned: the rated candidates had no history).
    - **Weights:** equal (all 1), with w3 tied to w2. The hand ratings could not tell weight settings apart (step 5).
    - **Speed:** about 1 s per request of 20 candidates on CPU, after the first call, which loads Detoxify and DistilBERT (about 15 s).
-3. **Hard filters first:** drop any candidate that isn't 4 lines, reaches one of the Detoxify limits in `toxicity` (the same limits the disses were filtered with), or has a lexical score below 0.8 (`reranker.lexical_min` in `config.yaml`).
+3. **Hard filters first:** drop any candidate that isn't 4 lines, reaches one of the Detoxify limits in `toxicity` (the same limits the disses were filtered with), or has a lexical score below 0.8 (`reranker.lexical_min` in `config.yaml`), and any exact repeat of a poem in the history.
 4. **Order for speed:** run the instant checks on all candidates, then run DistilBERT on the top 5 only.
 5. **Weight tuning:** two raters score 150 generated candidates from 1 to 5, then a grid search picks the weights whose combined score agrees best (Spearman) with the mean rating.
    - **Prompts:** the traits and intensity of 30 validation disses: half mild, half harsh, no trait set twice (21 pairs, 7 single traits, 1 triple, 1 with no traits). Never the 50 frozen eval prompts, so the tuning doesn't see the evaluation. The end words come from the rhyme planner, as at run time; the diss itself is not used.
@@ -350,32 +350,50 @@ Then add:
 
 # Phase 7: Dialogue manager [Recommended]
 
-A rule-based state machine (Lab 10):
+A rule-based state machine (Lab 10), in `dialogue/manager.py`. It makes no model calls: an interpreter turns each message into a validated turn (`dialogue/types.py`: ordered `add` / `remove` / `replace` trait edits, an intensity, a generic-roast flag and any descriptions it couldn't resolve), and `DialogueManager.step(turn, state)` returns the reply decision and a new state.
 
 ```python
-state = {"traits": [], "intensity": "normal", "history": [], "awaiting": None}
+DialogueState(traits=[], intensity="mild", awaiting=None, history=[], last_plan=None, generic=False)
 ```
+
+- **Intensity** starts at `mild`; `harsh` is the other value, since the generators know only these two (not `"normal"` as first sketched).
+- **Traits** are the 40 of `data/traits.json`, held-out ones included. `python -m dialogue.build_catalogue` writes `data/trait_catalogue.json` from it and the diss train split (35 traits seen in training, 5 held out), and a test checks it is up to date.
 
 | Situation | Action |
 |---|---|
 | `request_diss` with traits | update the state, generate, reply |
-| `request_diss` without traits | ask for traits |
+| `request_diss` without traits | ask for traits; the next answer resumes the request |
 | `another_one` | regenerate with the same state, avoiding poems in `history` |
-| `make_meaner` / `make_softer` | change the `<intensity>` token, regenerate |
-| new traits mid-conversation | add them, or replace the old ones if the user says so |
-| unknown trait | use the nearest trait and say so, or use a generic diss |
-| `out_of_scope` | redirect back to the bot's purpose |
+| `make_meaner` / `make_softer` | change the intensity, regenerate |
+| new traits mid-conversation | add them; replace the old ones on "instead" or "replace ... with"; remove on "remove", "drop" or "not" before the trait |
+| trait the normalizer guessed by similarity | use it and say so ("(Reading 'read minds' as bookish.)" above the poem) |
+| unknown trait (below the normalizer's threshold) | ask, suggesting the nearest trait; "yes", "1" or a trait answers, "cancel" drops the edit |
+| "generic roast" | generate with no traits |
+| `greet` / `goodbye` / `out_of_scope` | canned reply that redirects back to the bot's purpose |
+| "reset" | clear the conversation |
 
-**Repeat avoidance:** penalize any candidate with ROUGE-L above 0.5 against a poem in `history`, and avoid reusing the same rhyme plan twice in a row.
+**Interpreter** (`dialogue/interpreter.py`, `dialogue.backend` in `config.yaml`):
+- `nlu` (default): the Phase 6 joint model, with keyword rules on top for what it has no intent for or gets wrong.
+  - Meaner/softer words ("harsh", "go easy", "tone it down", not when negated) set the intensity before the intent head is trusted, as Phase 6 step 4 suggests. Without one, `make_meaner` / `make_softer` count only for a message with no trait and no "another": the head also fires on "add healthy again" and "try a different one".
+  - A span that is only an intensity word is not a trait ("be meaner" was tagged and normalized to patient).
+  - Trait keys and their other forms that the tagger missed ("confident and **calm**", "loyalty") are taken from the message itself.
+  - Remove, replace and generic requests are found by keywords, as in the table. "not" removes only before the trait word itself, since "not lazy" describes hardworking.
+- `qwen` [Optional]: System D's base model with the poem adapter turned off (`app/model_service.py` shares one model between both roles) reads the message into the same turn format as JSON, with the trait catalogue in the prompt. It understands free phrasing better but is slower (a ~2,700-token prompt per message), and it needs guards in `app/pipeline.py` against edits the message never asked for. Kept as a comparison for the dialogue evaluation.
+
+**Repeat avoidance:** the reranker drops an exact repeat of a poem in `history` and penalizes ROUGE-L above 0.5 against one (`reranker.history_rouge`, weight `history`; Phase 5). The planner excludes the last plan's end words, falling back to any plan if that leaves none.
 
 ---
 
 # Phase 8: Integration [Core]
 
-1. `Pipeline.respond(message, state)` chains every module.
-2. Gradio chat UI (`gr.ChatInterface`) with a dropdown to pick the generator, and a "writing your roast..." message while it works.
-3. Confirm it runs on a laptop CPU and measure the average response time per system. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU with a CUDA build of PyTorch.
-4. One-command run script and a README with setup steps, which covers the brief's "executable conditions".
+1. `Pipeline.respond(message, state)` (`app/pipeline.py`) chains every module: interpreter → dialogue manager → `RhymePlanner.plan(traits, k=2)` → 10 candidates per plan from A or D → `Reranker.rerank(traits, candidates, history)`.
+   - The reply is the best full-AABB candidate (`dialogue.require_aabb`).
+   - If none is full AABB, it samples one more batch (`dialogue.generation_retries`), then replies with the reranker's best of any rhyme.
+   - Only the poem sent is added to `history`, with its planned and actual end words.
+   - Missing models or files give a recoverable message, and the state is unchanged.
+2. Gradio chat UI (`python -m app.chat`, Blocks) with a dropdown to pick the generator, a reset button and the state kept per browser session.
+3. Confirm it runs on a laptop CPU and measure the average response time per system. System A with the NLU on CPU: median 4.2 s per turn (p95 4.6 s) over the 61 test turns, almost all of it generation and reranking; the NLU takes 0.03 s. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU (`--device cuda`) with a CUDA build of PyTorch. Not measured yet.
+4. One-command run script and a README with setup steps, which covers the brief's "executable conditions": `README.md`, `python -m app.setup_assets` (checks the files, and `--download` fetches the public ones), `python -m app.chat --device cuda`.
 
 ---
 
@@ -400,7 +418,22 @@ state = {"traits": [], "intensity": "normal", "history": [], "awaiting": None}
 For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table.
 
 ### Dialogue evaluation [Recommended]
-20 scripted multi-turn conversations (another one, no traits, adding traits, make it meaner). Report task success per turn.
+24 frozen scripted conversations (61 turns: another one, no traits, adding, removing and replacing traits, make it meaner, unknown and held-out traits, generic, cancel, reset) in `eval/dialogue_test.jsonl`, each turn with its gold turn and the expected state; `eval/dialogue_dev.jsonl` (3) is for development. `python -m eval.run_dialogue_eval` reports task success per turn (state, decision and pending question all as expected) into `eval/results/dialogue/`:
+- `--mode policy`: the dialogue manager on the gold turns: 61/61.
+- `--mode interpreter --backend nlu|qwen`: the real interpreter, no generation.
+- `--mode integrated --system A|D`: the whole pipeline.
+
+| NLU interpreter, System A, CPU | |
+|---|---|
+| Turns with the expected state | 36/61 (59%) |
+| Conversations right on every turn | 9/24 |
+| Intensity right | 57/58 |
+| Trait edits right | 40/58 |
+| Integrated: roasts returned, out of 48 requests | 48, no errors |
+
+- **Unknown traits ("telepathy", "psychic ability"):** the gold turns, written for the Qwen interpreter, expect a clarification question, but the normalizer finds a nearest trait above its threshold, so the bot uses it and says so as the table above specifies. These 6 turns and the turns after them in the same conversation count as failures.
+- **Other misses:** traits the normalizer maps wrongly ("perfectionism" to patient), a second trait the tagger skips ("never mind waiting and have travelled everywhere"), and a few answers to pending questions.
+- **Qwen interpreter:** one earlier run on an older prompt and fixture set got 16/58. Rerun on these fixtures before comparing.
 
 ### Human evaluation [Core]
 1. 30 prompts × 4 configurations (e.g., A-base, A-full, D-base, D-full) = 120 outputs.

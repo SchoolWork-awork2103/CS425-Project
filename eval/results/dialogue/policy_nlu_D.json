@@ -1,0 +1,2034 @@
+{
+  "mode": "policy",
+  "backend": "nlu",
+  "system": "D",
+  "model_inference_run": false,
+  "prompt_version": "trait-operations-v4",
+  "fixture_sha256": "bfcc7da8b5314991840d9bde5551b70589460e0a90adff16e093b08453c221a6",
+  "catalogue_sha256": "88cea1668cbf4874985324bdece494698b339fdd09d8ae7d5475f663e2c35e79",
+  "checkpoint": "C:\\Users\\ngjac\\OneDrive\\Desktop\\Y4S1\\CS425\\Project\\CS425-Project\\checkpoints\\gen_D_1.5b_best",
+  "adapter_config_sha256": "c1653f63378a54b27069c03916fe69a4f4d539353afc38a25344a4640a57c6f7",
+  "adapter_weights_sha256": "d864d9de5bb654b87a66a79b3c0189ae705e471bae5056900bd99e48d26c014e",
+  "settings": {
+    "dialogue": {
+      "backend": "nlu",
+      "default_intensity": "mild",
+      "require_aabb": true,
+      "local_files_only": true,
+      "max_input_tokens": 4096,
+      "max_new_tokens": 384,
+      "validation_retries": 1,
+      "generation_retries": 1,
+      "history_limit": 20
+    },
+    "sampling": {
+      "temperature": 0.8,
+      "top_p": 0.9,
+      "rep_penalty": 1.2
+    },
+    "reranker": {
+      "lexical_min": 0.8,
+      "trait_fit_top": 5,
+      "history_rouge": 0.5,
+      "weights": {
+        "logprob": 1.0,
+        "aabb": 1.0,
+        "lexical": 1.0,
+        "trait_fit": 1.0,
+        "repetition": 1.0,
+        "toxicity": 1.0,
+        "history": 1.0
+      },
+      "tuning": {
+        "prompts": {
+          "D": 20,
+          "A": 10
+        },
+        "plans": 2,
+        "per_plan": 10,
+        "shown": 5,
+        "raters": 2,
+        "checkpoints": {
+          "A": "gen_A_rev_stage2_best.pt",
+          "D": "gen_D_1.5b_best"
+        }
+      }
+    }
+  },
+  "hardware": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD",
+    "device": "cpu",
+    "gpu": null
+  },
+  "versions": {
+    "torch": "2.14.1+cpu",
+    "transformers": "5.20.2",
+    "detoxify": "0.5.4"
+  },
+  "counts": {
+    "turns": 61,
+    "state_correct": 61,
+    "clarifications": 15,
+    "errors": 0,
+    "retried": 0,
+    "conversations": 24,
+    "conversations_complete": 24
+  },
+  "state_accuracy": 1.0,
+  "conversation_completion": 1.0,
+  "latency_seconds": {
+    "median": 0.00011189999895577785,
+    "p95": 0.0001914000004035188
+  },
+  "interpretation_seconds": {
+    "median": null,
+    "p95": null
+  },
+  "peak_cuda_memory_bytes": null,
+  "peak_process_memory_bytes": 36917248,
+  "details": [
+    {
+      "conversation": "collect-and-adjust",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "harsh",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": []
+          },
+          "expected": "traits",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": "harsh",
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001627000001462875,
+      "attempts": 0
+    },
+    {
+      "conversation": "collect-and-adjust",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "harsh",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "confident"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00017250000018975697,
+      "attempts": 0
+    },
+    {
+      "conversation": "collect-and-adjust",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "harsh",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00012559999959194101,
+      "attempts": 0
+    },
+    {
+      "conversation": "collect-and-adjust",
+      "turn": 4,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": "mild",
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001426999988325406,
+      "attempts": 0
+    },
+    {
+      "conversation": "add-remove",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "bookish"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 9.949999912350904e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "add-remove",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "musical"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00018989999989571515,
+      "attempts": 0
+    },
+    {
+      "conversation": "add-remove",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "remove",
+            "traits": [
+              "bookish"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00016400000095018186,
+      "attempts": 0
+    },
+    {
+      "conversation": "replacement",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "competitive"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001551000004837988,
+      "attempts": 0
+    },
+    {
+      "conversation": "replacement",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "replace",
+            "traits": [
+              "generous"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00019120000069960952,
+      "attempts": 0
+    },
+    {
+      "conversation": "remove-last",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "curious"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00011210000047867652,
+      "attempts": 0
+    },
+    {
+      "conversation": "remove-last",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": []
+          },
+          "expected": "traits",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "remove",
+            "traits": [
+              "curious"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00014869999904476572,
+      "attempts": 0
+    },
+    {
+      "conversation": "remove-last",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "loyal"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00018790000103763305,
+      "attempts": 0
+    },
+    {
+      "conversation": "single-choice-yes",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "see everything positively",
+                "candidates": [
+                  "optimistic"
+                ],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "see everything positively",
+            "candidates": [
+              "optimistic"
+            ],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00010309999925084412,
+      "attempts": 0
+    },
+    {
+      "conversation": "single-choice-yes",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": null,
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00014100000043981709,
+      "attempts": 0
+    },
+    {
+      "conversation": "multiple-choice",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "smart"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 9.339999996882398e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "multiple-choice",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "drive",
+                "candidates": [
+                  "ambitious",
+                  "hardworking"
+                ],
+                "mode": "replace",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "drive",
+            "candidates": [
+              "ambitious",
+              "hardworking"
+            ],
+            "mode": "replace",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00010860000111279078,
+      "attempts": 0
+    },
+    {
+      "conversation": "multiple-choice",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": null,
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00014509999891743064,
+      "attempts": 0
+    },
+    {
+      "conversation": "cancel",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "independent"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.270000034826808e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "cancel",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "telepathy",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "telepathy",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00011210000047867652,
+      "attempts": 0
+    },
+    {
+      "conversation": "cancel",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "say",
+      "prediction": null,
+      "error": null,
+      "stage": "policy",
+      "seconds": 5.419999979494605e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "supersede",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "psychic ability",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "psychic ability",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 7.670000013604295e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "supersede",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "replace",
+            "traits": [
+              "punctual"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001331999992544297,
+      "attempts": 0
+    },
+    {
+      "conversation": "heldout-speaking-time",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "eloquent"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.460000026389025e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "heldout-speaking-time",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "harsh",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "replace",
+            "traits": [
+              "punctual"
+            ]
+          }
+        ],
+        "intensity": "harsh",
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00014040000132808927,
+      "attempts": 0
+    },
+    {
+      "conversation": "heldout-patience-travel-money",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "patient",
+              "worldly"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00010550000115472358,
+      "attempts": 0
+    },
+    {
+      "conversation": "heldout-patience-travel-money",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "frugal"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00020709999989776406,
+      "attempts": 0
+    },
+    {
+      "conversation": "generic",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": true,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": true,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00010850000035134144,
+      "attempts": 0
+    },
+    {
+      "conversation": "generic",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": true,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00015100000018719584,
+      "attempts": 0
+    },
+    {
+      "conversation": "generic",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "wise"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001914000004035188,
+      "attempts": 0
+    },
+    {
+      "conversation": "canned-preserve",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "say",
+      "prediction": {
+        "kind": "greet",
+        "request_generation": false,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 5.7499999456922524e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "canned-preserve",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "tidy"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00029270000050019007,
+      "attempts": 0
+    },
+    {
+      "conversation": "canned-preserve",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "say",
+      "prediction": {
+        "kind": "out_of_scope",
+        "request_generation": false,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001475000008213101,
+      "attempts": 0
+    },
+    {
+      "conversation": "canned-preserve",
+      "turn": 4,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "say",
+      "prediction": {
+        "kind": "goodbye",
+        "request_generation": false,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00011189999895577785,
+      "attempts": 0
+    },
+    {
+      "conversation": "reset",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "harsh",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "outgoing"
+            ]
+          }
+        ],
+        "intensity": "harsh",
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00012599999899975955,
+      "attempts": 0
+    },
+    {
+      "conversation": "reset",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "say",
+      "prediction": null,
+      "error": null,
+      "stage": "policy",
+      "seconds": 5.300000339047983e-06,
+      "attempts": 0
+    },
+    {
+      "conversation": "reset",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": []
+          },
+          "expected": "traits",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 6.720000055793207e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "negated-trait",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "musical"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.329999945999589e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "negated-intensity",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "harsh",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "meticulous"
+            ]
+          }
+        ],
+        "intensity": "harsh",
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.399999933317304e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "negated-intensity",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "harsh",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00010579999980109278,
+      "attempts": 0
+    },
+    {
+      "conversation": "ordered-edits",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "caring",
+              "helpful"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.940000043367036e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "ordered-edits",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "remove",
+            "traits": [
+              "caring"
+            ]
+          },
+          {
+            "mode": "add",
+            "traits": [
+              "honest"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00013070000022707973,
+      "attempts": 0
+    },
+    {
+      "conversation": "unknown-correction",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "ability to fly unaided",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "ability to fly unaided",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.350000098289456e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "unknown-correction",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "adventurous"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001339999998890562,
+      "attempts": 0
+    },
+    {
+      "conversation": "unknown-to-generic",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "teleportation",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "teleportation",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 7.270000060088933e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "unknown-to-generic",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": true,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": true,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00014800000099057797,
+      "attempts": 0
+    },
+    {
+      "conversation": "conflicting-intensity",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "charming"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.070000149018597e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "conflicting-intensity",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "gentler or meaner intensity",
+                "candidates": [],
+                "mode": "add",
+                "target": "intensity"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "gentler or meaner intensity",
+            "candidates": [],
+            "mode": "add",
+            "target": "intensity"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.600000001024455e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "conflicting-intensity",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": "mild",
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001436000002286164,
+      "attempts": 0
+    },
+    {
+      "conversation": "dedup-and-noop-remove",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "healthy",
+              "disciplined"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.129999878292438e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "dedup-and-noop-remove",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "healthy"
+            ]
+          },
+          {
+            "mode": "remove",
+            "traits": [
+              "ambitious"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001229999998031417,
+      "attempts": 0
+    },
+    {
+      "conversation": "two-unknowns",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "first quality",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              },
+              {
+                "text": "second quality",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "first quality",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          },
+          {
+            "text": "second quality",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0001038999998854706,
+      "attempts": 0
+    },
+    {
+      "conversation": "two-unknowns",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [
+              {
+                "mode": "add",
+                "traits": [
+                  "wise"
+                ]
+              }
+            ],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "second quality",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "wise"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00015139999959501438,
+      "attempts": 0
+    },
+    {
+      "conversation": "two-unknowns",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "loyal"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00015040000107546803,
+      "attempts": 0
+    },
+    {
+      "conversation": "empty-and-nonsubstantive-answer",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "say",
+      "prediction": null,
+      "error": null,
+      "stage": "policy",
+      "seconds": 1.3299999409355223e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "empty-and-nonsubstantive-answer",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": []
+          },
+          "expected": "traits",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 5.229999987932388e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "empty-and-nonsubstantive-answer",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": true,
+            "trait_updates": [],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": []
+          },
+          "expected": "traits",
+          "resume_generation": true
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": false,
+        "trait_updates": [],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 7.449999975506216e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "empty-and-nonsubstantive-answer",
+      "turn": 4,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "say",
+      "prediction": null,
+      "error": null,
+      "stage": "policy",
+      "seconds": 2.7599999157246202e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "roast-then-trait",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "calm"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.369999886781443e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "correction-with-unsupported-trait",
+      "turn": 1,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "request",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "replace",
+            "traits": [
+              "confident",
+              "calm"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 8.200000047509093e-05,
+      "attempts": 0
+    },
+    {
+      "conversation": "correction-with-unsupported-trait",
+      "turn": 2,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": {
+          "proposed": {
+            "kind": "request",
+            "request_generation": false,
+            "trait_updates": [
+              {
+                "mode": "remove",
+                "traits": [
+                  "calm"
+                ]
+              }
+            ],
+            "intensity": null,
+            "generic_requested": false,
+            "unresolved": [
+              {
+                "text": "strong",
+                "candidates": [],
+                "mode": "add",
+                "target": "traits"
+              }
+            ]
+          },
+          "expected": "choice",
+          "resume_generation": false
+        }
+      },
+      "decision": "clarify",
+      "prediction": {
+        "kind": "request",
+        "request_generation": false,
+        "trait_updates": [
+          {
+            "mode": "remove",
+            "traits": [
+              "calm"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": [
+          {
+            "text": "strong",
+            "candidates": [],
+            "mode": "add",
+            "target": "traits"
+          }
+        ]
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.00010889999975915998,
+      "attempts": 0
+    },
+    {
+      "conversation": "correction-with-unsupported-trait",
+      "turn": 3,
+      "correct": true,
+      "state": {
+        "intensity": "mild",
+        "generic": false,
+        "pending": null
+      },
+      "decision": "generate",
+      "prediction": {
+        "kind": "answer",
+        "request_generation": true,
+        "trait_updates": [
+          {
+            "mode": "add",
+            "traits": [
+              "athletic"
+            ]
+          }
+        ],
+        "intensity": null,
+        "generic_requested": false,
+        "unresolved": []
+      },
+      "error": null,
+      "stage": "policy",
+      "seconds": 0.0002395999999862397,
+      "attempts": 0
+    }
+  ]
+}

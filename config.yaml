@@ -4,6 +4,7 @@ seed: 42
 
 paths:
   traits: data/traits.json
+  trait_catalogue: data/trait_catalogue.json
   eval_prompts: eval/prompts.json
   checkpoints: checkpoints        # mirrored to the shared Drive folder
   # checkpoint names: gen_{system}_stage{1|2}_best.pt, e.g. gen_A_stage2_best.pt
@@ -73,6 +74,7 @@ trait_fit:                        # Phase 5 trait-fit classifier for the reranke
 reranker:                         # Phase 5 combined score
   lexical_min: 0.8                # hard filter: a candidate below this lexical_score is dropped (toxicity uses the limits above)
   trait_fit_top: 5                # DistilBERT trait fit runs on the top 5 by the instant features only
+  history_rouge: 0.5              # repeat avoidance: ROUGE-L above this against an earlier reply is penalized
   weights:                        # equal weights; the ratings were too uniform to tune them (pipeline.md, Phase 5)
     logprob: 1.0
     aabb: 1.0                     # syllables has no entry: its weight is tied to this one
@@ -80,6 +82,7 @@ reranker:                         # Phase 5 combined score
     trait_fit: 1.0
     repetition: 1.0
     toxicity: 1.0
+    history: 1.0                  # weight of the repeat penalty; not tuned (the rated candidates had no history)
   tuning:                         # candidates rated by hand to tune the weights (reranker/rating_pool.py)
     prompts: {D: 20, A: 10}       # validation-diss prompts per generator; all candidates for a prompt come from one system
     plans: 2                      # top rhyme plans per prompt, as at run time
@@ -87,3 +90,16 @@ reranker:                         # Phase 5 combined score
     shown: 5                      # candidates per prompt on the rating sheets: 30 x 5 = 150
     raters: 2
     checkpoints: {A: gen_A_rev_stage2_best.pt, D: gen_D_1.5b_best}
+
+sampling: {temperature: 0.8, top_p: 0.9, rep_penalty: 1.2}   # Phase 3 decoding, for all systems
+
+dialogue:                         # Phase 7 dialogue manager and Phase 8 pipeline (app/pipeline.py)
+  backend: nlu                    # nlu: the Phase 6 joint model; qwen: Qwen2.5-1.5B with the poem adapter off (comparison)
+  default_intensity: mild         # the generators know mild and harsh only
+  require_aabb: true              # reply with the best full-AABB candidate; the best of any rhyme only if none is
+  local_files_only: true
+  max_input_tokens: 4096
+  max_new_tokens: 384
+  validation_retries: 1
+  generation_retries: 1
+  history_limit: 20

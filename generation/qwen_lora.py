@@ -86,9 +86,10 @@ def autocast(device):
     return torch.autocast("cuda", dtype=half_dtype(device)) if device == "cuda" else contextlib.nullcontext()
 
 
-def load_base(name, device="cpu"):
-    tok = AutoTokenizer.from_pretrained(name)
-    model = AutoModelForCausalLM.from_pretrained(name, dtype=half_dtype(device)).to(device)
+def load_base(name, device="cpu", local_files_only=False):
+    tok = AutoTokenizer.from_pretrained(name, local_files_only=local_files_only)
+    model = AutoModelForCausalLM.from_pretrained(
+        name, dtype=half_dtype(device), local_files_only=local_files_only).to(device)
     return model, tok
 
 
@@ -101,11 +102,11 @@ def add_lora(model, r=16, alpha=32, dropout=0.05, targets=("q_proj", "k_proj", "
     return model
 
 
-def load_generator(adapter_dir, device="cpu"):
+def load_generator(adapter_dir, device="cpu", local_files_only=False):
     """A trained adapter on its base model (named in adapter_config.json), and the tokenizer."""
     base = json.load(open(Path(adapter_dir) / "adapter_config.json"))["base_model_name_or_path"]
-    model, tok = load_base(base, device)
-    return PeftModel.from_pretrained(model, str(adapter_dir)).eval(), tok
+    model, tok = load_base(base, device, local_files_only=local_files_only)
+    return PeftModel.from_pretrained(model, str(adapter_dir), local_files_only=local_files_only).eval(), tok
 
 
 def run_epoch(model, loader, device, opt=None, sched=None, scaler=None, accum=1, clip=1.0, max_batches=None,

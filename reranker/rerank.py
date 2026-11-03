@@ -7,12 +7,17 @@ candidates (A's and D's are on different scales, and only the order within a req
 unless set: almost every candidate scores 1 on syllables, so the ratings can't tune it (pipeline.md, Phase 5).
 
 Order, as in pipeline.md: the hard filters (four lines, lexical_score >= reranker.lexical_min, under every Detoxify
-limit in `toxicity`), then the instant features on all candidates, then DistilBERT trait fit on the top
-reranker.trait_fit_top only. Weights are reranker.weights in config.yaml.
+limit in `toxicity`, not a repeat of a poem in the conversation's history), then the instant features on all
+candidates, then DistilBERT trait fit on the top reranker.trait_fit_top only. Weights are reranker.weights in
+config.yaml.
+
+Repeat avoidance (Phase 7): with a history of earlier replies, a candidate whose ROUGE-L against one of them is above
+reranker.history_rouge is penalized by that ROUGE-L (weight `history`, 1 unless set); an exact repeat is dropped.
 
     rr = Reranker()
     ranked = rr.rerank(["confident"], candidates)    # candidates: generate() output, dicts with lines, norm_logprob
     ranked[0]["lines"]                               # the reply; each kept candidate has "score" and "features"
+    rr.rerank(["confident"], candidates, history=[earlier["lines"]])
 """
 import sys
 from pathlib import Path
@@ -32,6 +37,24 @@ def repetition(lines):
     return 1 - len(set(ws)) / len(ws) if ws else 0.0
 
 
+def rouge_l(a, b):
+    """ROUGE-L F1 (longest common word subsequence) between two poems, each a list of lines."""
+    a, b = [w for l in a for w in words_of(l)], [w for l in b for w in words_of(l)]
+    if not a or not b:
+        return 0.0
+    row = [0] * (len(b) + 1)
+    for x in a:
+        prev = 0
+        for j, y in enumerate(b, 1):
+            prev, row[j] = row[j], prev + 1 if x == y else max(row[j], row[j - 1])
+    return 2 * row[-1] / (len(a) + len(b))
+
+
+def poem_lines(poem):
+    """The lines of a history entry: a list of lines, a dict with "lines", or a dialogue PoemRecord."""
+    return poem if isinstance(poem, list) else poem["lines"] if isinstance(poem, dict) else poem.lines
+
+
 def scaled(values):
     """Min-max over one request's candidates; all the same gives 0.5 (no effect on the order)."""
     lo, hi = min(values), max(values)
@@ -43,7 +66,7 @@ def combine(f, w):
     syl = w.get("syllables", w["aabb"])                      # tied to the rhyme weight unless set
     return (w["logprob"] * f["logprob"] + w["aabb"] * f["aabb"] + syl * f["syllables"] + w["lexical"] * f["lexical"]
             + w["trait_fit"] * f.get("trait_fit", 0.0) - w["repetition"] * f["repetition"]
-            - w["toxicity"] * f["toxicity"])
+            - w["toxicity"] * f["toxicity"] - w.get("history", 1.0) * f.get("history", 0.0))
 
 
 class Reranker:
@@ -51,7 +74,7 @@ class Reranker:
         self.cfg = cfg or load_config()
         r = self.cfg["reranker"]
         self.weights = {**r["weights"], **(weights or {})}
-        self.lexical_min, self.top = r["lexical_min"], r["trait_fit_top"]
+        self.lexical_min, self.top, self.history_rouge = r["lexical_min"], r["trait_fit_top"], r["history_rouge"]
         self.limits = self.cfg["toxicity"]
         vocab = Path(f"{project_path(self.cfg['paths']['glove'])}.vocab.txt")
         self.vocab = set(vocab.read_text(encoding="utf-8").split("\n")) if vocab.exists() else None
@@ -75,18 +98,28 @@ class Reranker:
             self._fit = TraitFit.load(device=self.device)
         return self._fit.score(traits, poems)
 
-    def features(self, candidates, tox=None):
+    def features(self, candidates, tox=None, history=()):
         """Instant features of candidates that passed the hard filters; logprob scaled over this set."""
         tox = tox or self.toxicity(["\n".join(c["lines"]) for c in candidates])
         lp = scaled([c["norm_logprob"] for c in candidates])
-        return [{"logprob": l, "aabb": aabb_score(c["lines"]), "syllables": syllable_score(c["lines"]),
-                 "lexical": lexical_score(c["lines"], self.vocab), "repetition": repetition(c["lines"]),
-                 "toxicity": max(t.values())} for c, l, t in zip(candidates, lp, tox)]
+        feats = [{"logprob": l, "aabb": aabb_score(c["lines"]), "syllables": syllable_score(c["lines"]),
+                  "lexical": lexical_score(c["lines"], self.vocab), "repetition": repetition(c["lines"]),
+                  "toxicity": max(t.values())} for c, l, t in zip(candidates, lp, tox)]
+        if history:
+            earlier = [poem_lines(p) for p in history]
+            for c, f in zip(candidates, feats):
+                overlap = max(rouge_l(c["lines"], p) for p in earlier)
+                f["history"] = overlap if overlap > self.history_rouge else 0.0
+        return feats
 
-    def filter(self, candidates):
+    def filter(self, candidates, history=()):
         """(kept candidates with their toxicity scores, dropped candidates with a reason)."""
+        earlier = {tuple(w for l in poem_lines(p) for w in words_of(l)) for p in history}
         four = [c for c in candidates if len(c["lines"]) == 4 and all(l.strip() for l in c["lines"])]
         dropped = [{**c, "dropped": "not_4_lines"} for c in candidates if c not in four]
+        repeats = [c for c in four if tuple(w for l in c["lines"] for w in words_of(l)) in earlier]
+        dropped += [{**c, "dropped": "repeat"} for c in repeats]
+        four = [c for c in four if c not in repeats]
         tox = self.toxicity(["\n".join(c["lines"]) for c in four]) if four else []
         kept = []
         for c, t in zip(four, tox):
@@ -99,13 +132,14 @@ class Reranker:
                 kept.append((c, t))
         return kept, dropped
 
-    def rerank(self, traits, candidates):
-        """Kept candidates, best first, each with "score" and "features". Empty if every candidate was dropped."""
-        kept, _ = self.filter(candidates)
+    def rerank(self, traits, candidates, history=()):
+        """Kept candidates, best first, each with "score" and "features". Empty if every candidate was dropped.
+        history: earlier replies in the conversation (lists of lines, or dicts / records with "lines")."""
+        kept, _ = self.filter(candidates, history)
         if not kept:
             return []
         cands, tox = [c for c, _ in kept], [t for _, t in kept]
-        feats = self.features(cands, tox)
+        feats = self.features(cands, tox, history)
         ranked = sorted(({**c, "features": f, "score": combine(f, self.weights)} for c, f in zip(cands, feats)),
                         key=lambda c: -c["score"])
         if self.use_fit and self.weights["trait_fit"]:
