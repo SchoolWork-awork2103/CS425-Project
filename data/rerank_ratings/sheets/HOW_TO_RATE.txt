@@ -1,0 +1,21 @@
+How to rate the roasts
+
+Each row is a four-line roast written for someone who asked to be roasted for the listed traits, at the listed
+intensity. Rows for the same request are next to each other. Fill in one column for every row:
+
+  rating  1-5, how good the poem is as a reply to that request
+
+5  you would happily send it: clearly about the traits, a real joke, both couplets rhyme (lines 1-2, lines 3-4),
+   reads smoothly
+4  good, with one small weakness: a forced rhyme, a flat line, a bit generic
+3  fine but forgettable: on topic and readable, but not funny, or one line is clumsy
+2  weak: barely about the traits, a couplet doesn't rhyme, or hard to follow
+1  unusable: nonsense, broken lines, or offensive about race, religion, gender, sexuality or disability
+
+- Intensity: "harsh" should bite and "mild" should be gentle teasing. A clear mismatch costs a point.
+- "(none)" under traits means the request named no trait: any fair generic roast is on topic.
+- Rate each poem on its own merits. Ties are fine, and so is using 1 and 5.
+- The note column is optional (e.g. why you gave a 1). Don't change any other column or the order of the rows.
+- Rate alone: don't compare ratings with the other rater until both sheets are done.
+
+Save as CSV (UTF-8) with the same file name, then run: python reranker/rating_pool.py collect

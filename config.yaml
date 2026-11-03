@@ -72,6 +72,14 @@ trait_fit:                        # Phase 5 trait-fit classifier for the reranke
 
 reranker:                         # Phase 5 combined score
   lexical_min: 0.8                # hard filter: a candidate below this lexical_score is dropped (toxicity uses the limits above)
+  trait_fit_top: 5                # DistilBERT trait fit runs on the top 5 by the instant features only
+  weights:                        # equal weights; the ratings were too uniform to tune them (pipeline.md, Phase 5)
+    logprob: 1.0
+    aabb: 1.0                     # syllables has no entry: its weight is tied to this one
+    lexical: 1.0
+    trait_fit: 1.0
+    repetition: 1.0
+    toxicity: 1.0
   tuning:                         # candidates rated by hand to tune the weights (reranker/rating_pool.py)
     prompts: {D: 20, A: 10}       # validation-diss prompts per generator; all candidates for a prompt come from one system
     plans: 2                      # top rhyme plans per prompt, as at run time
