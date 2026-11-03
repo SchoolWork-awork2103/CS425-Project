@@ -157,7 +157,13 @@ Not done:
 
 1. **Reversed lines** like System A [Optional ablation]: they force every end word, but reversed text wastes GPT-2's
    English pretraining, so expect worse fluency.
+   - **Why optional:** the result is predictable. Rhyme would rise to about 100%, as for A, but fluency would
+     probably drop, since GPT-2 learned English forwards. A already shows what forcing the end word does, so this
+     would add little to the report.
 2. **Stage 2 only at lr 5e-5** [Optional]: separates the missing quatrains from the learning rate in the ablation.
+   - **Why optional:** the gap it would check is very large (full AABB 74% with Stage 1, 13% without), so a better
+     learning rate is very unlikely to close it. It would only confirm the conclusion. It also needs a small notebook
+     change, so that this run can use its own Stage 2 learning rate.
 
 ### Decoding, for all systems
 No changes to the settings. For E, the repetition penalty is done (above).
