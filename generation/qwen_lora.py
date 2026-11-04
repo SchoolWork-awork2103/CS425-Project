@@ -205,9 +205,9 @@ class AnswerRepetitionPenalty(LogitsProcessor):
         if answer.shape[1] == 0 or self.penalty == 1:
             return scores
         seen = torch.zeros_like(scores, dtype=torch.bool).scatter_(1, answer, True) & self.penalized
-        s = scores[seen]
-        scores[seen] = torch.where(s > 0, s / self.penalty, s * self.penalty)
-        return scores
+        # a new tensor: generate() keeps the scores it passes in as the raw logits (output_logits), which 
+        # the log-probability is computed from; changing them in place would put the penalty into it
+        return torch.where(seen, torch.where(scores > 0, scores / self.penalty, scores * self.penalty), scores)
 
 
 def penalized_tokens(tok, vocab_size, end_words, device):
@@ -244,6 +244,27 @@ def generate(model, tok, traits, intensity, end_words, n=10, temperature=0.8, to
     texts = tok.batch_decode(answer, skip_special_tokens=True)
     return [{"lines": decode_lines(t), "text": t, "logprob": l, "norm_logprob": l / k}
             for t, l, k in zip(texts, logprob.tolist(), length.tolist())]
+
+
+@torch.no_grad()
+def score(model, tok, traits, intensity, end_words, poems, device="cpu", batch_size=4):
+    """How likely the model finds given poems (each a list of lines) for one prompt: the same logprob and
+    norm_logprob as generate() returns for its own samples, for poems it did not write. Each poem is scored as a
+    tagged answer, with end_words as the tags."""
+    model.eval()
+    rows = [example(tok, {"traits": traits, "intensity": intensity, "end_words": end_words, "lines": p})
+            for p in poems]
+    collate, out = make_collate(tok.pad_token_id), []
+    for i in range(0, len(rows), batch_size):
+        b = {k: v.to(device) for k, v in collate(rows[i:i + batch_size]).items()}
+        with autocast(device):
+            logits = model(input_ids=b["input_ids"], attention_mask=b["attention_mask"]).logits
+        labels = b["labels"][:, 1:]
+        mask = labels != -100
+        lp = logits[:, :-1].float().log_softmax(-1).gather(2, labels.clamp(min=0)[..., None]).squeeze(2)
+        total, length = (lp * mask).sum(1), mask.sum(1)
+        out += [{"logprob": t, "norm_logprob": t / k} for t, k in zip(total.tolist(), length.tolist())]
+    return out
 
 
 def report(prompts, poems, trait_info, show=0, log=print):
