@@ -4,6 +4,7 @@ python -m eval.run_dialogue_eval --mode policy
 python -m eval.run_dialogue_eval --mode interpreter --backend nlu      # the default backend (config.yaml)
 python -m eval.run_dialogue_eval --mode interpreter --backend qwen --device cuda
 python -m eval.run_dialogue_eval --mode integrated --system D --device cuda
+python -m eval.run_dialogue_eval --mode integrated --system E --device cuda
 """
 import argparse
 from collections import Counter
@@ -16,7 +17,7 @@ import statistics
 import sys
 import time
 
-from app.pipeline import Pipeline
+from app.pipeline import GENERATORS, Pipeline
 from dialogue.catalogue import ROOT
 from dialogue.prompts import PROMPT_VERSION
 from dialogue.types import InterpretationError, PoemRecord, TurnInterpretation
@@ -46,6 +47,29 @@ def peak_process_memory():
     import resource
     value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return value if sys.platform == "darwin" else value * 1024
+
+
+# TODO: record the GPU clock with the latencies (e.g. min / median / max SM clock 
+#       in MHz, read right after each turn, into "hardware"). 
+# Without the clock, a saved latency can't be told apart from a throttled one,
+# so latencies across runs or systems may not be comparable
+
+
+def checkpoint_record(cfg, name):
+    """The files behind one loaded checkpoint, hashed so a result can be traced to the exact model."""
+    root = ROOT / cfg["paths"]["checkpoints"]
+    if name == "E":                                   # a full GPT-2 model directory
+        path = root / cfg["gpt2"]["checkpoint"]
+        return {"path": str(path), "config_sha256": file_hash(path / "config.json"),
+                "weights_sha256": file_hash(path / "model.safetensors")}
+    path = root / cfg["reranker"]["tuning"]["checkpoints"][name]
+    if name == "A":                                   # a single .pt file
+        return {"path": str(path), "sha256": file_hash(path)}
+    weights = path / "adapter_model.safetensors"      # D: a LoRA adapter
+    if not weights.is_file():
+        weights = path / "adapter_model.bin"
+    return {"path": str(path), "adapter_config_sha256": file_hash(path / "adapter_config.json"),
+            "adapter_weights_sha256": file_hash(weights)}
 
 
 def run(fixtures, mode="policy", backend=None, system="D", device="cpu", cfg=None):
@@ -149,17 +173,7 @@ def run(fixtures, mode="policy", backend=None, system="D", device="cpu", cfg=Non
         used.add("D")
     if mode == "integrated":
         used.add(system)
-    checkpoints = {}
-    for name in sorted(used):
-        path = ROOT / cfg["paths"]["checkpoints"] / cfg["reranker"]["tuning"]["checkpoints"][name]
-        if name == "A":
-            checkpoints[name] = {"path": str(path), "sha256": file_hash(path)}
-        else:
-            weights = path / "adapter_model.safetensors"
-            if not weights.is_file():
-                weights = path / "adapter_model.bin"
-            checkpoints[name] = {"path": str(path), "adapter_config_sha256": file_hash(path / "adapter_config.json"),
-                                 "adapter_weights_sha256": file_hash(weights)}
+    checkpoints = {name: checkpoint_record(cfg, name) for name in sorted(used)}
     return {"mode": mode, "backend": backend, "system": system,
             "model_inference_run": mode != "policy" and counts["interpreted"] > 0, "prompt_version": PROMPT_VERSION,
             "fixture_sha256": hashlib.sha256(Path(fixtures).read_bytes()).hexdigest(),
@@ -181,7 +195,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=["policy", "interpreter", "integrated"], default="policy")
     parser.add_argument("--backend", choices=["qwen", "nlu"], default=None, help="default: dialogue.backend")
-    parser.add_argument("--system", choices=["A", "D"], default="D")
+    parser.add_argument("--system", choices=list(GENERATORS), default="D")
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     parser.add_argument("--fixtures", type=Path, default=ROOT / "eval/dialogue_test.jsonl")
     parser.add_argument("--output", type=Path, default=None)
