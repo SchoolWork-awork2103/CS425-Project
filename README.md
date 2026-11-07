@@ -68,7 +68,7 @@ python -m dialogue.build_catalogue
 python -m unittest discover -v                                    # no models needed; planner tests skip without GloVe
 python -m eval.run_dialogue_eval --mode policy                    # dialogue manager on the gold turns
 python -m eval.run_dialogue_eval --mode interpreter               # + the real NLU (or --backend qwen --device cuda)
-python -m eval.run_dialogue_eval --mode integrated --system A     # the whole pipeline
+python -m eval.run_dialogue_eval --mode integrated --system A     # the whole pipeline (or --system D / E --device cuda)
 ```
 
 The dialogue test set is `eval/dialogue_test.jsonl` (24 conversations, 61 turns; `eval/dialogue_dev.jsonl` for development). Results go to `eval/results/dialogue/`; the numbers are in pipeline.md, Phase 9.

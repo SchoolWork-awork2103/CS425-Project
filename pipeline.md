@@ -439,7 +439,21 @@ DialogueState(traits=[], intensity="mild", awaiting=None, history=[], last_plan=
    - Only the poem sent is added to `history`, with its planned and actual end words.
    - Missing models or files give a recoverable message, and the state is unchanged.
 2. Gradio chat UI (`python -m app.chat`, Blocks) with a dropdown to pick the generator (A, D or E, labelled with model and size; `--system` picks the starting one), a reset button and the state kept per browser session.
-3. Confirm it runs on a laptop CPU and measure the average response time per system. System A with the NLU on CPU: median 3.9 s per turn (p95 4.6 s) over the 61 test turns, almost all of it generation and reranking; the NLU takes 0.03 s. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU (`--device cuda`) with a CUDA build of PyTorch. Not measured yet. System E (124M) should be much faster than D on a CPU, which would make it a demo option; not measured yet. Record the GPU clock with GPU latencies, since a throttled run can't otherwise be told apart (a TODO in `eval/run_dialogue_eval.py`).
+3. Confirm it runs on a laptop CPU and measure the average response time per system. Measured with `python -m eval.run_dialogue_eval --mode integrated` over the 61 test turns (48 of them write a roast), all on the same laptop, plugged in (2026-11-07):
+
+   | System | Device | Median per turn | p95 | Median per roast (48) | Peak GPU memory |
+   |---|---|---|---|---|---|
+   | A (GRU, 9M) | CPU | 3.3 s | 3.9 s | 3.4 s | – |
+   | E (GPT-2 small, 124M) | GPU | 4.0 s | 5.6 s | 4.2 s | 1.9 GiB |
+   | E (GPT-2 small, 124M) | CPU | 22.9 s | 28.7 s | 23.3 s | – |
+   | D (Qwen2.5-1.5B + LoRA) | GPU | 13.2 s | 21.3 s | 13.7 s | 5.0 GiB |
+
+   - Almost all of the time is generation and reranking; the NLU takes about 0.01 s on the GPU and 0.02 s on the CPU.
+   - On the GPU, E answers about 3 times faster than D and uses under 40% of its memory. D at 5 GiB leaves little room on a 6–8 GB laptop GPU.
+   - A on a different laptop's CPU took a median of 3.9 s (p95 4.6 s), so times depend on the machine; compare systems only within one machine.
+   - On the CPU alone, E takes a median of 22.9 s per turn (all 36/61 turns as expected, no errors; `integrated_nlu_E_cpu.json`), about 7 times A's 3.3 s: each reply samples 20 candidates from a 124M model, and the reranker's Detoxify and DistilBERT trait fit run on the CPU too. So E is a fast option only with a GPU; without one, A is the generator for the demo.
+   - D on the CPU alone was too slow to finish the 61 turns, so it is not measured; D needs the GPU.
+   - A laptop GPU on battery or power saving can run several times slower (E took about 15 s for 10 candidates at 210 MHz against 1.6 s at 2055 MHz). Time with the laptop plugged in, and record the GPU clock with GPU latencies (a TODO in `eval/run_dialogue_eval.py`).
 4. One-command run script and a README with setup steps, which covers the brief's "executable conditions": `README.md`, `python -m app.setup_assets` (checks the files, and `--download` fetches the public ones), `python -m app.chat --device cuda`.
 
 ---
@@ -461,6 +475,26 @@ DialogueState(traits=[], intensity="mild", awaiting=None, history=[], last_plan=
 | Response time | per system, on CPU |
 | NLU | intent accuracy, slot F1 |
 
+**Code:** `eval/run_auto_eval.py` (metrics and statistics in `eval/auto_metrics.py`; 10 tests in `eval/test_auto_eval.py`). Results go to `eval/results/auto/`.
+```
+python -m eval.run_auto_eval generate --system E --device cuda                 # candidate pool, the planner's plans
+python -m eval.run_auto_eval generate --system E --device cuda --plans random   # pool for the no-planner ablation
+python -m eval.run_auto_eval analyse --device cuda                             # every pool -> summary.json, comparison.json
+```
+- **What it evaluates:** the generators in the app's setting (the planner's rhyme words, the reranker, the app's choice rule), which the Phase 3 sample checks (real disses' end words, no reranker) do not. The prompts are frozen: nothing is tuned on them; if a setting changes after a look at the results, every system is run again and the report says so.
+- **Input:** each prompt's **gold traits**, so the generators are compared without NLU mistakes (the NLU has its own test set and the dialogue evaluation). `intensity: null` (40 of 50) becomes `dialogue.default_intensity` (mild). The 5 `unclear` prompts have no traits and get a generic roast, as the fallback disses taught every generator; they are reported apart and left out of the trait measures.
+- **Generate once, derive every configuration:** for each prompt and seed (3 seeds), the planner's top 2 plans × 2 batches of 10 candidates, made with the app's own code (`Pipeline._planner`, `Pipeline._generate`; no refactor was needed). Every candidate is saved (`<system>_planner_pool.jsonl`), so the configurations below pick from the same poems and every comparison is paired. Each batch is seeded from (seed, prompt, plan, batch), so a prompt's poems do not depend on the run order; an interrupted run resumes where it stopped.
+
+  | Configuration | Picks | Isolates |
+  |---|---|---|
+  | `full` | the app: rerank batch 1 (10 per plan); if no candidate is full AABB, batch 2 too, then the best of any rhyme | the system as used |
+  | `no_reranker` | the first candidate of plan 1, unfiltered | what the reranker adds |
+  | `k5`, `k10`, `k20`, `k40` | rerank the first k candidates, the plans in turn, as one batch (each smaller set inside the larger) | quality against number of candidates |
+  | `no_planner` | `full`, on a pool made with `--plans random`: two rhyming end-word pairs from the training disses (different rhyme sounds), fixed per prompt and the same for every system | what the planner's choice of words adds. Leaving the end words out is not possible: every generator was trained with four |
+- **Metrics** on the chosen poem: returned, four lines, strict AABB (both couplets rhyme, A ≠ B), end-word hit, `syllable_score`, `lexical_score`, trait mention, trait fit (DistilBERT), embedding similarity to the trait descriptions (MiniLM), 4-gram overlap with the training disses and copied lines, distinct-1/2 (per seed, over the chosen poems) and time (`full`: generation of the batches used plus reranking). A request with no poem scores 0 on returned, four lines, AABB and end-word hit, and is left out of the rest. The reranker chooses by trait fit, so for configurations with it, trait mention and embedding similarity are the fairer trait measures; human ratings are the independent check.
+- **Statistics:** the unit is the prompt (a prompt's poems are not independent). Per prompt, each metric is averaged over the seeds; `summary.json` gives 95% bootstrap intervals over prompts, overall and per category (n = 5 for held-out and unclear: about ±40 points on a rate, so read them as indications), plus the spread over seeds. `comparison.json` compares each system's `full` with its other configurations and the systems with each other, prompt by prompt (mean difference with a bootstrap interval, Wilcoxon signed-rank p, prompts better and worse). Log-probability is never compared across systems (different tokenizers), and perplexity comes from each system's test loss (Phase 3), since the frozen prompts have no reference poems.
+- **Time:** one untimed request first, so loading the models is not counted. Run plugged in (a laptop GPU on battery can be several times slower).
+
 ### Ablations [Core]
 For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table. Done so far: A forward against reversed lines (Phase 3) and E with and without Stage 1 (Phase 3), both with the real disses' end words.
 
@@ -470,13 +504,16 @@ For each system built: with and without Stage 1 pretraining, rhyme planning, rer
 - `--mode interpreter --backend nlu|qwen`: the real interpreter, no generation.
 - `--mode integrated --system A|D|E`: the whole pipeline.
 
-| NLU interpreter, System A, CPU | |
-|---|---|
-| Turns with the expected state | 36/61 (59%) |
-| Conversations right on every turn | 9/24 |
-| Intensity right | 57/58 |
-| Trait edits right | 40/58 |
-| Integrated: roasts returned, out of 48 requests | 48, no errors |
+| NLU interpreter, integrated | System A, CPU | System D, GPU | System E, GPU |
+|---|---|---|---|
+| Turns with the expected state | 36/61 (59%) | 36/61 | 36/61 |
+| Conversations right on every turn | 9/24 | 9/24 | 9/24 |
+| Intensity right | 57/58 | 57/58 | 57/58 |
+| Trait edits right | 40/58 | 40/58 | 40/58 |
+| Roasts returned, out of 48 requests | 48, no errors | 48, no errors | 48, no errors |
+| Median time per turn | 3.3 s | 13.2 s | 4.0 s |
+
+The three generators get identical scores, turn by turn: what is scored (traits, intensity, decision, pending question) comes from the NLU and the dialogue manager, which are the same in every run, and every generator returned a poem whenever one was asked for. Only the time differs (Phase 8, step 3). Whether the poems are any good is for the automatic and human evaluations.
 
 - **Unknown traits ("telepathy", "psychic ability"):** the gold turns, written for the Qwen interpreter, expect a clarification question, but the normalizer finds a nearest trait above its threshold, so the bot uses it and says so as the table above specifies. These 6 turns and the turns after them in the same conversation count as failures.
 - **Other misses:** traits the normalizer maps wrongly ("perfectionism" to patient), a second trait the tagger skips ("never mind waiting and have travelled everywhere"), and a few answers to pending questions.

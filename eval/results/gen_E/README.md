@@ -1,7 +1,6 @@
 # System E results (GPT-2 small + full fine-tune)
 
 One training run of `generation/train_gpt2.ipynb` per checkpoint. The models themselves are in the shared Drive folder
-(`MyDrive/CS425/checkpoints/gen_E_*_best/`); this folder keeps the numbers.
 
 | Run | File | Base checkpoint |
 |---|---|---|
@@ -214,3 +213,21 @@ epochs) and prompts as the full runs.
   5 epochs may undertrain (train loss starts at 2.77 and val loss is still falling at epoch 5), so part of the gap may
   be the learning rate rather than the missing quatrains. A Stage 2-only run at 5e-5 would separate the two. Even so,
   the 3,382 disses alone are unlikely to make up for 18,850 quatrains of rhyme-plan practice.
+
+## In the app (2026-11-07)
+
+E-base (`gen_E_base_stage2_best/`) is generator E in the chat app. On the integrated dialogue eval
+(`python -m eval.run_dialogue_eval --mode integrated --system E --device cuda`, 24 conversations, 61 turns, 48 of them
+roasts; results in `eval/results/dialogue/integrated_nlu_E.json`), next to D on the same laptop, plugged in:
+
+| | E (GPU) | D (GPU) |
+|---|---|---|
+| Turns with the expected state | 36/61 | 36/61 |
+| Roasts returned, out of 48 | 48, no errors | 48, no errors |
+| Median time per turn (p95) | 4.0 s (5.6 s) | 13.2 s (21.3 s) |
+| Median time per roast | 4.2 s | 13.7 s |
+| Peak GPU memory | 1.9 GiB | 5.0 GiB |
+
+- The turn scores are the same for every generator: they come from the NLU and the dialogue manager. What E changes is
+  the speed: about 3 times faster than D on the GPU, with under 40% of its memory.
+- Still to measure: E and D on the CPU alone, where E's size should matter most.
