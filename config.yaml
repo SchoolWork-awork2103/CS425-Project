@@ -91,7 +91,7 @@ reranker:                         # Phase 5 combined score
     raters: 2
     checkpoints: {A: gen_A_rev_stage2_best.pt, D: gen_D_1.5b_best}
 
-gpt2:                             # System E full fine-tune (generation/gpt2_lm.py, pipeline_gpt2.md)
+gpt2:                             # System E full fine-tune (generation/gpt2_lm.py, pipeline.md Phase 3)
   models:                         # GPT-2 small (124M), same tokenizer
     poems: ismaelfaro/gpt2-poems.en          # pretrained on a Kaggle poems dataset
     crpo: andreipb/gpt2-poetry-model-crpo    # pretrained on the Gutenberg Poetry Corpus

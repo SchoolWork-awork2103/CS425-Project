@@ -1,5 +1,5 @@
 """System E: GPT-2 small (124M) checkpoints already fine-tuned on poetry, fully fine-tuned on the quatrains and then
-the disses (pipeline_gpt2.md). The checkpoints are listed under gpt2.models in config.yaml; all three share GPT-2's
+the disses (pipeline.md, Phase 3, System E). The checkpoints are listed under gpt2.models in config.yaml; all three share GPT-2's
 tokenizer.
 
 The prompt carries the same information as Systems A and D (traits, intensity and the four planned end words), and the

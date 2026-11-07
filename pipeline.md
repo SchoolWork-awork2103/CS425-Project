@@ -5,7 +5,7 @@
 **Pipeline at run time** (no API calls anywhere):
 user message → NLU → dialogue manager → rhyme planner → retrieval → generator (several candidates) → reranker → reply
 
-**Where an LLM is used** (offline, before training only): generating the modern AABB quatrain corpus for pretraining, the diss data, the NLU training data, intensity labels and two kinds of reranker negatives (flat and non-rhyming), and optionally as a second judge in evaluation. All of it uses Qwen3-32B-FP8 with thinking off. At run time the only LLM is System D's own Qwen2.5-1.5B, run locally; with its poem adapter turned off it can also stand in for the NLU, as a comparison (Phase 7).
+**Where an LLM is used** (offline, before training only): generating the modern AABB quatrain corpus for pretraining, the diss data, the NLU training data, intensity labels and two kinds of reranker negatives (flat and non-rhyming), and optionally as a second judge in evaluation. All of it uses Qwen3-32B-FP8 with thinking off. At run time the only pretrained language models are the generators' own (System D's Qwen2.5-1.5B, System E's GPT-2 small), run locally; with its poem adapter turned off, D's Qwen can also stand in for the NLU, as a comparison (Phase 7).
 
 **Priority tags**
 - **[Core]**: needed for a working, valid project
@@ -20,6 +20,7 @@ user message → NLU → dialogue manager → rhyme planner → retrieval → ge
 | B | GRU encoder-decoder with attention | Week 5 | Optional |
 | C | Small Transformer from scratch | Week 6 | Optional |
 | D | Qwen2.5-1.5B-Instruct + LoRA, run locally | Week 10 | Recommended |
+| E | GPT-2 small (124M), full fine-tune, Stage 1 + 2 | Week 6 | Optional |
 
 ---
 
@@ -30,7 +31,7 @@ user message → NLU → dialogue manager → rhyme planner → retrieval → ge
    plus a shared `requirements.txt`, fixed random seeds, and a `config.yaml` for paths and hyperparameters.
 2. **Compute:** Colab T4 for training; the LLM data (1a, 1b, 1d, 1e) is generated with vLLM on the cluster's 48 GB GPU (L40); checkpoints in a shared Drive folder with agreed names (e.g., `gen_A_stage2_best.pt`).
    - Each generation notebook loads its own copy of the model (about 40 GiB at `gpu_memory_utilization=0.90`), so run them one at a time and shut down the previous kernel first. `negatives_gen.ipynb` checks for free GPU memory before loading.
-   - Every notebook has a `MODE` switch: run `"pilot"` and read the output, then `"full"` with Restart & Run All. Raw output goes to `llm_out/` (`llm_pilot_out/` for pilots) and is copied to that dataset's `llm_out/` in the repo (e.g. `data/nlu/llm_out/`). Each dataset folder holds its notebook, its prepare script, `llm_out/` (raw) and `corpus/` (cleaned and split); the cluster working copies are kept in `archive/`.
+   - Every notebook has a `MODE` switch: run `"pilot"` and read the output, then `"full"` with Restart & Run All. Raw output goes to `llm_out/` (`llm_pilot_out/` for pilots) and is copied to that dataset's `llm_out/` in the repo (e.g. `data/nlu/llm_out/`). Each dataset folder holds its notebook, its prepare script, `llm_out/` (raw) and `corpus/` (cleaned and split); the cluster working copies are kept in `archive/`, along with the first prototype from before this pipeline (`archive/legacy/`: sonnets, the old diss CSV and `Train.ipynb`).
 3. **Trait list:** 40 positive traits, each with a "flip" angle and synonyms, in `data/traits.json`:
    ```json
    {"confident": {"flip": "arrogant, all talk", "synonyms": ["self-assured", "bold", "sure of myself"]}}
@@ -222,6 +223,47 @@ Then add:
   D knows held-out traits and is more varied, but with forward lines about 1 in 5 poems is not full AABB, which the reranker's `aabb_score` has to make up for. Test loss 1.455 for seen traits, 1.703 for held-out (per Qwen token, not comparable with A).
 - **Size comparison** [Optional]: the checkpoint name follows `MODEL_NAME`, so 0.5B and 3B (`gen_D_0.5b`, `gen_D_3b`; batch 4 × 4 for 3B on a T4) run from the same notebook, to show how much the planner and reranker add as the generator grows.
 
+### System E: GPT-2 small (124M), full fine-tune [Optional]
+- **Why:** a size point between A (9.3M GRU from scratch) and D (1.5B, instruction-tuned), so the report can show how rhyme, trait knowledge and fluency change with model size and pretraining; and a controlled test of poetry pretraining. Three GPT-2 small checkpoints share the architecture and tokenizer and differ only in what they were pretrained on:
+
+  | Run | Checkpoint | Pretrained on |
+  |---|---|---|
+  | E-poems | `ismaelfaro/gpt2-poems.en` | Kaggle poems (mostly modern) |
+  | E-crpo | `andreipb/gpt2-poetry-model-crpo` | Gutenberg Poetry Corpus (the old verse 1a rejected), 3 epochs |
+  | E-base | `gpt2` | no poetry (control) |
+
+  All three are MIT-licensed on Hugging Face. They share GPT-2's tokenizer, so their losses compare with each other but not with A or D.
+- **Prompt:** the same information as A and D, with D's end-word tags; GPT-2's own tokenizer, not the 8k BPE. Stage 1 quatrains have `Traits: none` and `Intensity: none`, as in System A; fallback disses have `Traits: none` with `mild` or `harsh`.
+  ```
+  Traits: romantic, wise
+  Intensity: mild
+  Rhymes: heart apart insight blight
+  Poem:
+  [heart] you say you fill life with romance and keep love near the heart,
+  [apart] but your cliches are so thick, they drive true feelings far apart.
+  ...<|endoftext|>
+  ```
+- **Training:** full fine-tune of all 124M parameters, AdamW, fp16, clipping at 1.0, 16 examples per step (batch 8 × 2; peak 3.3 GiB). Stage 1 on the quatrains at lr 5e-5, then Stage 2 on the disses at 1e-5, each up to 5 epochs with early stopping (patience 2), keeping the best val loss. Checkpoints save the model only (no optimizer state). Stage 2 takes about 12 minutes on a local GPU.
+- **Decoding:** D's repetition penalty, not Hugging Face's: Hugging Face's also covers the prompt, whose `Rhymes:` line holds the planned end words, so it pushed the model away from them. `top_k=0`, so only top-p applies, as in D. A stop ends the answer at the line break after its fourth line, and `generate()` returns `lines`, `text`, `logprob` and `norm_logprob`, the same keys as D.
+- **Penalty bug, found here:** the penalty changed the model's scores in place, and `generate()` computed the log-probability from those same scores, so it came out 3 to 10 nats too high per poem. Fixed for E (it now returns a new tensor; each log-probability matches a teacher-forced pass within 0.0015); D had the same bug, fixed and rescored in Phase 5.
+- **Code:** `generation/gpt2_lm.py` (12 unit tests in `generation/test_gpt2_lm.py`), `generation/train_gpt2.ipynb` (Colab or local; samples the same 40 + 40 prompts as D and scores them with D's `report()`), settings under `gpt2:` in `config.yaml`. Checkpoints `gen_E_{poems|crpo|base}_stage{1|2}_best/` on the Drive; the app loads `gen_E_base_stage2_best/` (`gpt2.checkpoint`).
+- **Result** (`eval/results/gen_E/`, 2026-11-01; the same 40 + 40 prompts × 4 samples as D, with the real disses' end words):
+
+  | Run | Stage 2 val loss | Test loss, seen / held-out | Full AABB, seen / held-out | Held-out trait mentions |
+  |---|---|---|---|---|
+  | E-poems, Stage 1 + 2 | 1.925 | 1.929 / 2.090 | 64% / 79% | 21% |
+  | E-crpo, Stage 1 + 2 | 1.820 | 1.821 / 2.001 | 71% / 84% | 39% |
+  | **E-base, Stage 1 + 2** | **1.786** | **1.785 / 1.970** | 74% / 83% | 39% |
+  | E-base, Stage 2 only | 1.933 | 1.939 / 2.159 | 13% / 11% | 23% |
+  | D (for reference) | (other tokenizer) | | 81% / 79% | 69% |
+
+  - **Poetry pretraining does not help.** E-base has the lowest loss at every epoch and is level with E-crpo on samples; E-poems is behind on both. A likely reason: the disses are modern, conversational English, closer to GPT-2's web text than to either poetry set, and the quatrains already teach the form. E-base is carried forward as System E. E-crpo's lines are modern English, not archaic, after fine-tuning. The report should give this as a negative finding.
+  - **Stage 1 is essential for E:** without it, only about half the lines end on the planned word and full AABB falls from about 80% to about 12%. D reaches 81% without Stage 1 because it was instruction-tuned. Caveat: the Stage 2-only run kept lr 1e-5, which may undertrain a model starting from plain GPT-2, but a gap this large is unlikely to close.
+  - **Form can be taught; knowledge of unseen traits comes from pretraining.** E's rhyme is close to D's (74% / 83% against 81% / 79%), but held-out trait mentions climb with model size: A 0%, E 39%, D 69%.
+  - In every full run, Stage 1 was best at epoch 4, and Stage 2 was still improving at the 5-epoch cap, by under 0.01. Distinct-2 0.63 (D 0.66, A 0.55). The checkpoints' habits (`<start>` tags, a literal `\n`, capitals) are gone after fine-tuning.
+  - Like D, E sometimes bends grammar to reach the end word ("you call yourself smart, always talking with a bright"). These numbers use the real disses' end words; with the planner's, D fell to 54% full AABB (Phase 5), and E has not been measured on them yet.
+- **Not done** [Optional]: *reversed lines* like A. They would force every end word, but they waste GPT-2's forward English pretraining, and A already shows what forcing does. *Stage 2 only at lr 5e-5*. It would separate the missing quatrains from the learning rate, but the gap is too large (74% against 13%) for it to change the conclusion.
+
 ### Decoding, for all systems
 - Top-p 0.9, temperature 0.8, repetition penalty.
 - **Batch** generation, e.g. `num_return_sequences=10` in a single call.
@@ -269,8 +311,8 @@ Then add:
    ```
    Normalize log-probability by length, otherwise short poems win.
    - **Code:** `reranker/rerank.py`: `Reranker().rerank(traits, candidates, history=())` takes the generators' `generate()` output (dicts with `lines` and `norm_logprob`) and returns the kept candidates best first, each with its `score` and `features`. Weights are `reranker.weights` in `config.yaml`. `history` is the conversation's earlier replies (Phase 7).
-   - **Features**, all in [0, 1]: `logprob` is the length-normalized log-probability min-max scaled over the request's candidates (A's and D's are on different scales, and only the order within a request matters); `aabb`, `syllables` and `lexical` from the phonetic module (lexical with the GloVe vocabulary); `trait_fit` from the classifier, 0.5 for every candidate when the request has no traits; `repetition` is the share of content words that repeat an earlier one in the poem; `toxicity` is the highest of the Detoxify scores that have a limit in `toxicity`. With a history, `history` is the highest ROUGE-L against an earlier reply when above 0.5 (`reranker.history_rouge`), else 0, subtracted with weight 1 (not tuned: the rated candidates had no history).
-   - **Weights:** equal (all 1), with w3 tied to w2. The hand ratings could not tell weight settings apart (step 5).
+   - **Features**, all in [0, 1]: `logprob` is the length-normalized log-probability min-max scaled over the request's candidates (A's, D's and E's are on different scales, and only the order within a request matters); `aabb`, `syllables` and `lexical` from the phonetic module (lexical with the GloVe vocabulary); `trait_fit` from the classifier, 0.5 for every candidate when the request has no traits; `repetition` is the share of content words that repeat an earlier one in the poem; `toxicity` is the highest of the Detoxify scores that have a limit in `toxicity`. With a history, `history` is the highest ROUGE-L against an earlier reply when above 0.5 (`reranker.history_rouge`), else 0, subtracted with weight 1 (not tuned: the rated candidates had no history).
+   - **Weights:** equal (all 1), with w3 tied to w2. The hand ratings could not tell weight settings apart (step 5). They were tuned on A and D candidates only; System E's go through the same filters and score.
    - **Speed:** about 1 s per request of 20 candidates on CPU, after the first call, which loads Detoxify and DistilBERT (about 15 s).
 3. **Hard filters first:** drop any candidate that isn't 4 lines, reaches one of the Detoxify limits in `toxicity` (the same limits the disses were filtered with), or has a lexical score below 0.8 (`reranker.lexical_min` in `config.yaml`), and any exact repeat of a poem in the history.
 4. **Order for speed:** run the instant checks on all candidates, then run DistilBERT on the top 5 only.
@@ -391,13 +433,13 @@ DialogueState(traits=[], intensity="mild", awaiting=None, history=[], last_plan=
 
 # Phase 8: Integration [Core]
 
-1. `Pipeline.respond(message, state)` (`app/pipeline.py`) chains every module: interpreter → dialogue manager → `RhymePlanner.plan(traits, k=2)` → 10 candidates per plan from A or D → `Reranker.rerank(traits, candidates, history)`.
+1. `Pipeline.respond(message, state)` (`app/pipeline.py`) chains every module: interpreter → dialogue manager → `RhymePlanner.plan(traits, k=2)` → 10 candidates per plan from A, D or E → `Reranker.rerank(traits, candidates, history)`.
    - The reply is the best full-AABB candidate (`dialogue.require_aabb`).
    - If none is full AABB, it samples one more batch (`dialogue.generation_retries`), then replies with the reranker's best of any rhyme.
    - Only the poem sent is added to `history`, with its planned and actual end words.
    - Missing models or files give a recoverable message, and the state is unchanged.
-2. Gradio chat UI (`python -m app.chat`, Blocks) with a dropdown to pick the generator, a reset button and the state kept per browser session.
-3. Confirm it runs on a laptop CPU and measure the average response time per system. System A with the NLU on CPU: median 3.9 s per turn (p95 4.6 s) over the 61 test turns, almost all of it generation and reranking; the NLU takes 0.03 s. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU (`--device cuda`) with a CUDA build of PyTorch. Not measured yet.
+2. Gradio chat UI (`python -m app.chat`, Blocks) with a dropdown to pick the generator (A, D or E, labelled with model and size; `--system` picks the starting one), a reset button and the state kept per browser session.
+3. Confirm it runs on a laptop CPU and measure the average response time per system. System A with the NLU on CPU: median 3.9 s per turn (p95 4.6 s) over the 61 test turns, almost all of it generation and reranking; the NLU takes 0.03 s. System D (1.5B) is slow on a CPU alone; for the demo, run it on the laptop GPU (`--device cuda`) with a CUDA build of PyTorch. Not measured yet. System E (124M) should be much faster than D on a CPU, which would make it a demo option; not measured yet. Record the GPU clock with GPU latencies, since a throttled run can't otherwise be told apart (a TODO in `eval/run_dialogue_eval.py`).
 4. One-command run script and a README with setup steps, which covers the brief's "executable conditions": `README.md`, `python -m app.setup_assets` (checks the files, and `--download` fetches the public ones), `python -m app.chat --device cuda`.
 
 ---
@@ -415,18 +457,18 @@ DialogueState(traits=[], intensity="mild", awaiting=None, history=[], last_plan=
 | Trait relevance | trait-fit classifier, embedding similarity |
 | Diversity | distinct-1/2 |
 | Memorization | maximum 4-gram overlap with training data |
-| Perplexity | diss test set (compare only systems with the same tokenizer) |
+| Perplexity | diss test set (compare only systems with the same tokenizer: the E runs with each other) |
 | Response time | per system, on CPU |
 | NLU | intent accuracy, slot F1 |
 
 ### Ablations [Core]
-For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table.
+For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table. Done so far: A forward against reversed lines (Phase 3) and E with and without Stage 1 (Phase 3), both with the real disses' end words.
 
 ### Dialogue evaluation [Recommended]
 24 frozen scripted conversations (61 turns: another one, no traits, adding, removing and replacing traits, make it meaner, unknown and held-out traits, generic, cancel, reset) in `eval/dialogue_test.jsonl`, each turn with its gold turn and the expected state; `eval/dialogue_dev.jsonl` (3) is for development. `python -m eval.run_dialogue_eval` reports task success per turn (state, decision and pending question all as expected) into `eval/results/dialogue/`:
 - `--mode policy`: the dialogue manager on the gold turns: 61/61.
 - `--mode interpreter --backend nlu|qwen`: the real interpreter, no generation.
-- `--mode integrated --system A|D`: the whole pipeline.
+- `--mode integrated --system A|D|E`: the whole pipeline.
 
 | NLU interpreter, System A, CPU | |
 |---|---|
@@ -441,7 +483,7 @@ For each system built: with and without Stage 1 pretraining, rhyme planning, rer
 - **Qwen interpreter:** one earlier run on an older prompt and fixture set got 16/58. Rerun on these fixtures before comparing.
 
 ### Human evaluation [Core]
-1. 30 prompts × 4 configurations (e.g., A-base, A-full, D-base, D-full) = 120 outputs.
+1. 30 prompts × 4 configurations (e.g., A-base, A-full, D-base, D-full) = 120 outputs. Swap an E configuration in for an A one only if E clearly beats A.
 2. 3–5 raters **outside the team**, outputs shown blind and in random order.
 3. Ratings 1–5 for coherence, trait relevance, humour, poetic quality and rhyme.
 4. Report means, Krippendorff's alpha and Wilcoxon tests. Report the held-out traits separately.
@@ -453,7 +495,8 @@ For each system built: with and without Stage 1 pretraining, rhyme planning, rer
 
 - **Report:** motivation → architecture diagram → data (including how the LLM was used offline, and why a generated modern quatrain corpus replaced Gutenberg) → each module → experiments → results and ablations → error analysis with examples → limitations and ethics. In the scope section, explain why you chose AABB quatrains only: one well-defined form lets you measure rhyme control precisely and put the effort into quality instead of breadth.
 - **Demo:** a live multi-turn chat showing a diss, "another one", adding a trait, an intensity change and a held-out trait.
-- **New contributions to state explicitly:** rhyme-plan conditioning, the phonetic plus BERT reranker, the multi-turn dialogue layer, and the architecture comparison with ablations.
+- **New contributions to state explicitly:** rhyme-plan conditioning, the phonetic plus BERT reranker, the multi-turn dialogue layer, and the architecture comparison with ablations, including the System E finding that poetry pretraining did not help (plain GPT-2 did as well as or better than both poetry checkpoints).
+- **Limitations to mention:** GPT-2 is not instruction-tuned, so E learns the prompt format only from fine-tuning; the CMUdict rhyme check misses pronunciation variants and unknown words, and AABB form says nothing about coherence or humour; sampling is random, so systems are compared on many prompts, with human ratings. Record the sources and licences of the pretrained checkpoints (Qwen2.5, GPT-2 and the two poetry checkpoints).
 
 ---
 
