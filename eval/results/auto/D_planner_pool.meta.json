@@ -3,7 +3,8 @@
   "system": "D",
   "plans": "planner",
   "seeds": [
-    0
+    425,
+    2026
   ],
   "device": "cuda",
   "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",

@@ -98,8 +98,8 @@ Phonetics (`phonetics/`, `data/form_checks.py`) sits under all of this: it filte
 | 7 | Interpreter | [dialogue/interpreter.py](dialogue/interpreter.py) | `NLUInterpreter` (default) or `QwenInterpreter` (comparison): message → validated turn | ✅ NLU 36/61 turns; Qwen ⬜ not measured on these fixtures |
 | 8 | Pipeline + Gradio UI | [app/pipeline.py](app/pipeline.py), [app/chat.py](app/chat.py) | `Pipeline.respond(message, state, system)`, Gradio Blocks, A / D / E dropdown | ✅ A on CPU: 48/48 roasts, median 3.9 s; D on GPU and E ⬜ not run |
 | 8 | Run script + README | [README.md](README.md), [app/setup_assets.py](app/setup_assets.py) | `python -m app.chat --device cuda` | ✅ |
-| 9 | Automatic eval on 50 prompts | [eval/run_auto_eval.py](eval/run_auto_eval.py), [auto_metrics.py](eval/auto_metrics.py) | `generate` (candidate pool per system) → `analyse` → `eval/results/auto/summary.json`, `comparison.json`; also the planner, reranker and candidates ablations | 🟡 code written, not yet run on all systems |
-| 9 | Ablations | | with/without Stage 1, planner, reranker, retrieval; quality vs. candidates | 🟡 A forward vs. reversed, E with vs. without Stage 1 |
+| 9 | Automatic eval on 50 prompts | [eval/run_auto_eval.py](eval/run_auto_eval.py), [auto_metrics.py](eval/auto_metrics.py) | `generate` (candidate pool per system) → `analyse` → `eval/results/auto/summary.json`, `comparison.json`; also the planner, reranker and candidates ablations | ✅ A, D and E, 3 seeds (2026-11-08); results in pipeline.md, Phase 9 |
+| 9 | Ablations | [eval/run_auto_eval.py](eval/run_auto_eval.py) | with/without Stage 1, planner, reranker, retrieval; quality vs. candidates | ✅ planner, reranker and 1/5/10/20/40 candidates for A, D and E on the frozen prompts; Stage 1 for E, forward vs. reversed for A; retrieval not built (no Stage 1 ablation for A) |
 | 9 | Dialogue eval | [eval/run_dialogue_eval.py](eval/run_dialogue_eval.py), [eval/dialogue_test.jsonl](eval/dialogue_test.jsonl) | 24 conversations / 61 turns → `eval/results/dialogue/` | 🟡 NLU done; Qwen, System D and System E not run |
 | 9 | Human eval | | 30 prompts × 4 configs, 3–5 outside raters | ⬜ |
 | 10 | Report and demo | | | ⬜ |
@@ -135,8 +135,8 @@ The evaluation the report needs, now that the product runs end to end.
 
 1. **Systems D and E in the chat**: done on the GPU (2026-11-07): the integrated dialogue eval gives all three systems the same 36/61, with a median of 3.3 s per turn for A (CPU), 4.0 s for E and 13.2 s for D (GPU, same laptop; pipeline.md, Phase 8). Still to do: D and E on the CPU alone, a look at their replies, and recording the GPU clock with GPU latencies (TODO in `eval/run_dialogue_eval.py`).
 2. **Qwen interpreter** on the dialogue test set (`--mode interpreter --backend qwen --device cuda`, needs the base model, about 3 GB), against the NLU's 36/61, before the report says which one is used. The 6 unknown-trait gold turns were written for Qwen (they expect a clarification question, where the NLU uses the nearest trait and says so): rewrite them or report the difference.
-3. **Automatic eval** on the 50 frozen prompts for A, D and E, through the rhyme planner (rhyme, syllables, format, lexical, trait-fit, distinct-1/2, 4-gram memorization, perplexity, time). This is also the Week 10 checkpoint. The prompts carry `intensity: null`; use `mild`, the dialogue default.
-4. **Ablations**: no Stage 1 (A; E is done), no planner (unconstrained end words), no reranker (first candidate), and quality against 5/10/20/40 candidates.
+3. **Automatic eval** on the 50 frozen prompts: done (2026-11-08, `eval/run_auto_eval.py`, 3 seeds). With the reranker all three return a full-AABB poem almost every time; D and E are level on form and trait mentions (86% and 87%), A trails at 67% and never names a held-out trait (pipeline.md, Phase 9).
+4. **Ablations**: done for the planner, the reranker and 1/5/10/20/40 candidates (A, D, E) and Stage 1 (E). Still open: no Stage 1 for A.
 5. **Human eval**: 30 prompts × 4 configs (A-base, A-full, D-base, D-full; E replaces A only if it clearly beats it), 3–5 raters outside the team, Krippendorff's alpha and Wilcoxon tests, held-out traits reported apart.
 6. **Report and demo.**
 

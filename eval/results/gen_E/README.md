@@ -230,4 +230,39 @@ roasts; results in `eval/results/dialogue/integrated_nlu_E.json`), next to D on 
 
 - The turn scores are the same for every generator: they come from the NLU and the dialogue manager. What E changes is
   the speed: about 3 times faster than D on the GPU, with under 40% of its memory.
-- Still to measure: E and D on the CPU alone, where E's size should matter most.
+- On the CPU alone (`integrated_nlu_E_cpu.json`), E takes a median of 22.9 s per turn (p95 28.7 s), against 3.3 s for
+  A: 20 candidates from a 124M model, and the reranker's models on the CPU too. E is a fast option only with a GPU. D
+  on the CPU alone was too slow to finish.
+
+## Frozen prompts (2026-11-08)
+
+The automatic evaluation (`eval/run_auto_eval.py`; pipeline.md, Phase 9): the 50 frozen prompts, gold traits, the
+planner's rhyme words, 3 seeds, the app's reranker and choice rule. E against D and A:
+
+| | E | D | A |
+|---|---|---|---|
+| Full AABB | 98% | 100% | 100% |
+| Lines ending on the planned word | 97% | 98% | 100% |
+| Names a trait (45 prompts) | 87% | 86% | 67% |
+| Names a held-out trait (5 prompts) | 60% | 80% | 0% |
+| Embedding similarity to the traits | 0.50 | 0.53 | 0.45 |
+| Distinct-2 | 0.72 | 0.75 | 0.64 |
+| 4-gram overlap with the training disses | 15% | 16% | 23% |
+
+How E's full AABB depends on the reranker and the number of candidates:
+
+| Candidates | 1 (no reranker) | 5 | 10 | 20 (the app) | 40 |
+|---|---|---|---|---|---|
+| E | 41% | 81% | 92% | 97% | 98% |
+| D | 74% | 99% | 100% | 100% | 100% |
+
+- **E is level with D on form and on naming the traits** (paired over the prompts: no significant difference in full
+  AABB, end-word hit or trait mention). D is slightly closer in meaning (embedding +0.025, p = 0.03) and better on
+  held-out traits (80% against 60%, but only 5 prompts).
+- **E depends on the reranker much more than D.** Its first candidate is full AABB only 41% of the time with the
+  planner's end words (74% with the real disses' end words in the sample checks above), so it needs about 20
+  candidates where D needs about 5.
+- **The planner** makes E's poems closer in meaning to the traits (embedding 0.46 → 0.50, p = 0.004) at a small cost in
+  end-word hit (100% → 97%); E names the traits from the prompt either way (86% → 87%).
+- Together with the speed above: E gives D's form and trait naming at about a third of D's time on a GPU, which makes it
+  the faster demo option when a GPU is there, while D stays better on traits it never saw.

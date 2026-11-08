@@ -261,7 +261,8 @@ Then add:
   - **Stage 1 is essential for E:** without it, only about half the lines end on the planned word and full AABB falls from about 80% to about 12%. D reaches 81% without Stage 1 because it was instruction-tuned. Caveat: the Stage 2-only run kept lr 1e-5, which may undertrain a model starting from plain GPT-2, but a gap this large is unlikely to close.
   - **Form can be taught; knowledge of unseen traits comes from pretraining.** E's rhyme is close to D's (74% / 83% against 81% / 79%), but held-out trait mentions climb with model size: A 0%, E 39%, D 69%.
   - In every full run, Stage 1 was best at epoch 4, and Stage 2 was still improving at the 5-epoch cap, by under 0.01. Distinct-2 0.63 (D 0.66, A 0.55). The checkpoints' habits (`<start>` tags, a literal `\n`, capitals) are gone after fine-tuning.
-  - Like D, E sometimes bends grammar to reach the end word ("you call yourself smart, always talking with a bright"). These numbers use the real disses' end words; with the planner's, D fell to 54% full AABB (Phase 5), and E has not been measured on them yet.
+  - Like D, E sometimes bends grammar to reach the end word ("you call yourself smart, always talking with a bright"). These numbers use the real disses' end words. With the planner's (frozen prompts, Phase 9), E's first candidate is full AABB only 41% of the time (D 74%), and the reranker lifts that to 98% (D 100%).
+- **In the app** (Phases 8 and 9): on the frozen prompts E is level with D on form and on naming the traits (full AABB 98% against 100%, trait mentions 87% against 86%), slightly less close in meaning to the traits (embedding similarity 0.50 against 0.53) and weaker on held-out traits (60% against 80%, 5 prompts). It answers about 3 times faster on the GPU (4.0 s against 13.2 s per turn) with under 40% of D's memory, but on the CPU alone it takes 22.9 s per turn, so without a GPU A is the demo generator. E relies on the reranker more than D does: full AABB rises from 81% with 5 candidates to 97% with 20.
 - **Not done** [Optional]: *reversed lines* like A. They would force every end word, but they waste GPT-2's forward English pretraining, and A already shows what forcing does. *Stage 2 only at lr 5e-5*. It would separate the missing quatrains from the learning rate, but the gap is too large (74% against 13%) for it to change the conclusion.
 
 ### Decoding, for all systems
@@ -494,9 +495,56 @@ python -m eval.run_auto_eval analyse --device cuda                             #
 - **Metrics** on the chosen poem: returned, four lines, strict AABB (both couplets rhyme, A ≠ B), end-word hit, `syllable_score`, `lexical_score`, trait mention, trait fit (DistilBERT), embedding similarity to the trait descriptions (MiniLM), 4-gram overlap with the training disses and copied lines, distinct-1/2 (per seed, over the chosen poems) and time (`full`: generation of the batches used plus reranking). A request with no poem scores 0 on returned, four lines, AABB and end-word hit, and is left out of the rest. The reranker chooses by trait fit, so for configurations with it, trait mention and embedding similarity are the fairer trait measures; human ratings are the independent check.
 - **Statistics:** the unit is the prompt (a prompt's poems are not independent). Per prompt, each metric is averaged over the seeds; `summary.json` gives 95% bootstrap intervals over prompts, overall and per category (n = 5 for held-out and unclear: about ±40 points on a rate, so read them as indications), plus the spread over seeds. `comparison.json` compares each system's `full` with its other configurations and the systems with each other, prompt by prompt (mean difference with a bootstrap interval, Wilcoxon signed-rank p, prompts better and worse). Log-probability is never compared across systems (different tokenizers), and perplexity comes from each system's test loss (Phase 3), since the frozen prompts have no reference poems.
 - **Time:** one untimed request first, so loading the models is not counted. Run plugged in (a laptop GPU on battery can be several times slower).
+- **Result** (2026-11-08; 50 prompts × 3 seeds (0, 425, 2026), 40 candidates per prompt and seed; `eval/results/auto/`). The app as used (`full`), with 95% bootstrap intervals over prompts where they matter:
+
+  | | A (GRU) | D (Qwen2.5-1.5B + LoRA) | E (GPT-2 small) |
+  |---|---|---|---|
+  | Poem returned, four lines | 100% | 100% | 100% |
+  | Full AABB (strict) | 100% | 100% | 98% [95–100] |
+  | Lines ending on the planned word | 100% | 98% | 97% |
+  | `syllable_score` / `lexical_score` | 1.00 / 0.99 | 1.00 / 1.00 | 0.99 / 0.99 |
+  | Names a trait or synonym (45 prompts) | 67% [55–77] | 86% [78–93] | 87% [80–94] |
+  | … single / multi / held-out traits | 78% / 72% / 0% | 80% / 93% / 80% | 87% / 95% / 60% |
+  | Embedding similarity to the traits | 0.45 [0.42–0.49] | 0.53 [0.50–0.55] | 0.50 [0.48–0.53] |
+  | Trait fit (DistilBERT; the reranker selects by it) | 0.96 | 0.99 | 0.95 |
+  | Distinct-1 / distinct-2 | 0.26 / 0.64 | 0.32 / 0.75 | 0.30 / 0.72 |
+  | 4-gram overlap with the training disses / whole lines copied | 23% / 0% | 16% / 0% | 15% / 0% |
+
+  - Full AABB was the same in all three seeds for every system (spread 0), and no request went unanswered: all three systems return a full-AABB poem for almost every prompt once the reranker has 20 candidates to choose from. The 5 unclear (no-trait) prompts are full AABB for all three.
+  - **D and E are level on form and on naming the traits** (paired: no significant difference in full AABB, end-word hit or trait mention, p ≥ 0.18). D is slightly closer in meaning to the traits (embedding +0.025, p = 0.03) and better on held-out traits (80% against 60%, 5 prompts: an indication only). E answers about 3 times faster on a GPU (Phase 8).
+  - **A rhymes perfectly but is the least on topic:** about 20 points fewer trait mentions than D and E (p ≤ 0.012), lower embedding similarity (p < 0.001), no held-out trait ever, and the most reused training phrasing (23% of 4-grams).
+  - **Not comparable here:** perplexity (each system's test loss, Phase 3), and time: this run's generation times rose with the laptop's temperature (D went from about 24 s to 42 s per prompt partway through seed 0), so the response times are the dialogue evaluation's (Phase 8). Trait fit is partly circular for configurations with the reranker, which selects by it; trait mention and embedding similarity are the fairer trait measures. Nothing here measures humour or sense: that is the human evaluation.
 
 ### Ablations [Core]
-For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table. Done so far: A forward against reversed lines (Phase 3) and E with and without Stage 1 (Phase 3), both with the real disses' end words.
+For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table. Done: A forward against reversed lines (Phase 3) and E with and without Stage 1 (Phase 3), both with the real disses' end words; and on the frozen prompts (`eval/run_auto_eval.py`, 3 seeds, paired over the 50 prompts), the reranker, the planner and the number of candidates for A, D and E. Retrieval was not built.
+
+- **Reranker** (`full` against `no_reranker`, the first candidate of plan 1, unfiltered):
+
+  | | Full AABB | End-word hit | Trait mention | 4-gram overlap |
+  |---|---|---|---|---|
+  | A | 100% → 100% | 100% → 100% | 55% → 67% (p = 0.07) | 16% → 23% |
+  | D | 74% → 100% (p < 0.001) | 91% → 98% (p < 0.001) | 79% → 86% (p = 0.04) | 11% → 16% |
+  | E | 41% → 98% (p < 0.001) | 77% → 97% (p < 0.001) | 77% → 87% (p = 0.02) | 10% → 15% |
+
+  The reranker turns the forward-writing generators' rhyme from unreliable into near-certain, most of all for E, and it also raises trait mentions a little. Its side effect, for every system (p < 0.001): it prefers familiar phrasing, so overlap with the training disses rises by 5 to 7 points and distinct-2 falls (A 0.70 → 0.64, D 0.80 → 0.75, E 0.79 → 0.72). No line is ever copied whole.
+- **Number of candidates** (the best of the first k, the two plans in turn):
+
+  | Full AABB | 1 | 5 | 10 | 20 | 40 |
+  |---|---|---|---|---|---|
+  | A | 100% | 100% | 100% | 100% | 100% |
+  | D | 74% | 99% | 100% | 100% | 100% |
+  | E | 41% | 81% | 92% | 97% | 98% |
+
+  D needs about 5 candidates, E about 20 (the app's setting); 40 adds 1 point for E. Trait mentions creep up with k too (E 79% → 84% → 87% → 90% from 5 to 40; A 56% → 68%).
+- **Planner** (`full` against `no_planner`, two random rhyming end-word pairs from the training disses):
+
+  | | Embedding similarity | Trait mention | End-word hit | 4-gram overlap |
+  |---|---|---|---|---|
+  | A | 0.34 → 0.45 (p < 0.001) | 46% → 67% (p = 0.003) | 100% → 100% | 30% → 23% |
+  | D | 0.49 → 0.53 (p = 0.005) | 83% → 86% (n.s.) | 100% → 98% (p = 0.03) | 18% → 16% |
+  | E | 0.46 → 0.50 (p = 0.004) | 86% → 87% (n.s.) | 100% → 97% (p = 0.03) | 18% → 15% |
+
+  The planner's contribution is topic: its trait-related end words make every system's poems closer in meaning to the traits. For A, which cannot read a trait, it is essential (+21 points of trait mentions); D and E name the traits from the prompt anyway. The cost is small: the planner's words are slightly harder to land (2 to 3 points of end-word hit for D and E; full AABB unchanged after reranking), while the random training pairs make poems reuse more training phrasing, and A copied a whole training line in 7% of its poems with them (0% with the planner's).
 
 ### Dialogue evaluation [Recommended]
 24 frozen scripted conversations (61 turns: another one, no traits, adding, removing and replacing traits, make it meaner, unknown and held-out traits, generic, cancel, reset) in `eval/dialogue_test.jsonl`, each turn with its gold turn and the expected state; `eval/dialogue_dev.jsonl` (3) is for development. `python -m eval.run_dialogue_eval` reports task success per turn (state, decision and pending question all as expected) into `eval/results/dialogue/`:

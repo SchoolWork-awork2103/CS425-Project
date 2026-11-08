@@ -3,7 +3,8 @@
   "system": "A",
   "plans": "planner",
   "seeds": [
-    0
+    425,
+    2026
   ],
   "device": "cpu",
   "gpu": null,
