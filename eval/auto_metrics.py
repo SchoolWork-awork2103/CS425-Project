@@ -85,6 +85,17 @@ def choose(batches, rerank, select):
     return None, len(batches), len(ranked) if batches else 0
 
 
+def first_safe(candidates, toxicity, limits, chunk=5):
+    """The first candidate under every toxicity limit, or None: the generator alone, with only the safety filter.
+    toxicity(texts) gives one dict of scores per text; candidates are checked a few at a time, in order."""
+    for i in range(0, len(candidates), chunk):
+        part = candidates[i:i + chunk]
+        for c, t in zip(part, toxicity(["\n".join(c["lines"]) for c in part])):
+            if all(t[k] < lim for k, lim in limits.items()):
+                return c
+    return None
+
+
 def mean(values):
     values = [v for v in values if v is not None]
     return sum(values) / len(values) if values else None
@@ -118,6 +129,47 @@ def paired(a, b, bs=2000, seed=0):
             pass
     res["better"], res["worse"] = sum(d > 0 for d in diffs), sum(d < 0 for d in diffs)
     return res
+
+
+def krippendorff_alpha(units, metric="ordinal"):
+    """Krippendorff's alpha for ratings: units[i] is the list of values the raters gave unit i (missing ones left
+    out; units with fewer than two values do not count). metric: "nominal", "ordinal" (the default, for 1-5 ratings)
+    or "interval". 1 is perfect agreement, 0 is chance."""
+    units = [u for u in units if len(u) >= 2]
+    values = sorted({v for u in units for v in u})
+    index = {v: i for i, v in enumerate(values)}
+    size = len(values)
+    o = [[0.0] * size for _ in range(size)]                  # coincidence matrix
+    for u in units:
+        for a in range(len(u)):
+            for b in range(len(u)):
+                if a != b:
+                    o[index[u[a]]][index[u[b]]] += 1 / (len(u) - 1)
+    n_c = [sum(row) for row in o]
+    n = sum(n_c)
+
+    def delta(c, k):
+        if metric == "nominal":
+            return float(c != k)
+        if metric == "interval":
+            return (values[c] - values[k]) ** 2
+        lo, hi = min(c, k), max(c, k)
+        return (sum(n_c[lo:hi + 1]) - (n_c[c] + n_c[k]) / 2) ** 2
+
+    observed = sum(o[c][k] * delta(c, k) for c in range(size) for k in range(size))
+    expected = sum(n_c[c] * n_c[k] * delta(c, k) for c in range(size) for k in range(size)) / (n - 1) if n > 1 else 0
+    return 1.0 if expected == 0 else 1 - observed / expected
+
+
+def holm(pvalues):
+    """Holm-Bonferroni adjusted p-values, in the given order (None stays None): controls the chance of any false
+    positive across a family of tests."""
+    order = sorted((p, i) for i, p in enumerate(pvalues) if p is not None)
+    adjusted, running = [None] * len(pvalues), 0.0
+    for rank, (p, i) in enumerate(order):
+        running = max(running, min(1.0, (len(order) - rank) * p))
+        adjusted[i] = running
+    return adjusted
 
 
 def spread(values):

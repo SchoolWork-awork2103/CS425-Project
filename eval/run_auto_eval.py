@@ -27,6 +27,8 @@ analyse: each configuration picks one poem per prompt and seed, the way the app 
   no_reranker  the first candidate of plan 1, unfiltered: what the generator alone gives
   k5 ... k40   rerank the first k candidates, plans in turn, as one batch: quality against number of candidates
   no_planner   full, on the random-plan pool
+  base         the first candidate of the random-plan pool under every toxicity limit: the generator alone (no planner,
+               no reranker), with only the safety filter, so it can be shown to the human raters
 Metrics on the chosen poem (eval/auto_metrics.py): returned, four lines, strict AABB, end-word hit, syllable_score,
 lexical_score, trait mention, trait fit (the reranker's DistilBERT), embedding similarity to the trait descriptions
 (MiniLM), 4-gram overlap with the training disses and copied lines, distinct-1/2, and time (full only). A request with
@@ -35,7 +37,9 @@ trait fit, so trait mention and embedding similarity are the fairer trait measur
 Per prompt, metrics are averaged over seeds; intervals are 95% bootstrap over prompts, and comparisons are paired.
 
 Files in eval/results/auto/: <system>_<plans>_pool.jsonl (every candidate) with <system>_<plans>_pool.meta.json (how
-it was made), summary.json (every metric, overall and per category) and comparison.json (paired differences).
+it was made), summary.json (every metric, overall and per category), comparison.json (paired differences) and
+chosen.jsonl (the poem each configuration chose for each prompt and seed, with its metrics: the human evaluation's
+input).
 """
 import argparse
 from collections import defaultdict
@@ -55,7 +59,8 @@ from phonetics import lexical_score, rhymes, same_sound, syllable_score
 from utils import load_config
 
 OUT = ROOT / "eval/results/auto"
-CONFIGS = ["full", "no_reranker", "k5", "k10", "k20", "k40", "no_planner"]
+CONFIGS = ["full", "no_reranker", "k5", "k10", "k20", "k40", "no_planner", "base"]
+RANDOM_PLAN_CONFIGS = ("no_planner", "base")
 METRICS = ["returned", "four_lines", "aabb", "end_word_hit", "syllables", "lexical", "mention", "trait_fit",
            "embedding", "overlap", "copied_line", "seconds"]
 COMPARED = ["returned", "aabb", "end_word_hit", "syllables", "lexical", "mention", "trait_fit", "embedding", "overlap"]
@@ -179,15 +184,16 @@ def analyse(cfg, device="cpu", out=OUT, bootstrap=2000):
     train = M.training_ngrams(read_jsonl(ROOT / cfg["paths"]["diss_dir"] / "train.jsonl"))
     encoder = SentenceTransformer(cfg["nlu"]["span_encoder"], device=device)
 
-    # records[(system, config)][prompt][seed] = metrics; chosen[(system, config)][seed] = poems, for distinct-n
-    records, chosen_poems = defaultdict(lambda: defaultdict(dict)), defaultdict(lambda: defaultdict(list))
+    # records[(system, config)][prompt][seed] = metrics; chosen[(system, config)][seed] = poems, for distinct-n;
+    # picks: every chosen poem, for chosen.jsonl
+    records, chosen_poems, picks = defaultdict(lambda: defaultdict(dict)), defaultdict(lambda: defaultdict(list)), []
     for system in GENERATORS:
         pipeline = Pipeline(cfg, system, device, reranker=reranker)
         for plans_mode in ("planner", "random"):
             path = pool_path(out, system, plans_mode)
             if not path.exists():
                 continue
-            configs = ["no_planner"] if plans_mode == "random" else [c for c in CONFIGS if c != "no_planner"]
+            configs = [c for c in CONFIGS if (c in RANDOM_PLAN_CONFIGS) == (plans_mode == "random")]
             for row in read_jsonl(path):
                 p = prompts.get(row["prompt"])
                 if p is None or row["error"]:
@@ -197,6 +203,9 @@ def analyse(cfg, device="cpu", out=OUT, bootstrap=2000):
                     if config == "no_reranker":
                         first = next(c for c in row["candidates"] if (c["plan"], c["batch"], c["sample"]) == (0, 0, 0))
                         best, used = {**first, "planned_end_words": row["plans"][0]}, 1
+                    elif config == "base":
+                        safe = M.first_safe(row["candidates"], reranker.toxicity, reranker.limits)
+                        best, used = None if safe is None else {**safe, "planned_end_words": row["plans"][safe["plan"]]}, 1
                     else:
                         best, used, _ = M.choose(config_batches(row, config, batches),
                                                  lambda c: reranker.rerank(p["traits"], c), pipeline._select)
@@ -211,6 +220,12 @@ def analyse(cfg, device="cpu", out=OUT, bootstrap=2000):
                     records[(system, config)][row["prompt"]][row["seed"]] = m
                     if best is not None:
                         chosen_poems[(system, config)][row["seed"]].append(best["lines"])
+                    picks.append({"system": system, "config": config, "prompt": row["prompt"], "seed": row["seed"],
+                                  "category": p["category"], "traits": p["traits"], "intensity": p["intensity"],
+                                  "lines": None if best is None else best["lines"],
+                                  "planned_end_words": None if best is None else best["planned_end_words"],
+                                  "candidate": None if best is None else [best["plan"], best["batch"], best["sample"]],
+                                  "metrics": m})
             print(f"analysed {path.name}")
 
     groups = {"all": list(prompts), **{c: [i for i, p in prompts.items() if p["category"] == c]
@@ -247,8 +262,10 @@ def analyse(cfg, device="cpu", out=OUT, bootstrap=2000):
     (out / "summary.json").write_text(json.dumps({**stamp, "results": summary}, indent=2) + "\n", encoding="utf-8")
     (out / "comparison.json").write_text(json.dumps({**stamp, "comparisons": comparison}, indent=2) + "\n",
                                          encoding="utf-8")
+    picks.sort(key=lambda r: (r["system"], CONFIGS.index(r["config"]), r["seed"], r["prompt"]))
+    (out / "chosen.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in picks), encoding="utf-8")
     print_table(summary)
-    print(f"wrote {out / 'summary.json'} and {out / 'comparison.json'}")
+    print(f"wrote {out / 'summary.json'}, {out / 'comparison.json'} and {out / 'chosen.jsonl'}")
 
 
 def print_table(summary):

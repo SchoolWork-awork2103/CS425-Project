@@ -58,6 +58,14 @@ class SelectionTest(unittest.TestCase):
         self.assertEqual(M.choose([weak, weak], rerank, select), (weak[0], 2, 1))
         self.assertEqual(M.choose([[], []], rerank, select), (None, 2, 0))
 
+    def test_first_safe(self):
+        cands = [{"lines": [f"poem {i}"]} for i in range(7)]
+        scores = {"poem 0": 0.9, "poem 1": 0.8, "poem 6": 0.0}
+        toxicity = lambda texts: [{"threat": scores.get(t, 0.5)} for t in texts]
+        self.assertIs(M.first_safe(cands, toxicity, {"threat": 0.6}, chunk=2), cands[2])
+        self.assertIs(M.first_safe(cands, toxicity, {"threat": 0.1}, chunk=5), cands[6])    # found in the 2nd chunk
+        self.assertIsNone(M.first_safe(cands, toxicity, {"threat": 0.0}))
+
     def test_config_batches(self):
         row = {"plans": [["p"] * 4, ["q"] * 4],
                "candidates": [{"plan": j, "batch": b, "sample": i, "lines": [], "norm_logprob": 0}
