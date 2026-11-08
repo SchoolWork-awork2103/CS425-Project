@@ -568,7 +568,14 @@ The three generators get identical scores, turn by turn: what is scored (traits,
 
 - **Unknown traits ("telepathy", "psychic ability"):** the gold turns, written for the Qwen interpreter, expect a clarification question, but the normalizer finds a nearest trait above its threshold, so the bot uses it and says so as the table above specifies. These 6 turns and the turns after them in the same conversation count as failures.
 - **Other misses:** traits the normalizer maps wrongly ("perfectionism" to patient), a second trait the tagger skips ("never mind waiting and have travelled everywhere"), and a few answers to pending questions.
-- **Qwen interpreter:** one earlier run on an older prompt and fixture set got 16/58. Rerun on these fixtures before comparing.
+- **Qwen interpreter** (2026-11-09, `--mode interpreter --backend qwen --device cuda`, `eval/results/dialogue/interpreter_qwen_D.json`; no generation, so it tests understanding only), against the NLU on the same turns (`interpreter_nlu_A.json`):
+
+  | Interpreter | Turns with the expected state | Conversations right throughout | Interpretation exactly right | Trait edits right | Unknown traits matched to a known one | Clarifying questions | Time per message |
+  |---|---|---|---|---|---|---|---|
+  | NLU (default) | **36/61** | **9/24** | **30/58** | **40/58** | 6 of 6 | 5 | **0.02 s** (CPU) |
+  | Qwen2.5-1.5B (D's base, adapter off) | 19/61 | 2/24 | 11/57 | 34/57 | **1 of 6** | 27 | 4.0 s median, 8.5 s p95 (GPU) |
+
+  Turn by turn, both get 13 right, only the NLU 23, only Qwen 6. Qwen's main fault is asking: 27 clarifying questions, 16 of them on clear requests ("My self assurance is my best quality", "Give me a fresh verse", "Go a little easier this time"). Its low intensity score (30/57) is mostly harmless: 25 of the 27 misses fill in "mild" where the user named no intensity, which is the default anyway. 9 of its 57 answers needed a retry for valid output, and one failed. Its strength is unknown traits: it recognises "telepathy" as outside the list where the NLU picks the nearest trait. **So the NLU stays the default**: right on almost twice as many turns, never fails, needs no GPU and is about 200 times faster. A possible refinement, not built: the NLU first, Qwen only when the NLU finds no known trait.
 
 ### Human evaluation [Core]
 1. 30 prompts × 4 configurations (e.g., A-base, A-full, D-base, D-full) = 120 outputs. Swap an E configuration in for an A one only if E clearly beats A.
