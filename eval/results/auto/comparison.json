@@ -1,0 +1,1757 @@
+{
+  "date": "2026-11-08",
+  "bootstrap": 2000,
+  "pools": [
+    "A_planner_pool.jsonl",
+    "A_random_pool.jsonl",
+    "D_planner_pool.jsonl",
+    "D_random_pool.jsonl",
+    "E_planner_pool.jsonl",
+    "E_random_pool.jsonl"
+  ],
+  "comparisons": {
+    "A full vs A no_reranker": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0075,
+        "low": 0.0,
+        "high": 0.02,
+        "n": 50,
+        "p_wilcoxon": 0.17971249487899976,
+        "better": 2,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": 0.002960123729488826,
+        "low": -0.0017278940557163835,
+        "high": 0.007337066799359811,
+        "n": 50,
+        "p_wilcoxon": 0.18483870811855208,
+        "better": 12,
+        "worse": 8
+      },
+      "mention": {
+        "mean": 0.08888888888888889,
+        "low": -0.06666666666666667,
+        "high": 0.24444444444444444,
+        "n": 45,
+        "p_wilcoxon": 0.28504940740261275,
+        "better": 9,
+        "worse": 5
+      },
+      "trait_fit": {
+        "mean": 0.07668943219921655,
+        "low": 0.019113269293059905,
+        "high": 0.15036765474619138,
+        "n": 45,
+        "p_wilcoxon": 0.10729167401114265,
+        "better": 25,
+        "worse": 19
+      },
+      "embedding": {
+        "mean": 0.043687481019232005,
+        "low": 0.014249039027425978,
+        "high": 0.07457633482085334,
+        "n": 45,
+        "p_wilcoxon": 0.005096880144525195,
+        "better": 30,
+        "worse": 14
+      },
+      "overlap": {
+        "mean": 0.07798928919539502,
+        "low": 0.04410883470174697,
+        "high": 0.1119727782688043,
+        "n": 50,
+        "p_wilcoxon": 0.0001537422019073124,
+        "better": 37,
+        "worse": 12
+      }
+    },
+    "A full vs A k5": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0075,
+        "low": 0.0,
+        "high": 0.0225,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 1,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": -0.0008868926385912656,
+        "low": -0.003701183643611319,
+        "high": 0.0016769618917975816,
+        "n": 50,
+        "p_wilcoxon": 0.6464622026641696,
+        "better": 5,
+        "worse": 5
+      },
+      "mention": {
+        "mean": 0.08888888888888889,
+        "low": -0.022222222222222223,
+        "high": 0.2222222222222222,
+        "n": 45,
+        "p_wilcoxon": 0.15729920705028502,
+        "better": 6,
+        "worse": 2
+      },
+      "trait_fit": {
+        "mean": 0.016326020502795777,
+        "low": -0.002605094491607613,
+        "high": 0.05031022495693631,
+        "n": 45,
+        "p_wilcoxon": 0.5614396639119171,
+        "better": 14,
+        "worse": 19
+      },
+      "embedding": {
+        "mean": 0.016036325361993578,
+        "low": -0.005095764994621277,
+        "high": 0.03831115067005157,
+        "n": 45,
+        "p_wilcoxon": 0.20277316827451453,
+        "better": 19,
+        "worse": 15
+      },
+      "overlap": {
+        "mean": 0.02961523030702116,
+        "low": 0.0008663143144653337,
+        "high": 0.05867994200324893,
+        "n": 50,
+        "p_wilcoxon": 0.08395896175017849,
+        "better": 21,
+        "worse": 15
+      }
+    },
+    "A full vs A k10": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.005,
+        "low": 0.0,
+        "high": 0.015,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 1,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": 6.592717418810068e-05,
+        "low": -0.0026313034911276743,
+        "high": 0.0028102912525586345,
+        "n": 50,
+        "p_wilcoxon": 0.8334336202223243,
+        "better": 4,
+        "worse": 4
+      },
+      "mention": {
+        "mean": 0.06666666666666667,
+        "low": -0.044444444444444446,
+        "high": 0.17777777777777778,
+        "n": 45,
+        "p_wilcoxon": 0.25683925795785656,
+        "better": 5,
+        "worse": 2
+      },
+      "trait_fit": {
+        "mean": 8.099179507957565e-05,
+        "low": -0.0029261774486965602,
+        "high": 0.003309955541044474,
+        "n": 45,
+        "p_wilcoxon": 0.27760541836356367,
+        "better": 10,
+        "worse": 14
+      },
+      "embedding": {
+        "mean": -0.0017762538459565904,
+        "low": -0.021816157632403903,
+        "high": 0.018047916226916844,
+        "n": 45,
+        "p_wilcoxon": 0.7533040472859123,
+        "better": 10,
+        "worse": 14
+      },
+      "overlap": {
+        "mean": 0.02651559915905504,
+        "low": 0.0013489775573444864,
+        "high": 0.05257195471299719,
+        "n": 50,
+        "p_wilcoxon": 0.08646199403769568,
+        "better": 16,
+        "worse": 10
+      }
+    },
+    "A full vs A k20": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "mention": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "trait_fit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "embedding": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "overlap": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "A full vs A k40": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": -0.0006356831898552051,
+        "low": -0.0042593723376778605,
+        "high": 0.0025655128813023564,
+        "n": 50,
+        "p_wilcoxon": 0.7215797250891103,
+        "better": 6,
+        "worse": 5
+      },
+      "mention": {
+        "mean": -0.08888888888888889,
+        "low": -0.2,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": 0.10247043485974941,
+        "better": 1,
+        "worse": 5
+      },
+      "trait_fit": {
+        "mean": -0.02246958136351572,
+        "low": -0.06783373183053401,
+        "high": 0.0018163376384311251,
+        "n": 45,
+        "p_wilcoxon": 0.5921774964028619,
+        "better": 10,
+        "worse": 12
+      },
+      "embedding": {
+        "mean": -0.005660745832655165,
+        "low": -0.03336605297194587,
+        "high": 0.024196181694666544,
+        "n": 45,
+        "p_wilcoxon": 0.2626860925759784,
+        "better": 7,
+        "worse": 15
+      },
+      "overlap": {
+        "mean": -0.009536147484302829,
+        "low": -0.030514023356193534,
+        "high": 0.010349084651895647,
+        "n": 50,
+        "p_wilcoxon": 0.43855341528388225,
+        "better": 11,
+        "worse": 15
+      }
+    },
+    "A full vs A no_planner": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": -0.0012150352926322894,
+        "low": -0.0052983178729233285,
+        "high": 0.0026916376613864367,
+        "n": 50,
+        "p_wilcoxon": 0.7762492904374707,
+        "better": 6,
+        "worse": 9
+      },
+      "mention": {
+        "mean": 0.2,
+        "low": 0.0,
+        "high": 0.37777777777777777,
+        "n": 45,
+        "p_wilcoxon": 0.03894745574202538,
+        "better": 14,
+        "worse": 5
+      },
+      "trait_fit": {
+        "mean": 0.0409783479757607,
+        "low": -0.0026601715944707394,
+        "high": 0.10217186599555943,
+        "n": 45,
+        "p_wilcoxon": 0.004556986892794157,
+        "better": 28,
+        "worse": 17
+      },
+      "embedding": {
+        "mean": 0.11181478732162052,
+        "low": 0.06653479403919643,
+        "high": 0.15288762119081284,
+        "n": 45,
+        "p_wilcoxon": 3.2735842410147598e-06,
+        "better": 38,
+        "worse": 7
+      },
+      "overlap": {
+        "mean": -0.08554000178069997,
+        "low": -0.12405498843388911,
+        "high": -0.04922284914043016,
+        "n": 50,
+        "p_wilcoxon": 0.0002373604558953415,
+        "better": 15,
+        "worse": 34
+      }
+    },
+    "D full vs D no_reranker": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.22,
+        "low": 0.1,
+        "high": 0.34,
+        "n": 50,
+        "p_wilcoxon": 0.0009111188771537128,
+        "better": 11,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.06,
+        "low": 0.0,
+        "high": 0.125,
+        "n": 50,
+        "p_wilcoxon": 0.11324177925260663,
+        "better": 12,
+        "worse": 3
+      },
+      "syllables": {
+        "mean": 0.0175,
+        "low": -0.005,
+        "high": 0.045,
+        "n": 50,
+        "p_wilcoxon": 0.1956677425436415,
+        "better": 5,
+        "worse": 3
+      },
+      "lexical": {
+        "mean": -0.001427152266028351,
+        "low": -0.004457845809879788,
+        "high": 0.0016826489569307724,
+        "n": 50,
+        "p_wilcoxon": 0.2203297530976842,
+        "better": 7,
+        "worse": 7
+      },
+      "mention": {
+        "mean": 0.044444444444444446,
+        "low": -0.08888888888888889,
+        "high": 0.17777777777777778,
+        "n": 45,
+        "p_wilcoxon": 0.5270892568655381,
+        "better": 6,
+        "worse": 4
+      },
+      "trait_fit": {
+        "mean": 0.15271735506701387,
+        "low": 0.06397781442436908,
+        "high": 0.2618839184857077,
+        "n": 45,
+        "p_wilcoxon": 0.014432439952692543,
+        "better": 25,
+        "worse": 15
+      },
+      "embedding": {
+        "mean": 0.005654086669286092,
+        "low": -0.0217824829949273,
+        "high": 0.03408825861083137,
+        "n": 45,
+        "p_wilcoxon": 0.6671072509908518,
+        "better": 22,
+        "worse": 18
+      },
+      "overlap": {
+        "mean": 0.05247300890870471,
+        "low": 0.029204869913641934,
+        "high": 0.07610877251681616,
+        "n": 50,
+        "p_wilcoxon": 8.766247265284366e-05,
+        "better": 34,
+        "worse": 11
+      }
+    },
+    "D full vs D k5": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": -0.02,
+        "low": -0.06,
+        "high": 0.02,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 1,
+        "worse": 3
+      },
+      "syllables": {
+        "mean": -0.0075,
+        "low": -0.0175,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.0832645166635504,
+        "better": 0,
+        "worse": 3
+      },
+      "lexical": {
+        "mean": -0.00026977557214644013,
+        "low": -0.00390694598215094,
+        "high": 0.003522696853718268,
+        "n": 50,
+        "p_wilcoxon": 0.571987011115615,
+        "better": 6,
+        "worse": 8
+      },
+      "mention": {
+        "mean": 0.022222222222222223,
+        "low": -0.1111111111111111,
+        "high": 0.15555555555555556,
+        "n": 45,
+        "p_wilcoxon": 0.7388826803635273,
+        "better": 5,
+        "worse": 4
+      },
+      "trait_fit": {
+        "mean": -0.000955404175652398,
+        "low": -0.00394495063357883,
+        "high": 0.0011526491906907823,
+        "n": 45,
+        "p_wilcoxon": 0.38855107096863606,
+        "better": 19,
+        "worse": 12
+      },
+      "embedding": {
+        "mean": -0.002135398652818468,
+        "low": -0.031402890549765694,
+        "high": 0.026610406239827473,
+        "n": 45,
+        "p_wilcoxon": 0.8600041316346514,
+        "better": 14,
+        "worse": 17
+      },
+      "overlap": {
+        "mean": 0.02383858775788904,
+        "low": 0.006496086733136914,
+        "high": 0.04091478262352112,
+        "n": 50,
+        "p_wilcoxon": 0.01268251271857492,
+        "better": 22,
+        "worse": 11
+      }
+    },
+    "D full vs D k10": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": -0.01,
+        "low": -0.05,
+        "high": 0.02,
+        "n": 50,
+        "p_wilcoxon": 0.5637028616507731,
+        "better": 1,
+        "worse": 2
+      },
+      "syllables": {
+        "mean": -0.005,
+        "low": -0.0125,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.15729920705028502,
+        "better": 0,
+        "worse": 2
+      },
+      "lexical": {
+        "mean": -0.000211367039328747,
+        "low": -0.0027861881111582764,
+        "high": 0.0024510293183116682,
+        "n": 50,
+        "p_wilcoxon": 0.6744240722352938,
+        "better": 3,
+        "worse": 5
+      },
+      "mention": {
+        "mean": 0.0,
+        "low": -0.1111111111111111,
+        "high": 0.1111111111111111,
+        "n": 45,
+        "p_wilcoxon": 1.0,
+        "better": 3,
+        "worse": 3
+      },
+      "trait_fit": {
+        "mean": -0.0013650139172871909,
+        "low": -0.004331307941012912,
+        "high": 0.0005865600374009874,
+        "n": 45,
+        "p_wilcoxon": 0.5921774964028619,
+        "better": 11,
+        "worse": 11
+      },
+      "embedding": {
+        "mean": -0.009370554818047418,
+        "low": -0.03372297220759922,
+        "high": 0.013384498490227593,
+        "n": 45,
+        "p_wilcoxon": 0.5921774964028619,
+        "better": 10,
+        "worse": 12
+      },
+      "overlap": {
+        "mean": 0.01643144552554829,
+        "low": 0.001282991051262236,
+        "high": 0.03263311247404122,
+        "n": 50,
+        "p_wilcoxon": 0.05558365877076873,
+        "better": 17,
+        "worse": 7
+      }
+    },
+    "D full vs D k20": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "mention": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "trait_fit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "embedding": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "overlap": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "D full vs D k40": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": -0.01,
+        "low": -0.03,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 0,
+        "worse": 1
+      },
+      "syllables": {
+        "mean": -0.005,
+        "low": -0.0125,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.15729920705028502,
+        "better": 0,
+        "worse": 2
+      },
+      "lexical": {
+        "mean": -0.0013860535648499094,
+        "low": -0.0029509714026817414,
+        "high": -5.531763411397828e-05,
+        "n": 50,
+        "p_wilcoxon": 0.043114446783075355,
+        "better": 0,
+        "worse": 5
+      },
+      "mention": {
+        "mean": 0.06666666666666667,
+        "low": 0.0,
+        "high": 0.15555555555555556,
+        "n": 45,
+        "p_wilcoxon": 0.0832645166635504,
+        "better": 3,
+        "worse": 0
+      },
+      "trait_fit": {
+        "mean": -0.00022468169530232747,
+        "low": -0.0009256826506720649,
+        "high": 0.0003130409452650282,
+        "n": 45,
+        "p_wilcoxon": 0.7475000777680043,
+        "better": 8,
+        "worse": 11
+      },
+      "embedding": {
+        "mean": 0.009391964144176907,
+        "low": -0.0061214400662316214,
+        "high": 0.024825745820999147,
+        "n": 45,
+        "p_wilcoxon": 0.2772406362261136,
+        "better": 12,
+        "worse": 7
+      },
+      "overlap": {
+        "mean": -0.0029152578403001577,
+        "low": -0.016366256356115536,
+        "high": 0.010564663072612213,
+        "n": 50,
+        "p_wilcoxon": 0.8483946983538319,
+        "better": 10,
+        "worse": 11
+      }
+    },
+    "D full vs D no_planner": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": -0.03,
+        "low": -0.06,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.0832645166635504,
+        "better": 0,
+        "worse": 3
+      },
+      "syllables": {
+        "mean": -0.0075,
+        "low": -0.0175,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.0832645166635504,
+        "better": 0,
+        "worse": 3
+      },
+      "lexical": {
+        "mean": -0.00035340449031569634,
+        "low": -0.003939035238437647,
+        "high": 0.003346813256053678,
+        "n": 50,
+        "p_wilcoxon": 0.8563589864870352,
+        "better": 8,
+        "worse": 8
+      },
+      "mention": {
+        "mean": -0.022222222222222223,
+        "low": -0.15555555555555556,
+        "high": 0.1111111111111111,
+        "n": 45,
+        "p_wilcoxon": 0.763024600552995,
+        "better": 5,
+        "worse": 6
+      },
+      "trait_fit": {
+        "mean": -0.0001224464840359158,
+        "low": -0.0037211683061387805,
+        "high": 0.002720959981282552,
+        "n": 45,
+        "p_wilcoxon": 0.8580747949403644,
+        "better": 22,
+        "worse": 23
+      },
+      "embedding": {
+        "mean": 0.03980704148610433,
+        "low": 0.014604667822519938,
+        "high": 0.06677070657412211,
+        "n": 45,
+        "p_wilcoxon": 0.0061494065418514765,
+        "better": 29,
+        "worse": 16
+      },
+      "overlap": {
+        "mean": -0.002397088433290912,
+        "low": -0.029534728035138937,
+        "high": 0.022892856752737153,
+        "n": 50,
+        "p_wilcoxon": 0.8229019354214293,
+        "better": 25,
+        "worse": 24
+      }
+    },
+    "E full vs E no_reranker": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.6,
+        "low": 0.46,
+        "high": 0.74,
+        "n": 50,
+        "p_wilcoxon": 4.320463057827488e-08,
+        "better": 30,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.2,
+        "low": 0.14,
+        "high": 0.265,
+        "n": 50,
+        "p_wilcoxon": 3.272260934747328e-06,
+        "better": 28,
+        "worse": 1
+      },
+      "syllables": {
+        "mean": 0.0225,
+        "low": -0.0225,
+        "high": 0.0775,
+        "n": 50,
+        "p_wilcoxon": 0.47328946538009,
+        "better": 6,
+        "worse": 6
+      },
+      "lexical": {
+        "mean": 0.0023415141396964947,
+        "low": -0.002364393873836077,
+        "high": 0.007422697960558497,
+        "n": 50,
+        "p_wilcoxon": 0.33169613087134386,
+        "better": 9,
+        "worse": 8
+      },
+      "mention": {
+        "mean": 0.08888888888888889,
+        "low": -0.022222222222222223,
+        "high": 0.2222222222222222,
+        "n": 45,
+        "p_wilcoxon": 0.15729920705028502,
+        "better": 6,
+        "worse": 2
+      },
+      "trait_fit": {
+        "mean": 0.02313718997562925,
+        "low": -0.03863965218058891,
+        "high": 0.08836665512580011,
+        "n": 45,
+        "p_wilcoxon": 0.10811563134866801,
+        "better": 25,
+        "worse": 17
+      },
+      "embedding": {
+        "mean": 0.015741948617829217,
+        "low": -0.009717630677753025,
+        "high": 0.040307879116800095,
+        "n": 45,
+        "p_wilcoxon": 0.19133743144217152,
+        "better": 25,
+        "worse": 17
+      },
+      "overlap": {
+        "mean": 0.05702374940688654,
+        "low": 0.03838264631156724,
+        "high": 0.07652440166507739,
+        "n": 50,
+        "p_wilcoxon": 6.225523104681612e-06,
+        "better": 36,
+        "worse": 11
+      }
+    },
+    "E full vs E k5": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.18,
+        "low": 0.08,
+        "high": 0.3,
+        "n": 50,
+        "p_wilcoxon": 0.0026997960632601866,
+        "better": 9,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.04,
+        "low": -0.005,
+        "high": 0.09,
+        "n": 50,
+        "p_wilcoxon": 0.10062230917221894,
+        "better": 7,
+        "worse": 3
+      },
+      "syllables": {
+        "mean": -0.0025,
+        "low": -0.0375,
+        "high": 0.0325,
+        "n": 50,
+        "p_wilcoxon": 0.8760625221958024,
+        "better": 5,
+        "worse": 5
+      },
+      "lexical": {
+        "mean": -0.0019509830077865998,
+        "low": -0.0053274568049921055,
+        "high": 0.0012233279428401377,
+        "n": 50,
+        "p_wilcoxon": 0.29885724305855055,
+        "better": 5,
+        "worse": 9
+      },
+      "mention": {
+        "mean": 0.044444444444444446,
+        "low": -0.06666666666666667,
+        "high": 0.15555555555555556,
+        "n": 45,
+        "p_wilcoxon": 0.47950012218695337,
+        "better": 5,
+        "worse": 3
+      },
+      "trait_fit": {
+        "mean": 0.002127529422028197,
+        "low": -0.06295515608249438,
+        "high": 0.066761528286669,
+        "n": 45,
+        "p_wilcoxon": 0.3042320687118558,
+        "better": 18,
+        "worse": 15
+      },
+      "embedding": {
+        "mean": 0.012301798661549885,
+        "low": -0.011529382069905598,
+        "high": 0.03656636079152425,
+        "n": 45,
+        "p_wilcoxon": 0.22097248719684515,
+        "better": 20,
+        "worse": 13
+      },
+      "overlap": {
+        "mean": 0.032742477795804435,
+        "low": 0.011682155535180866,
+        "high": 0.05306246022832815,
+        "n": 50,
+        "p_wilcoxon": 0.002315066201529531,
+        "better": 26,
+        "worse": 9
+      }
+    },
+    "E full vs E k10": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.08,
+        "low": 0.02,
+        "high": 0.16,
+        "n": 50,
+        "p_wilcoxon": 0.04550026389635839,
+        "better": 4,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.01,
+        "low": -0.02,
+        "high": 0.05,
+        "n": 50,
+        "p_wilcoxon": 0.7054569861112734,
+        "better": 2,
+        "worse": 2
+      },
+      "syllables": {
+        "mean": -0.0125,
+        "low": -0.0425,
+        "high": 0.0175,
+        "n": 50,
+        "p_wilcoxon": 0.3925707457427996,
+        "better": 3,
+        "worse": 5
+      },
+      "lexical": {
+        "mean": -0.001962796705443355,
+        "low": -0.004620313843677128,
+        "high": 0.0005271965303778603,
+        "n": 50,
+        "p_wilcoxon": 0.13812782757447145,
+        "better": 2,
+        "worse": 8
+      },
+      "mention": {
+        "mean": 0.022222222222222223,
+        "low": -0.06666666666666667,
+        "high": 0.1111111111111111,
+        "n": 45,
+        "p_wilcoxon": 0.6547208460185769,
+        "better": 3,
+        "worse": 2
+      },
+      "trait_fit": {
+        "mean": 0.00017324544282423126,
+        "low": -0.06513435894416439,
+        "high": 0.06514255222347047,
+        "n": 45,
+        "p_wilcoxon": 0.632507939829223,
+        "better": 13,
+        "worse": 15
+      },
+      "embedding": {
+        "mean": 0.007742491033342149,
+        "low": -0.01541019214524163,
+        "high": 0.029862487316131593,
+        "n": 45,
+        "p_wilcoxon": 0.3623707584699263,
+        "better": 17,
+        "worse": 11
+      },
+      "overlap": {
+        "mean": 0.021784714546362025,
+        "low": 0.006313369077771851,
+        "high": 0.038798287135889266,
+        "n": 50,
+        "p_wilcoxon": 0.019569215233846395,
+        "better": 21,
+        "worse": 9
+      }
+    },
+    "E full vs E k20": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.02,
+        "low": 0.0,
+        "high": 0.06,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 1,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.005,
+        "low": 0.0,
+        "high": 0.015,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 1,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": -0.0075,
+        "low": -0.0225,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 0,
+        "worse": 1
+      },
+      "lexical": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "mention": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "trait_fit": {
+        "mean": -0.0001257499059041341,
+        "low": -0.0003357026312086317,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": 0.17971249487899976,
+        "better": 0,
+        "worse": 2
+      },
+      "embedding": {
+        "mean": 0.0018849723868899874,
+        "low": -0.0007345676422119141,
+        "high": 0.006756768623987833,
+        "n": 45,
+        "p_wilcoxon": 0.6547208460185769,
+        "better": 1,
+        "worse": 1
+      },
+      "overlap": {
+        "mean": 0.0017302684744545211,
+        "low": -0.007227799227799227,
+        "high": 0.01241860465116279,
+        "n": 50,
+        "p_wilcoxon": 0.6547208460185769,
+        "better": 1,
+        "worse": 1
+      }
+    },
+    "E full vs E k40": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": -0.0175,
+        "low": -0.04,
+        "high": 0.0025,
+        "n": 50,
+        "p_wilcoxon": 0.10247043485974937,
+        "better": 1,
+        "worse": 4
+      },
+      "lexical": {
+        "mean": -0.0013690233165427612,
+        "low": -0.004342607732851634,
+        "high": 0.0015074272133095644,
+        "n": 50,
+        "p_wilcoxon": 0.5062404808205192,
+        "better": 4,
+        "worse": 6
+      },
+      "mention": {
+        "mean": -0.044444444444444446,
+        "low": -0.1111111111111111,
+        "high": 0.0,
+        "n": 45,
+        "p_wilcoxon": 0.15729920705028502,
+        "better": 0,
+        "worse": 2
+      },
+      "trait_fit": {
+        "mean": -0.022155648397488726,
+        "low": -0.0661973043758836,
+        "high": 0.00025366544723510743,
+        "n": 45,
+        "p_wilcoxon": 0.3944257624523617,
+        "better": 10,
+        "worse": 13
+      },
+      "embedding": {
+        "mean": -0.0038393921322292753,
+        "low": -0.018402409553527833,
+        "high": 0.010622796085145738,
+        "n": 45,
+        "p_wilcoxon": 0.975736119417176,
+        "better": 13,
+        "worse": 10
+      },
+      "overlap": {
+        "mean": -0.01279044167880083,
+        "low": -0.028613695563429208,
+        "high": 0.0018847008700158766,
+        "n": 50,
+        "p_wilcoxon": 0.12151235710849262,
+        "better": 9,
+        "worse": 19
+      }
+    },
+    "E full vs E no_planner": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": -0.02,
+        "low": -0.08,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 0,
+        "worse": 1
+      },
+      "end_word_hit": {
+        "mean": -0.04,
+        "low": -0.075,
+        "high": -0.01,
+        "n": 50,
+        "p_wilcoxon": 0.03843393023678171,
+        "better": 0,
+        "worse": 5
+      },
+      "syllables": {
+        "mean": -0.0275,
+        "low": -0.0575,
+        "high": -0.0025,
+        "n": 50,
+        "p_wilcoxon": 0.06565379808726941,
+        "better": 1,
+        "worse": 7
+      },
+      "lexical": {
+        "mean": -0.002248980919624095,
+        "low": -0.00560553082807314,
+        "high": 0.0009837456198175088,
+        "n": 50,
+        "p_wilcoxon": 0.23227471368990604,
+        "better": 3,
+        "worse": 11
+      },
+      "mention": {
+        "mean": 0.06666666666666667,
+        "low": -0.044444444444444446,
+        "high": 0.17777777777777778,
+        "n": 45,
+        "p_wilcoxon": 0.25683925795785656,
+        "better": 5,
+        "worse": 2
+      },
+      "trait_fit": {
+        "mean": -0.038671033839798634,
+        "low": -0.10009194789454341,
+        "high": 0.000831147034962972,
+        "n": 45,
+        "p_wilcoxon": 0.7205201468991618,
+        "better": 24,
+        "worse": 21
+      },
+      "embedding": {
+        "mean": 0.03581050965521071,
+        "low": 0.0050981905725267194,
+        "high": 0.06600607501135933,
+        "n": 45,
+        "p_wilcoxon": 0.020264795226069054,
+        "better": 30,
+        "worse": 15
+      },
+      "overlap": {
+        "mean": -0.029737127275083278,
+        "low": -0.053301130675511496,
+        "high": -0.006395041446109918,
+        "n": 50,
+        "p_wilcoxon": 0.04294367729928261,
+        "better": 18,
+        "worse": 32
+      }
+    },
+    "A full vs D full": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.03,
+        "low": 0.0,
+        "high": 0.06,
+        "n": 50,
+        "p_wilcoxon": 0.0832645166635504,
+        "better": 3,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0075,
+        "low": 0.0,
+        "high": 0.0175,
+        "n": 50,
+        "p_wilcoxon": 0.0832645166635504,
+        "better": 3,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": -0.000361514042487463,
+        "low": -0.004660744404278125,
+        "high": 0.003420728010983618,
+        "n": 50,
+        "p_wilcoxon": 0.9305586092250409,
+        "better": 8,
+        "worse": 10
+      },
+      "mention": {
+        "mean": -0.2222222222222222,
+        "low": -0.4,
+        "high": -0.044444444444444446,
+        "n": 45,
+        "p_wilcoxon": 0.025347318677468252,
+        "better": 5,
+        "worse": 15
+      },
+      "trait_fit": {
+        "mean": -0.0313757034122116,
+        "low": -0.0823774558905926,
+        "high": -0.0017969515588548448,
+        "n": 45,
+        "p_wilcoxon": 0.005502511543852506,
+        "better": 16,
+        "worse": 29
+      },
+      "embedding": {
+        "mean": -0.07564481496810913,
+        "low": -0.11200326614909702,
+        "high": -0.03991849025090535,
+        "n": 45,
+        "p_wilcoxon": 0.00028759760863295014,
+        "better": 11,
+        "worse": 34
+      },
+      "overlap": {
+        "mean": 0.061375633769497576,
+        "low": 0.03261657721670815,
+        "high": 0.0902487642737403,
+        "n": 50,
+        "p_wilcoxon": 0.00025655038305573007,
+        "better": 36,
+        "worse": 13
+      }
+    },
+    "A full vs E full": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.02,
+        "low": 0.0,
+        "high": 0.08,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 1,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.04,
+        "low": 0.01,
+        "high": 0.075,
+        "n": 50,
+        "p_wilcoxon": 0.03843393023678171,
+        "better": 5,
+        "worse": 0
+      },
+      "syllables": {
+        "mean": 0.0325,
+        "low": 0.01,
+        "high": 0.06,
+        "n": 50,
+        "p_wilcoxon": 0.01674764760318694,
+        "better": 7,
+        "worse": 0
+      },
+      "lexical": {
+        "mean": -0.0005405401896326167,
+        "low": -0.0049235124738497916,
+        "high": 0.003833469019969371,
+        "n": 50,
+        "p_wilcoxon": 0.8517457792831952,
+        "better": 10,
+        "worse": 10
+      },
+      "mention": {
+        "mean": -0.26666666666666666,
+        "low": -0.4222222222222222,
+        "high": -0.1111111111111111,
+        "n": 45,
+        "p_wilcoxon": 0.0026997960632601866,
+        "better": 2,
+        "worse": 14
+      },
+      "trait_fit": {
+        "mean": 0.006932622918652163,
+        "low": -0.026509021119111114,
+        "high": 0.059595092054870395,
+        "n": 45,
+        "p_wilcoxon": 0.055902186595972125,
+        "better": 19,
+        "worse": 26
+      },
+      "embedding": {
+        "mean": -0.048522668414645725,
+        "low": -0.07343485090467665,
+        "high": -0.02174774275885688,
+        "n": 45,
+        "p_wilcoxon": 0.0004063189612111273,
+        "better": 11,
+        "worse": 34
+      },
+      "overlap": {
+        "mean": 0.0737611436500229,
+        "low": 0.04231032204613298,
+        "high": 0.10221899600964539,
+        "n": 50,
+        "p_wilcoxon": 7.370520716375707e-05,
+        "better": 36,
+        "worse": 13
+      }
+    },
+    "D full vs E full": {
+      "returned": {
+        "mean": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "n": 50,
+        "p_wilcoxon": null,
+        "better": 0,
+        "worse": 0
+      },
+      "aabb": {
+        "mean": 0.02,
+        "low": 0.0,
+        "high": 0.08,
+        "n": 50,
+        "p_wilcoxon": 0.31731050786291415,
+        "better": 1,
+        "worse": 0
+      },
+      "end_word_hit": {
+        "mean": 0.01,
+        "low": -0.03,
+        "high": 0.05,
+        "n": 50,
+        "p_wilcoxon": 0.7456027889274615,
+        "better": 4,
+        "worse": 2
+      },
+      "syllables": {
+        "mean": 0.025,
+        "low": 0.0,
+        "high": 0.055,
+        "n": 50,
+        "p_wilcoxon": 0.07573361401794101,
+        "better": 7,
+        "worse": 3
+      },
+      "lexical": {
+        "mean": -0.00017902614714515374,
+        "low": -0.00410889177961699,
+        "high": 0.0038029912123072386,
+        "n": 50,
+        "p_wilcoxon": 0.7936442220889728,
+        "better": 9,
+        "worse": 9
+      },
+      "mention": {
+        "mean": -0.044444444444444446,
+        "low": -0.17777777777777778,
+        "high": 0.08888888888888889,
+        "n": 45,
+        "p_wilcoxon": 0.5270892568655381,
+        "better": 4,
+        "worse": 6
+      },
+      "trait_fit": {
+        "mean": 0.03830832633086377,
+        "low": -0.0020806564225090874,
+        "high": 0.10012251315638424,
+        "n": 45,
+        "p_wilcoxon": 0.18470849920123555,
+        "better": 29,
+        "worse": 16
+      },
+      "embedding": {
+        "mean": 0.027122146553463407,
+        "low": -0.002223312192493015,
+        "high": 0.05610624419318305,
+        "n": 45,
+        "p_wilcoxon": 0.0724836333747021,
+        "better": 28,
+        "worse": 17
+      },
+      "overlap": {
+        "mean": 0.012385509880525327,
+        "low": -0.013633709742028356,
+        "high": 0.036885627630842605,
+        "n": 50,
+        "p_wilcoxon": 0.28942362339137306,
+        "better": 30,
+        "worse": 19
+      }
+    }
+  }
+}

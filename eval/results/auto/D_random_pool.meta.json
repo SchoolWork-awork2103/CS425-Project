@@ -1,0 +1,29 @@
+{
+  "date": "2026-11-08",
+  "system": "D",
+  "plans": "random",
+  "seeds": [
+    0
+  ],
+  "device": "cuda",
+  "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+  "prompts_sha256": "b53012dbef9b7696f77a164b13f67829d9c080227feeb1cbb86b0f20cf2f715c",
+  "checkpoint": {
+    "path": "C:\\Users\\Bryan\\Documents\\GitHub\\CS425-Project\\checkpoints\\gen_D_1.5b_best",
+    "adapter_config_sha256": "c1653f63378a54b27069c03916fe69a4f4d539353afc38a25344a4640a57c6f7",
+    "adapter_weights_sha256": "d864d9de5bb654b87a66a79b3c0189ae705e471bae5056900bd99e48d26c014e"
+  },
+  "versions": {
+    "torch": "2.14.1+cu126",
+    "transformers": "5.22.1",
+    "peft": "0.21.2"
+  },
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "plans_per_prompt": 2,
+  "per_plan": 10,
+  "batches": 2
+}

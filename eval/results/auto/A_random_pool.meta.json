@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-08",
+  "system": "A",
+  "plans": "random",
+  "seeds": [
+    0
+  ],
+  "device": "cpu",
+  "gpu": null,
+  "prompts_sha256": "b53012dbef9b7696f77a164b13f67829d9c080227feeb1cbb86b0f20cf2f715c",
+  "checkpoint": {
+    "path": "C:\\Users\\Bryan\\Documents\\GitHub\\CS425-Project\\checkpoints\\gen_A_rev_stage2_best.pt",
+    "sha256": "3f4d853e0d0226eda34ec0b9feef92c01c9985ca29bf798d663a413776c5cfad"
+  },
+  "versions": {
+    "torch": "2.14.1+cu126",
+    "transformers": "5.22.1",
+    "peft": "0.21.2"
+  },
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "plans_per_prompt": 2,
+  "per_plan": 10,
+  "batches": 2
+}
