@@ -42,10 +42,9 @@
   "configs": [
     "D-full",
     "E-full",
-    "A-full",
     "D-base"
   ],
-  "items": 120,
+  "items": 90,
   "raters": 3,
   "missing": []
 }

@@ -5,7 +5,8 @@ import unittest
 from pathlib import Path
 
 from eval import auto_metrics as M
-from eval.human_eval import CONFIGS, CRITERIA, MIX, PARTS, POEM_SEED, build_items, rater_layout, read_rater
+from eval.human_eval import (COLUMNS, CONFIGS, CRITERIA, MIX, POEM_SEED, analyse_panel, build_items, rater_layout,
+                             read_ratings)
 
 
 def chosen_rows():
@@ -51,7 +52,7 @@ class FormsTest(unittest.TestCase):
         self.assertTrue(all(it["lines"][0].split()[3] == str(POEM_SEED) for it in items))     # the seed-425 poems
         shared = [it for it in items if len(it["configs"]) > 1]
         self.assertEqual([it["configs"] for it in shared], [["D-full", "E-full"]])            # prompt 41 (held out)
-        self.assertEqual(len(items), 4 * 30 - 1)
+        self.assertEqual(len(items), len(CONFIGS) * 30 - 1)
         self.assertEqual(sorted(it["item"] for it in items), list(range(1, len(items) + 1)))
         self.assertNotIn(practice["prompt"], selected)
         self.assertEqual(build_items(chosen_rows(), seed=42)[1], items)                       # fixed by the seed
@@ -66,30 +67,31 @@ class FormsTest(unittest.TestCase):
         self.assertNotEqual(order(one), order(two))                   # ... in their own order
         self.assertNotIn("D-full", str(one))                          # blind: no configuration names
 
-    def test_read_rater_merges_parts(self):
-        items = [{"item": i} for i in range(1, PARTS + 1)]           # one poem per part
+    def test_read_ratings(self):
+        items = {1: {}, 2: {}, 3: {}}
         with tempfile.TemporaryDirectory() as tmp:
-            paths = []
-            for part in range(1, PARTS + 1):
-                header = ["Timestamp", "Practice poem 1 [Rhyme]"] + [f"Poem #{part:03d} [{c}]" for c in CRITERIA]
-                values = ["2026/11/09", "5"] + ["3"] * len(CRITERIA)
-                if part == PARTS:
-                    values[-1] = ""                                   # the last part's last criterion is empty
-                paths.append(Path(tmp) / f"rater_1_part{part}.csv")
-                with open(paths[-1], "w", encoding="utf-8", newline="") as f:
-                    csv.writer(f).writerows([header, values])
-            got, problems = read_rater(paths, items)
-            self.assertEqual({i: got[i]["Coherence"] for i in got}, {i: 3 for i in range(1, PARTS + 1)})
-            self.assertEqual(problems, [f"rater_1 poem #{PARTS:03d} {CRITERIA[-1]}: missing or not 1-5"])
-            _, problems = read_rater(paths[:-1], items[:-1])          # a part not returned
-            self.assertIn("parts [1, 2] found", problems[0])
-            with open(paths[0], "a", encoding="utf-8", newline="") as f:    # part 1 answered twice
-                csv.writer(f).writerow(["2026/11/10", "1"] + ["4"] * len(CRITERIA))
-            got, problems = read_rater(paths, items)
-            self.assertIn("rater_1_part1.csv: 2 responses", problems[0])
-            got, problems = read_rater(paths, items, use_last=True)
-            self.assertEqual(got[1]["Coherence"], 4)                  # the latest response
-            self.assertNotIn("responses", " ".join(problems))
+            path = Path(tmp) / "rater.csv"
+            with open(path, "w", encoding="utf-8", newline="") as f:  # an LLM sheet: extra columns, unpadded number
+                csv.writer(f).writerows([["poem", "line1", *COLUMNS], ["1", "a, b", 3, 4, 2, 1, 5],
+                                         ["002", "c", 3, 4, 2, 1, 6], ["2", "c", 3, 4, 2, 1, 5]])
+            got, problems = read_ratings(path, items)
+        self.assertEqual(got[1], dict(zip(CRITERIA, [3, 4, 2, 1, 5])))
+        self.assertEqual(problems, ["rater.csv poem 002 rhyme: '6', not 1-5", "rater.csv: poem 002 rated twice",
+                                    "rater.csv: poem 003 missing"])
+
+    def test_panel(self):
+        items = {i: {"prompt": p, "configs": [c], "category": "heldout" if p == 1 else "single"}
+                 for i, (p, c) in enumerate([(p, f"{s}-{k}") for p in (1, 2, 3) for s, k in CONFIGS], 1)}
+        rate = lambda bump: {i: {c: 2 + 2 * (it["configs"][0] == "D-full") + bump for c in CRITERIA}
+                             for i, it in items.items()}
+        panel = analyse_panel({"r1": rate(0), "r2": rate(1)}, items, bootstrap=100)
+        self.assertEqual(panel["results"]["D-full"]["Humour"]["mean"], 4.5)
+        self.assertEqual(panel["results"]["D-base"]["Humour"]["heldout"], 2.5)
+        self.assertEqual(panel["comparisons"]["D-full vs D-base"]["Rhyme"]["mean"], 2.0)
+        self.assertEqual(panel["flat_raters"], {})
+        flat = {i: {c: 3 for c in CRITERIA} for i in items}                # the same score everywhere
+        self.assertEqual(set(analyse_panel({"r1": rate(0), "r3": flat}, items, 100)["flat_raters"]), {"r3"})
+        self.assertIsNone(analyse_panel({"r1": rate(0)}, items, 100)["agreement_alpha_ordinal"]["Rhyme"])
 
 
 if __name__ == "__main__":
