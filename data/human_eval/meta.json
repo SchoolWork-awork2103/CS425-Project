@@ -1,0 +1,51 @@
+{
+  "poem_seed": 425,
+  "selection_seed": 42,
+  "prompts": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    9,
+    12,
+    14,
+    15,
+    16,
+    18,
+    21,
+    23,
+    25,
+    26,
+    27,
+    28,
+    30,
+    34,
+    36,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    48
+  ],
+  "mix": {
+    "heldout": 5,
+    "single": 12,
+    "multi": 12,
+    "unclear": 1
+  },
+  "configs": [
+    "D-full",
+    "E-full",
+    "A-full",
+    "D-base"
+  ],
+  "items": 120,
+  "raters": 3,
+  "missing": []
+}

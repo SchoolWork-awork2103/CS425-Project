@@ -1,0 +1,28 @@
+Thank you for helping! A chatbot writes short roast poems: someone tells it what they are proud of, and it
+answers with a four-line poem that teases them about it. Several versions of the bot wrote the poems you will see.
+
+There are 30 requests, each with up to 4 poems, in 3 parts of 10 requests: this form is one part, and you have a
+separate link for each. Rate every poem from 1 to 5 on five criteria. Each part takes about 15-20 minutes. Submit a
+part before taking a break: an unsubmitted form is lost if you close the page. Part 1 starts with two practice poems.
+
+The poems are playful insults. They were filtered for vulgar and hateful language, but they are still roasts.
+
+Rate each poem on its own, from 1 to 5 (2 and 4 are for in-between cases):
+
+Coherence: does it make sense?
+  1 nonsense or broken sentences / 3 mostly makes sense, one line clumsy or confusing / 5 every line makes sense and
+  the lines connect
+Relevance: is it about the requested traits?
+  1 not about the traits / 3 loosely about them, or a generic roast / 5 clearly about the traits, turning the brag
+  against the person
+  "harsh" should bite and "mild" should be gentle teasing: a clear mismatch costs a point here. For a request with
+  no trait, relevance means a fair generic roast.
+Humour: is it funny?
+  1 flat, or mean without wit / 3 mildly amusing / 5 genuinely funny, with a real punchline
+Poetic quality: does it flow?
+  1 clunky, uneven lines, words forced in to rhyme / 3 readable but forced in places / 5 flows naturally, nothing
+  forced
+Rhyme: do lines 1-2 rhyme, and lines 3-4?
+  1 neither pair rhymes / 3 one pair rhymes, or near-rhymes / 5 both pairs clearly rhyme
+
+Rate alone, and don't look anything up. There are no right answers: we want your own opinion.
