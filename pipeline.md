@@ -3,7 +3,7 @@
 **Output format:** every poem is a **quatrain with an AABB rhyme scheme**: four lines, where lines 1 and 2 rhyme with each other and lines 3 and 4 rhyme with each other, using a different rhyme sound.
 
 **Pipeline at run time** (no API calls anywhere):
-user message → NLU → dialogue manager → rhyme planner → retrieval → generator (several candidates) → reranker → reply
+user message → NLU → dialogue manager → rhyme planner → generator (several candidates) → reranker → reply
 
 **Where an LLM is used** (offline, before training only): generating the modern AABB quatrain corpus for pretraining, the diss data, the NLU training data, intensity labels and two kinds of reranker negatives (flat and non-rhyming), and optionally as a second judge in evaluation. All of it uses Qwen3-32B-FP8 with thinking off. At run time the only pretrained language models are the generators' own (System D's Qwen2.5-1.5B, System E's GPT-2 small), run locally; with its poem adapter turned off, D's Qwen can also stand in for the NLU, as a comparison (Phase 7).
 
@@ -17,8 +17,6 @@ user message → NLU → dialogue manager → rhyme planner → retrieval → ge
 | ID | Generator | Course link | Priority |
 |---|---|---|---|
 | A | GRU language model, traits as prefix | Week 4 | Core |
-| B | GRU encoder-decoder with attention | Week 5 | Optional |
-| C | Small Transformer from scratch | Week 6 | Optional |
 | D | Qwen2.5-1.5B-Instruct + LoRA, run locally | Week 10 | Recommended |
 | E | GPT-2 small (124M), full fine-tune, Stage 1 + 2 | Week 6 | Optional |
 
@@ -27,7 +25,7 @@ user message → NLU → dialogue manager → rhyme planner → retrieval → ge
 # Phase 0: Setup [Core]
 
 1. **Repo:** one GitHub repo with folders
-   `data/ phonetics/ generation/ retrieval/ reranker/ nlu/ dialogue/ eval/ app/`
+   `data/ phonetics/ generation/ reranker/ nlu/ dialogue/ eval/ app/`
    plus a shared `requirements.txt`, fixed random seeds, and a `config.yaml` for paths and hyperparameters.
 2. **Compute:** Colab T4 for training; the LLM data (1a, 1b, 1d, 1e) is generated with vLLM on the cluster's 48 GB GPU (L40); checkpoints in a shared Drive folder with agreed names (e.g., `gen_A_stage2_best.pt`).
    - Each generation notebook loads its own copy of the model (about 40 GiB at `gpu_memory_utilization=0.90`), so run them one at a time and shut down the previous kernel first. `negatives_gen.ipynb` checks for free GPU memory before loading.
@@ -198,12 +196,6 @@ Then add:
 - AdamW, gradient clipping at 1.0, `ReduceLROnPlateau`, early stopping (patience 3), restore the best validation checkpoint.
 - **Reversed lines.** Each line is written word-reversed, starting from its rhyme word, and that word is forced at decoding, so every line ends on the rhyme plan. With forward lines the GRU ended only 27% of lines on the planned word (6% full AABB); reversed it is 100%, with no loss in trait mentions or fluency. The forward run is kept as the ablation baseline (`gen_A_*`; final model `gen_A_rev_*`; results in `eval/results/gen_A/`).
 
-### System B: GRU encoder-decoder with attention [Optional]
-- The encoder reads traits, intensity and rhyme words; the decoder generates the poem with Bahdanau attention (Lab 5 code). Initialize the decoder from System A's Stage 1 weights where the shapes match.
-
-### System C: small Transformer [Optional]
-- Decoder-only: 4 layers, 4 heads, 256 dimensions. Same tokenizer, format and two stages as A (Lab 6 code).
-
 ### System D: Qwen2.5-1.5B-Instruct + LoRA [Recommended]
 - **Why 1.5B:** clearly better English than 0.5B, still trains on a free Colab T4 and runs on a laptop GPU (RTX 3070, 8 GB) for the demo. Larger models are allowed by the brief but would make the generator do all the work and hide the planner and reranker contributions.
 - `peft` LoRA with r=16, alpha=32, dropout 0.05 on the attention projections (q, k, v, o); 3 epochs on the diss data, lr 2e-4 with cosine schedule and 5% warmup, 16 examples per step (batch 8 × 2 accumulation), keeping the epoch with the best validation loss. No Stage 1: the base model already knows English.
@@ -221,7 +213,6 @@ Then add:
   | Distinct-2 | 0.55 | 0.66 | 0.51 | 0.62 |
 
   D knows held-out traits and is more varied, but with forward lines about 1 in 5 poems is not full AABB, which the reranker's `aabb_score` has to make up for. Test loss 1.455 for seen traits, 1.703 for held-out (per Qwen token, not comparable with A).
-- **Size comparison** [Optional]: the checkpoint name follows `MODEL_NAME`, so 0.5B and 3B (`gen_D_0.5b`, `gen_D_3b`; batch 4 × 4 for 3B on a T4) run from the same notebook, to show how much the planner and reranker add as the generator grows.
 
 ### System E: GPT-2 small (124M), full fine-tune [Optional]
 - **Why:** a size point between A (9.3M GRU from scratch) and D (1.5B, instruction-tuned), so the report can show how rhyme, trait knowledge and fluency change with model size and pretraining; and a controlled test of poetry pretraining. Three GPT-2 small checkpoints share the architecture and tokenizer and differ only in what they were pretrained on:
@@ -263,8 +254,6 @@ Then add:
   - In every full run, Stage 1 was best at epoch 4, and Stage 2 was still improving at the 5-epoch cap, by under 0.01. Distinct-2 0.63 (D 0.66, A 0.55). The checkpoints' habits (`<start>` tags, a literal `\n`, capitals) are gone after fine-tuning.
   - Like D, E sometimes bends grammar to reach the end word ("you call yourself smart, always talking with a bright"). These numbers use the real disses' end words. With the planner's (frozen prompts, Phase 9), E's first candidate is full AABB only 41% of the time (D 74%), and the reranker lifts that to 98% (D 100%).
 - **In the app** (Phases 8 and 9): on the frozen prompts E is level with D on form and on naming the traits (full AABB 98% against 100%, trait mentions 87% against 86%), slightly less close in meaning to the traits (embedding similarity 0.50 against 0.53) and weaker on held-out traits (60% against 80%, 5 prompts). It answers about 3 times faster on the GPU (4.0 s against 13.2 s per turn) with under 40% of D's memory, but on the CPU alone it takes 22.9 s per turn, so without a GPU A is the demo generator. E relies on the reranker more than D does: full AABB rises from 81% with 5 candidates to 97% with 20.
-- **Not done** [Optional]: *reversed lines* like A. They would force every end word, but they waste GPT-2's forward English pretraining, and A already shows what forcing does. *Stage 2 only at lr 5e-5*. It would separate the missing quatrains from the learning rate, but the gap is too large (74% against 13%) for it to change the conclusion.
-
 ### Decoding, for all systems
 - Top-p 0.9, temperature 0.8, repetition penalty.
 - **Batch** generation, e.g. `num_return_sequences=10` in a single call.
@@ -272,16 +261,6 @@ Then add:
 - **Stop after the fourth `<nl>`**, or at `<eos>`, so every candidate is exactly four lines. System D keeps the first four lines of its answer.
 
 **Checkpoint, end of Week 10:** every system you're building produces readable quatrains for the 50 evaluation prompts.
-
----
-
-# Phase 4: Retrieval [Optional]
-
-1. Index the training disses with BM25 (`rank_bm25`) over trait strings.
-2. `retrieve(traits, k=3)` returns the nearest examples:
-   - as few-shot examples in System D's prompt
-   - as extra candidates in the pool, for a "retrieve vs generate" ablation
-3. Report how often a retrieved poem wins the reranking.
 
 ---
 
@@ -519,7 +498,7 @@ python -m eval.run_auto_eval analyse --device cuda                             #
   - **Not comparable here:** perplexity (each system's test loss, Phase 3), and time: this run's generation times rose with the laptop's temperature (D went from about 24 s to 42 s per prompt partway through seed 0), so the response times are the dialogue evaluation's (Phase 8). Trait fit is partly circular for configurations with the reranker, which selects by it; trait mention and embedding similarity are the fairer trait measures. Nothing here measures humour or sense: that is the human evaluation.
 
 ### Ablations [Core]
-For each system built: with and without Stage 1 pretraining, rhyme planning, reranking and retrieval. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table. Done: A forward against reversed lines (Phase 3) and E with and without Stage 1 (Phase 3), both with the real disses' end words; and on the frozen prompts (`eval/run_auto_eval.py`, 3 seeds, paired over the 50 prompts), the reranker, the planner and the number of candidates for A, D and E. Retrieval was not built.
+For each system built: with and without Stage 1 pretraining, rhyme planning and reranking. Also a small plot of quality against number of candidates (5, 10, 20, 40). Present it all in one main table. Done: A forward against reversed lines (Phase 3) and E with and without Stage 1 (Phase 3), both with the real disses' end words; and on the frozen prompts (`eval/run_auto_eval.py`, 3 seeds, paired over the 50 prompts), the reranker, the planner and the number of candidates for A, D and E.
 
 - **Reranker** (`full` against `no_reranker`, the first candidate of plan 1, unfiltered):
 
@@ -628,7 +607,7 @@ python -m eval.human_eval collect              # data/human_eval/ratings/{human,
 |---|---|
 | 8 (now) | Repo, trait list, frozen eval prompts, phonetic module, quatrain corpus generated (full run), LLM diss data generation started |
 | 9 | Diss data filtered and reviewed, NLU data done, System A Stage 1 trained, NLU model trained |
-| 10 | Generators trained, reranker classifier trained, retrieval done, first end-to-end run |
+| 10 | Generators trained, reranker classifier trained, first end-to-end run |
 | 11 | Reranker weights tuned, dialogue manager done, integration and UI, automatic eval running |
 | 12 | Ablations, human evaluation, bug fixing |
 | 13 | Analysis, report, demo rehearsal |
@@ -639,6 +618,6 @@ python -m eval.human_eval collect              # data/human_eval/ratings/{human,
 - **Quatrain corpus is too small or too uniform for Stage 1:** raise `TARGET_USABLE` to 50,000, add topics or tones, or mix in output from a second model (e.g. Qwen2.5-32B) for more variety in style.
 - **Diss data quality is weak:** cut to 25 traits and generate more per trait. Depth matters more than coverage.
 - **The rhyme planner restricts vocabulary too much:** sample from its top 5 plans and include some unconstrained candidates.
-- **Short on time:** drop Systems B and C and retrieval, use keyword-based NLU, and reduce the human evaluation to 20 prompts × 3 configurations, still with outside raters.
+- **Short on time:** use keyword-based NLU, and reduce the human evaluation to 20 prompts × 3 configurations, still with outside raters.
 
 Weeks 8–9 decide the rest: the phonetic module and the data come first, because every other component depends on them.
