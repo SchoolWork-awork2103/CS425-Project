@@ -16,11 +16,14 @@ python -m pip install -r requirements.txt
 
 For System D on the GPU, install a CUDA build of PyTorch first ([PyTorch's installer](https://pytorch.org/get-started/locally/)).
 
-Download the trained models from the team's Hugging Face repo into `checkpoints/` (or copy them from the shared Drive, `MyDrive/CS425/checkpoints`):
+Then download everything the app needs and check that it is in place:
 
 ```powershell
-hf download SmuCS425-Group7/disschatbot --local-dir checkpoints --include "nlu_joint_best/*" "trait_fit_best/*" "gen_A_rev_stage2_best.pt" "gen_D_1.5b_best/*" "gen_E_base_stage2_best/*"
+python -m app.setup_assets --download
+python -m app.setup_assets
 ```
+
+`--download` fetches the trained models from the team's Hugging Face repo (`paths.checkpoints_repo` in `config.yaml`) into `checkpoints/`, skipping any already there, so local copies are never replaced:
 
 ```text
 checkpoints/
@@ -28,17 +31,12 @@ checkpoints/
   trait_fit_best/            # reranker trait-fit classifier (Phase 5)
   gen_A_rev_stage2_best.pt   # System A
   gen_D_1.5b_best/           # System D adapter
-  gen_E_base_stage2_best/    # System E (optional)
+  gen_E_base_stage2_best/    # System E
 ```
 
-Then fetch the public files (Qwen2.5-1.5B-Instruct base, the MiniLM span encoder, the Detoxify checkpoint, BERT tokenizer files and the GloVe 6B archive, from which `data/glove/` is built) and check that everything is in place:
+It then fetches the public files: the Qwen2.5-1.5B-Instruct base (about 3 GB, which System D's adapter sits on), the MiniLM span encoder, the Detoxify checkpoint, BERT tokenizer files and the GloVe 6B archive, from which `data/glove/` is built.
 
-```powershell
-python -m app.setup_assets --download
-python -m app.setup_assets
-```
-
-The check exits nonzero if something required is missing. The Qwen base is only needed for System D (and the optional Qwen interpreter). If you already have `glove.6B.zip`, `python data/prepare_glove.py path/to/glove.6B.zip` builds `data/glove/` without the download.
+The check exits nonzero if anything is missing, including the checkpoint of any of the three generators. If you already have `glove.6B.zip`, `python data/prepare_glove.py path/to/glove.6B.zip` builds `data/glove/` without the download.
 
 ## Run
 

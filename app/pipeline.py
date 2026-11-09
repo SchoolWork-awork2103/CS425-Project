@@ -201,9 +201,20 @@ class Pipeline:
             raise ValueError(f"Generator must be one of {', '.join(GENERATORS)}")
         control = self.manager.control(message, state)
         if control:
-            decision, state = control
-            self.last_trace["decision"] = decision.kind
-            return decision.text, state
+            # An answer to a pending question ("yes", "1", a listed trait) can resume a roast
+            # request, so a generate decision goes on to generation like any other.
+            decision, new_state = control
+        else:
+            decision, new_state = self._interpret_and_step(message, state)
+            if decision is None:
+                return new_state
+        self.last_trace["decision"] = decision.kind
+        if decision.kind != "generate":
+            return decision.text, new_state
+        return self._generate_reply(system, decision, new_state)
+
+    def _interpret_and_step(self, message, state):
+        """(decision, new state), or (None, (reply, state)) when the message can't be interpreted."""
         try:
             self.last_trace["stage"] = "interpretation"
             start = time.perf_counter()
@@ -231,18 +242,17 @@ class Pipeline:
                 turn.generic_requested = False
             self._ground_destructive_updates(turn, message, state)
             self.last_trace["stage"] = "policy"
-            decision, new_state = self.manager.step(turn, state)
+            return self.manager.step(turn, state)
         except InterpretationError:
             self.last_trace["attempts"] = getattr(self.interpreter, "last_attempts", 0)
             self.last_trace["error"] = "invalid_interpretation"
-            return "I couldn't interpret that clearly. Please give a shorter request with traits and mild or harsh intensity.", state
+            return None, ("I couldn't interpret that clearly. Please give a shorter request with traits and mild or harsh intensity.", state)
         except (OSError, RuntimeError, ValueError, ImportError):
             log.exception("Dialogue interpretation failed")
             self.last_trace["error"] = "interpretation_unavailable"
-            return "The interpreter is unavailable. Check the local model setup in README.md and try again.", state
-        self.last_trace["decision"] = decision.kind
-        if decision.kind != "generate":
-            return decision.text, new_state
+            return None, ("The interpreter is unavailable. Check the local model setup in README.md and try again.", state)
+
+    def _generate_reply(self, system, decision, new_state):
         try:
             self.last_trace["stage"] = "planning"
             k = self.cfg["reranker"]["tuning"]["plans"]

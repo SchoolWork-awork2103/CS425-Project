@@ -7,6 +7,7 @@ paths:
   trait_catalogue: data/trait_catalogue.json
   eval_prompts: eval/prompts.json
   checkpoints: checkpoints        # mirrored to the shared Drive folder
+  checkpoints_repo: SmuCS425-Group7/disschatbot   # Hugging Face repo that app.setup_assets --download fetches them from
   # checkpoint names: gen_{system}_stage{1|2}_best.pt, e.g. gen_A_stage2_best.pt
   topics: data/quatrains/topics.json
   quatrains: data/quatrains/gen_out/qwen3-32b/quatrains.jsonl

@@ -63,14 +63,25 @@ class PipelineTest(unittest.TestCase):
         reply, state = self.pipeline.respond("I can read minds")
         self.assertEqual(reply, "\n".join(["(Reading 'read minds' as bookish.)", *GOOD]))
         self.assertEqual(state.history[0].lines, GOOD)
-        # a turn answered without the interpreter (the control path) does not repeat the note
-        self.service.generate.return_value = [{"lines": [*GOOD[:3], "yet nobody listens, we all roll our eyes."],
-                                               "norm_logprob": -1.0}]
+        # a turn answered without the interpreter (the control path) still writes the roast,
+        # and does not repeat the note
+        second = [*GOOD[:3], "yet nobody listens, we all roll our eyes."]
+        self.service.generate.return_value = [{"lines": second, "norm_logprob": -1.0}]
         state.awaiting = PendingQuestion(TurnInterpretation(request_generation=True,
                                                             unresolved=[Unresolved("jokes", ["funny"])]), "choice")
         reply, state = self.pipeline.respond("1", state)
-        self.assertNotIn("Reading", reply)
+        self.assertEqual(reply, "\n".join(second))
         self.assertEqual(state.traits, ["bookish", "funny"])
+        self.assertEqual(len(state.history), 2)
+
+    def test_yes_to_a_suggested_trait_writes_the_roast(self):
+        state = DialogueState(awaiting=PendingQuestion(
+            TurnInterpretation(request_generation=True, unresolved=[Unresolved("polyglot", ["worldly"])]), "choice"))
+        reply, state = self.pipeline.respond("yes", state)
+        self.assertEqual(reply, "\n".join(GOOD))
+        self.assertEqual(state.traits, ["worldly"])
+        self.assertIsNone(state.awaiting)
+        self.interpreter.interpret.assert_not_called()
 
     def test_clarification_and_bad_interpretation_do_not_generate(self):
         self.interpreter.interpret.return_value = TurnInterpretation(request_generation=True)

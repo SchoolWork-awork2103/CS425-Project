@@ -1,8 +1,9 @@
-"""Check local project assets; --download prepares public base-model dependencies.
+"""Check local project assets; --download fetches whatever is missing.
 
-The trained project adapters/classifiers and GRU checkpoint must be copied from the
-team's training outputs separately. GloVe vectors are derived from the public
-glove.6B.zip. No inference is run here.
+--download takes the trained checkpoints (NLU, trait-fit, Systems A, D and E) from the
+team's Hugging Face repo (paths.checkpoints_repo), skipping any already in checkpoints/,
+then the public base models, Detoxify and GloVe (derived from glove.6B.zip).
+No inference is run here.
 """
 import argparse
 import json
@@ -15,6 +16,8 @@ GLOVE_ZIP_URL = "https://huggingface.co/stanfordnlp/glove/resolve/main/glove.6B.
 GLOVE_ZIP_SHA256 = "6471382cdd837544bf3ac72497a38715e845897d265b2b424b4761832009c837"
 # Detoxify("original") loads this through torch.hub, so it is cached where torch.hub keeps checkpoints
 DETOXIFY_URL = "https://github.com/unitaryai/detoxify/releases/download/v0.1-alpha/toxic_original-c1212f89.ckpt"
+# The Qwen base files the app needs (no README, LICENSE, .gitattributes)
+QWEN_PATTERNS = ["*.json", "*.safetensors", "*.txt", "*.model", "*.tiktoken"]
 
 
 def detoxify_checkpoint():
@@ -48,7 +51,9 @@ def check(cfg):
                 results[name + " config/tokenizer"] = {"present": False}
         from huggingface_hub import snapshot_download
         try:
-            snapshot = Path(snapshot_download("Qwen/Qwen2.5-1.5B-Instruct", local_files_only=True))
+            # Same patterns as download(): newer huggingface_hub rejects a partial snapshot without them
+            snapshot = Path(snapshot_download("Qwen/Qwen2.5-1.5B-Instruct", local_files_only=True,
+                                              allow_patterns=QWEN_PATTERNS))
             index = snapshot / "model.safetensors.index.json"
             if index.is_file():
                 shards = set(json.loads(index.read_text(encoding="utf-8"))["weight_map"].values())
@@ -60,20 +65,40 @@ def check(cfg):
             results["Qwen base weights"] = {"present": False}
     except ImportError:
         results["runtime dependencies"] = {"present": False}
-    results["System A checkpoint (optional)"] = {
+    # All three generators are in the UI dropdown, so each one's checkpoint is required.
+    results["System A checkpoint"] = {
         "path": str(checkpoints / cfg["reranker"]["tuning"]["checkpoints"]["A"]),
-        "present": (checkpoints / cfg["reranker"]["tuning"]["checkpoints"]["A"]).is_file(), "optional": True}
-    results["System E checkpoint (optional)"] = {
+        "present": (checkpoints / cfg["reranker"]["tuning"]["checkpoints"]["A"]).is_file()}
+    results["System E checkpoint"] = {
         "path": str(checkpoints / cfg["gpt2"]["checkpoint"]),
-        "present": (checkpoints / cfg["gpt2"]["checkpoint"] / "model.safetensors").is_file(), "optional": True}
+        "present": (checkpoints / cfg["gpt2"]["checkpoint"] / "model.safetensors").is_file()}
     return results
+
+
+def _trained_checkpoints(cfg, backend):
+    """{pattern in the team's Hugging Face repo: local file that shows it is already there}."""
+    checkpoints = ROOT / cfg["paths"]["checkpoints"]
+    a, d = cfg["reranker"]["tuning"]["checkpoints"]["A"], cfg["reranker"]["tuning"]["checkpoints"]["D"]
+    e = cfg["gpt2"]["checkpoint"]
+    wanted = {a: checkpoints / a,
+              f"{d}/*": checkpoints / d / "adapter_model.safetensors",
+              f"{e}/*": checkpoints / e / "model.safetensors",
+              "trait_fit_best/*": checkpoints / "trait_fit_best" / "model.safetensors"}
+    if backend == "nlu":
+        wanted["nlu_joint_best/*"] = checkpoints / "nlu_joint_best" / "model.pt"
+    return wanted
 
 
 def download(cfg, backend):
     from huggingface_hub import snapshot_download
-    # Public assets only; project-specific trained models are never replaced.
-    snapshot_download("Qwen/Qwen2.5-1.5B-Instruct",
-                      allow_patterns=["*.json", "*.safetensors", "*.txt", "*.model", "*.tiktoken"])
+    # Trained checkpoints from the team's repo, only the ones missing locally, so local copies are never replaced.
+    missing = [pattern for pattern, marker in _trained_checkpoints(cfg, backend).items() if not marker.is_file()]
+    if missing:
+        print("Downloading trained checkpoints:", ", ".join(missing))
+        snapshot_download(cfg["paths"]["checkpoints_repo"], local_dir=ROOT / cfg["paths"]["checkpoints"],
+                          allow_patterns=missing)
+    # Public base models and data
+    snapshot_download("Qwen/Qwen2.5-1.5B-Instruct", allow_patterns=QWEN_PATTERNS)
     snapshot_download("bert-base-uncased", allow_patterns=["*.json", "*.txt"])
     if backend == "nlu":
         snapshot_download(cfg["nlu"]["span_encoder"])
@@ -116,7 +141,7 @@ def main():
         download(cfg, backend)
     results = check(cfg)
     print(json.dumps(results, indent=2))
-    if any(not r["present"] for r in results.values() if not r.get("optional")):
+    if any(not r["present"] for r in results.values()):
         raise SystemExit(1)
 
 
