@@ -4,6 +4,29 @@ import warnings
 from .pipeline import GENERATORS, Pipeline
 
 
+def instructions(catalogue):
+    """The "How to use" panel: what the bot understands, with phrasings the NLU and keyword rules handle."""
+    traits = ", ".join(sorted(catalogue.keys))
+    return f"""\
+| To | Say something like |
+|---|---|
+| Get a roast | *Roast me, I'm confident and musical* |
+| Get another roast | *Another one* |
+| Make it harsher | *harsher*, *meaner*, *savage*, *no mercy* |
+| Make it milder | *go easy*, *softer*, *tone it down* |
+| Add a trait | *Add how organized I am*, *I'm also smart* |
+| Remove a trait | *Drop the musical part* |
+| Replace the traits | *Roast my punctuality instead* |
+| Roast without traits | *Just give me a generic roast*, *surprise me* |
+| Answer a question from the bot | *yes*, *1* / *2*, or the trait's name |
+| Back out of a question | *cancel* or *no* |
+| Start over | *reset* or **Reset conversation** |
+| Leave | *bye* (your settings stay until you reset) |
+
+**Traits it knows:** {traits}.
+"""
+
+
 def create_app(pipeline):
     import gradio as gr
     # Gradio 5.50's show_progress has no "spinner without timer" option: "full" is the
@@ -14,17 +37,23 @@ def create_app(pipeline):
                    css=".meta-text { display: none; } footer { display: none !important; }") as demo:
         gr.Markdown("# AABB roast bot\nTell me traits you're proud of, then ask for another roast or change the intensity.")
         state = gr.State(pipeline.manager.initial_state())
-        generator = gr.Dropdown([(label, key) for key, label in GENERATORS.items()], value=pipeline.system,
-                                label="Poem generator")
-        # Gradio 5.50 emits this warning even when False is explicitly supplied.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning,
-                                    message=r"The default value of 'allow_tags' in gr\.Chatbot will be changed.*")
-            chat = gr.Chatbot(type="messages", label="Roast conversation", allow_tags=False)
-        message = gr.Textbox(label="Message", placeholder="Roast me, I'm confident and musical")
-        with gr.Row():
-            send = gr.Button("Send", variant="primary")
-            reset = gr.Button("Reset conversation")
+        # Chat on the left, instructions beside it (Gradio stacks the columns on narrow screens).
+        with gr.Row(equal_height=False):
+            with gr.Column(scale=3):
+                generator = gr.Dropdown([(label, key) for key, label in GENERATORS.items()], value=pipeline.system,
+                                        label="Poem generator")
+                # Gradio 5.50 emits this warning even when False is explicitly supplied.
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=DeprecationWarning,
+                                            message=r"The default value of 'allow_tags' in gr\.Chatbot will be changed.*")
+                    chat = gr.Chatbot(type="messages", label="Roast conversation", allow_tags=False)
+                message = gr.Textbox(label="Message", placeholder="Roast me, I'm confident and musical")
+                with gr.Row():
+                    send = gr.Button("Send", variant="primary")
+                    reset = gr.Button("Reset conversation")
+            with gr.Column(scale=2, min_width=320):
+                with gr.Accordion("How to use", open=True):
+                    gr.Markdown(instructions(pipeline.catalogue))
 
         def respond(text, history, session, system):
             reply, session = pipeline.respond(text, session, system)
