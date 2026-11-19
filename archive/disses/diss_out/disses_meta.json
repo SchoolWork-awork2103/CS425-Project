@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-27",
+  "mode": "pilot",
+  "model": "Qwen/Qwen3-32B-FP8",
+  "license": "Apache-2.0",
+  "temperature": 0.9,
+  "top_p": 0.95,
+  "seed": 42,
+  "settings": {
+    "PER_SINGLE": 15,
+    "N_PAIRS": 250,
+    "PER_PAIR": 6,
+    "N_TRIPLES": 100,
+    "PER_TRIPLE": 4,
+    "PER_HELDOUT": 15,
+    "N_FALLBACK": 100,
+    "PER_REQUEST": 10,
+    "PASS_RATE_GUESS": 0.4,
+    "MAX_ROUNDS": 4,
+    "PERSONAS": [
+      "sarcastic stand-up comedian",
+      "rapper in a roast battle",
+      "disappointed teacher",
+      "brutally honest best friend",
+      "over-the-top game show host"
+    ]
+  },
+  "prompts": {
+    "system": "You write short, funny roasts as rhyming quatrains. Reply with a JSON array only: no title, no explanation, no code fence.",
+    "example": "Write 10 different roasts of a person who says they are \"confident\" (also said as: self-assured, bold; flip side: arrogant, all talk).\nTurn the positive trait into its flip side.\nIntensity: harsh: a savage roast-battle burn, sharp and cutting, but clever rather than crude.\nVoice: a sarcastic stand-up comedian, speaking directly to the person (\"you\").\n\nRules:\n- Each roast is a quatrain of two rhyming couplets (AABB): line 1 rhymes with line 2, line 3 rhymes with line 4, and the second couplet uses a different rhyme sound.\n- 7 to 11 syllables per line. Every line must make sense on its own; never add words just to reach a rhyme.\n- Stay on the given trait.\n- Never insult appearance, body, race, ethnicity, religion, gender, sexuality or disability. No swear words or slurs.\n- Modern everyday English. Every roast uses different rhyme words and a different joke.\n- Avoid overused rhymes like night/light, heart/apart, day/way.\n\nReturn a JSON array of 10 objects. In each, \"rhymes\" lists the end words of the two couplets, and \"lines\" holds the 4 lines, each starting with its end word in square brackets and ending with exactly that word. One object, for someone who loves karaoke:\n{\"rhymes\": \"name / same ; peace / police\", \"lines\": [\"[name] You grab the mic before they call your name,\", \"[same] then every song sounds exactly the same.\", \"[peace] The crowd isn't cheering, they're begging for peace,\", \"[police] your encore is why they called the police.\"]}"
+  },
+  "stats": {
+    "kept": 96,
+    "wanted": 152,
+    "candidates": 950,
+    "form_pass": 0.10631578947368421,
+    "by_kind": {
+      "single": {
+        "kept": 43,
+        "wanted": 60
+      },
+      "pair": {
+        "kept": 16,
+        "wanted": 36
+      },
+      "triple": {
+        "kept": 11,
+        "wanted": 16
+      },
+      "heldout": {
+        "kept": 8,
+        "wanted": 20
+      },
+      "fallback": {
+        "kept": 18,
+        "wanted": 20
+      }
+    },
+    "short_combinations": 14,
+    "reasons": {
+      "A_no_rhyme": 562,
+      "B_no_rhyme": 584,
+      "syllable_range": 494,
+      "pair_unbalanced": 172,
+      "rare_end_word": 69,
+      "bad_json": 36,
+      "over_target": 5,
+      "leftover_tag": 1,
+      "line_count=2": 1,
+      "same_sound_AB": 4,
+      "line_count=0": 1
+    },
+    "tokens": 120620,
+    "seconds": 407.8
+  }
+}

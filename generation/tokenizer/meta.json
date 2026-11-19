@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-28",
+  "model_type": "bpe",
+  "vocab_size": 8000,
+  "special": {
+    "<pad>": 0,
+    "<unk>": 1,
+    "<bos>": 2,
+    "<eos>": 3,
+    "<traits>": 4,
+    "<intensity>": 5,
+    "<rhymes>": 6,
+    "<poem>": 7,
+    "<nl>": 8
+  },
+  "trained_on": {
+    "quatrain_lines": 75400,
+    "diss_lines": 13528
+  },
+  "encode": {
+    "quatrains_train": {
+      "lines": 75400,
+      "tokens": 826059,
+      "tokens_per_line": 10.96,
+      "unk": 0,
+      "byte_fallback": 0,
+      "roundtrip_ok": true
+    },
+    "quatrains_val": {
+      "lines": 4000,
+      "tokens": 44410,
+      "tokens_per_line": 11.1,
+      "unk": 0,
+      "byte_fallback": 0,
+      "roundtrip_ok": true
+    },
+    "disses_train": {
+      "lines": 13528,
+      "tokens": 182989,
+      "tokens_per_line": 13.53,
+      "unk": 0,
+      "byte_fallback": 0,
+      "roundtrip_ok": true
+    },
+    "disses_val": {
+      "lines": 1692,
+      "tokens": 23069,
+      "tokens_per_line": 13.63,
+      "unk": 0,
+      "byte_fallback": 0,
+      "roundtrip_ok": true
+    },
+    "disses_test": {
+      "lines": 2276,
+      "tokens": 31171,
+      "tokens_per_line": 13.7,
+      "unk": 0,
+      "byte_fallback": 0,
+      "roundtrip_ok": true
+    }
+  },
+  "trait_pieces": {
+    "1": 36,
+    "2": 1,
+    "3": 2,
+    "4": 1
+  }
+}

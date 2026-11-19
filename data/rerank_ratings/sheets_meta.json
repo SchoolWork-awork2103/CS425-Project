@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-01",
+  "candidates": 600,
+  "dropped": {},
+  "after_filters": 600,
+  "items": 150,
+  "raters": 2,
+  "lexical_min": 0.8,
+  "toxicity_limits": {
+    "severe_toxicity": 0.1,
+    "obscene": 0.5,
+    "threat": 0.3,
+    "identity_attack": 0.2
+  },
+  "short_prompts": {},
+  "items_by_system": {
+    "A": 50,
+    "D": 100
+  }
+}

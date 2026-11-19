@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-31",
+  "raw": 3579,
+  "dropped": {
+    "span_not_in_text": 31,
+    "no_span": 23,
+    "duplicate": 41,
+    "ambiguous_intent": 3
+  },
+  "kept": 3481,
+  "splits": {
+    "test": 529,
+    "train": 2624,
+    "val": 328
+  },
+  "by_intent": {
+    "request_diss": 1963,
+    "another_one": 272,
+    "make_meaner": 300,
+    "make_softer": 292,
+    "greet": 171,
+    "goodbye": 200,
+    "out_of_scope": 283
+  },
+  "heldout_in_test": 197,
+  "spot_check": 348
+}

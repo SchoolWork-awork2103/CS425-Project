@@ -1,0 +1,119 @@
+{
+  "date": "2026-11-04",
+  "items": 150,
+  "prompts": 30,
+  "prompts_used": 18,
+  "prompts_all_one_rating": 12,
+  "baselines": {
+    "random": 1.4666666666666666,
+    "best_possible": 2.2222222222222223
+  },
+  "equal_weights": {
+    "weights": {
+      "logprob": 1.0,
+      "aabb": 1.0,
+      "lexical": 1.0,
+      "trait_fit": 1.0,
+      "repetition": 1.0,
+      "toxicity": 1.0,
+      "history": 1.0
+    },
+    "spearman": 0.12083393328764098,
+    "top": 1.5555555555555556
+  },
+  "feature_alone": {
+    "logprob": {
+      "spearman": -0.0126405717459993,
+      "top": 1.3611111111111112
+    },
+    "aabb": {
+      "spearman": 0.17372001270289894,
+      "top": 1.5370370370370372
+    },
+    "syllables": {
+      "spearman": -0.0612511549572116,
+      "top": 1.450925925925926
+    },
+    "lexical": {
+      "spearman": -0.03387024866252392,
+      "top": 1.4379629629629629
+    },
+    "trait_fit": {
+      "spearman": 0.04297419291094852,
+      "top": 1.5277777777777777
+    },
+    "repetition": {
+      "spearman": -0.12573369223764574,
+      "top": 1.3842592592592593
+    },
+    "toxicity": {
+      "spearman": -0.0026115048556891915,
+      "top": 1.5601851851851851
+    }
+  },
+  "cv": {
+    "folds": 5,
+    "grid": {
+      "spearman": 0.09039590148079144,
+      "top": 1.5541666666666667
+    },
+    "equal_weights": {
+      "spearman": 0.14619850844901366,
+      "top": 1.5916666666666666
+    },
+    "picked_per_fold": [
+      {
+        "logprob": 0.5,
+        "aabb": 0.5,
+        "trait_fit": 2,
+        "lexical": 0,
+        "repetition": 1,
+        "toxicity": 1
+      },
+      {
+        "logprob": 0,
+        "aabb": 0.5,
+        "trait_fit": 0,
+        "lexical": 1,
+        "repetition": 0,
+        "toxicity": 1
+      },
+      {
+        "logprob": 0,
+        "aabb": 1,
+        "trait_fit": 0.5,
+        "lexical": 1,
+        "repetition": 0,
+        "toxicity": 1
+      },
+      {
+        "logprob": 0,
+        "aabb": 1,
+        "trait_fit": 0.5,
+        "lexical": 1,
+        "repetition": 0,
+        "toxicity": 1
+      },
+      {
+        "logprob": 0,
+        "aabb": 0.5,
+        "trait_fit": 2,
+        "lexical": 1,
+        "repetition": 0,
+        "toxicity": 1
+      }
+    ]
+  },
+  "grid_best_on_all": {
+    "weights": {
+      "logprob": 0,
+      "aabb": 1,
+      "trait_fit": 0.5,
+      "lexical": 1,
+      "repetition": 0,
+      "toxicity": 1
+    },
+    "spearman": 0.21804164492933323,
+    "top": 1.6111111111111112
+  }
+}

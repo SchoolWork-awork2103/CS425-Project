@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-29",
+  "mode": "full",
+  "model": "Qwen/Qwen3-32B-FP8",
+  "license": "Apache-2.0",
+  "temperature": 0.9,
+  "top_p": 0.95,
+  "seed": 42,
+  "settings": {
+    "NLU_PER_REQUEST": 20,
+    "NLU_TRAIT_REQUESTS": 2,
+    "NLU_PAIRS": 60,
+    "NLU_PER_PAIR": 5,
+    "NLU_INTENT_REQUESTS": {
+      "request_diss": 8,
+      "another_one": 15,
+      "make_meaner": 15,
+      "make_softer": 15,
+      "greet": 10,
+      "goodbye": 10,
+      "out_of_scope": 15
+    },
+    "STYLES": [
+      "casual texting: lowercase, slang and a typo or two",
+      "polite, complete sentences",
+      "very short, 2 to 6 words",
+      "Gen Z slang",
+      "rambling, with extra details about their day",
+      "written by a non-native English speaker"
+    ]
+  },
+  "prompts": {
+    "system": "You write realistic chat messages that users send to a chatbot. Reply with a JSON array only.",
+    "trait_example": "Write 20 different messages a user might send to a roast-poem chatbot, asking to be roasted and revealing that they are \"confident\" (e.g. self-assured, bold, sure of myself, cocky). Each message is about the user themself (\"I\", \"me\").\nStyle: casual texting: lowercase, slang and a typo or two.\nMix direct mentions (\"roast me, I'm super organized\") with indirect ones that only describe the trait (\"people say I never shut up about history\"). Do not always use the words given above.\nReturn a JSON array of objects: {\"text\": the message, \"spans\": [{\"trait\": \"confident\", \"span\": the exact words in the text that express it}]}. Copy every span exactly from the text.",
+    "intent_example": "Write 20 different messages where a user of a roast-poem chatbot would already got a roast and ask for a harsher, more savage one.\nStyle: casual texting: lowercase, slang and a typo or two.\nReturn a JSON array of strings."
+  },
+  "stats": {
+    "messages": 3579,
+    "by_intent": {
+      "request_diss": 2019,
+      "another_one": 280,
+      "make_meaner": 300,
+      "make_softer": 300,
+      "greet": 180,
+      "goodbye": 200,
+      "out_of_scope": 300
+    },
+    "problems": {
+      "bad_json": 4
+    },
+    "tokens": 140715,
+    "seconds": 471.6
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "mode": "pilot",
+  "model_key": "qwen2.5-32b",
+  "model": "Qwen/Qwen2.5-32B-Instruct-AWQ",
+  "n_candidates": 4,
+  "temperature": 0.9,
+  "top_p": 0.95,
+  "judge_min": 4,
+  "saved": 128,
+  "prompts": 300,
+  "kept": 128,
+  "seconds": 82.57219958305359,
+  "tokens": 83094,
+  "form_pass": 0.4,
+  "tag_adherence": 0.7673785594639866,
+  "yield_": 0.4266666666666667,
+  "judge_pass": 0.3625,
+  "judge_mean": 3.3604166666666666,
+  "kept_score_mean": 4.0078125,
+  "est_min_20k": 215.03176974753538,
+  "est_min_50k": 537.5794243688384
+}

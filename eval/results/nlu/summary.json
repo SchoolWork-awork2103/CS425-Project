@@ -1,0 +1,102 @@
+{
+  "model": "distilbert-base-uncased",
+  "best_epoch": 8,
+  "test": {
+    "all": {
+      "n": 529,
+      "intent_acc": 0.9376181474480151,
+      "slot_precision": 0.2732793522267207,
+      "slot_recall": 0.3479381443298969,
+      "slot_f1": 0.3061224489795919,
+      "slot_word_f1": 0.6636931311329171,
+      "slot_overlap_f1": 0.7360513055428309
+    },
+    "training_traits": {
+      "n": 332,
+      "intent_acc": 0.9096385542168675,
+      "slot_precision": 0.2603305785123967,
+      "slot_recall": 0.3539325842696629,
+      "slot_f1": 0.30000000000000004,
+      "slot_word_f1": 0.6618798955613577,
+      "slot_overlap_f1": 0.7180898732556651
+    },
+    "heldout_traits": {
+      "n": 197,
+      "intent_acc": 0.9847715736040609,
+      "slot_precision": 0.2857142857142857,
+      "slot_recall": 0.34285714285714286,
+      "slot_f1": 0.3116883116883117,
+      "slot_word_f1": 0.665210267613326,
+      "slot_overlap_f1": 0.7525912573231185
+    },
+    "per_intent_acc": {
+      "another_one": 0.8214285714285714,
+      "goodbye": 0.75,
+      "greet": 0.8333333333333334,
+      "make_meaner": 0.7666666666666667,
+      "make_softer": 0.9,
+      "out_of_scope": 0.8275862068965517,
+      "request_diss": 0.9866310160427807
+    },
+    "intent_confusions": {
+      "request_diss -> another_one": 4,
+      "make_softer -> make_meaner": 3,
+      "out_of_scope -> request_diss": 3,
+      "another_one -> goodbye": 2,
+      "another_one -> request_diss": 2,
+      "goodbye -> another_one": 2,
+      "goodbye -> request_diss": 2,
+      "make_meaner -> request_diss": 2,
+      "make_meaner -> another_one": 2,
+      "make_meaner -> make_softer": 2,
+      "request_diss -> greet": 1,
+      "another_one -> greet": 1,
+      "goodbye -> make_meaner": 1,
+      "greet -> request_diss": 1,
+      "greet -> make_meaner": 1,
+      "greet -> out_of_scope": 1,
+      "make_meaner -> goodbye": 1,
+      "out_of_scope -> greet": 1,
+      "out_of_scope -> make_softer": 1
+    }
+  },
+  "normalization_gold_spans": {
+    "training_traits": {
+      "n": 178,
+      "strict": 0.43820224719101125,
+      "lenient": 0.5842696629213483,
+      "by_rule": {
+        "nearest": 153,
+        "synonym": 12,
+        "key": 9,
+        "unknown": 4
+      }
+    },
+    "heldout_traits": {
+      "n": 210,
+      "strict": 0.4857142857142857,
+      "lenient": 0.5619047619047619,
+      "by_rule": {
+        "nearest": 144,
+        "unknown": 34,
+        "key": 15,
+        "synonym": 17
+      }
+    }
+  },
+  "end_to_end_traits": {
+    "training_traits": {
+      "n": 164,
+      "exact_set": 0.2804878048780488,
+      "lenient_set": 0.39634146341463417,
+      "no_trait_found": 0.07317073170731707
+    },
+    "heldout_traits": {
+      "n": 197,
+      "exact_set": 0.3248730964467005,
+      "lenient_set": 0.4263959390862944,
+      "no_trait_found": 0.116751269035533
+    }
+  },
+  "seconds_per_message_cuda": 0.0225
+}

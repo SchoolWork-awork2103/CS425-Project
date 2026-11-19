@@ -1,0 +1,131 @@
+{
+  "date": "2026-10-28",
+  "source": "data/quatrains/gen_out/qwen3-32b/quatrains.jsonl",
+  "raw": 20000,
+  "dropped": {
+    "digits_symbols": 87,
+    "non_latin": 5,
+    "leftover_tag": 58
+  },
+  "kept": 19850,
+  "normalization": "lowercase; curly quotes -> straight; em/en dash -> ' - '; ellipsis -> '...'; asterisks removed; accents folded to ASCII; whitespace collapsed",
+  "split": {
+    "by": "topic group: topics linked by a shared noun (POS-tagged, Porter-stemmed, or one noun starting or ending with the other, at least 4 letters); topics with no noun stay in train",
+    "seed": 42,
+    "train": 18850,
+    "val": 1000,
+    "train_topics": 754,
+    "val_topics": 43,
+    "groups": 85,
+    "largest_group": {
+      "topics": 694,
+      "quatrains": 17409
+    },
+    "max_val_group": 248,
+    "val_groups": 29,
+    "no_noun_topics": 15
+  },
+  "val_groups": [
+    [
+      "a price tag wrong",
+      "seeing a price tag too high"
+    ],
+    [
+      "adjusting the thermostat",
+      "arguing over the thermostat"
+    ],
+    [
+      "bees buzz near blossoms"
+    ],
+    [
+      "charging cable tangled"
+    ],
+    [
+      "dandelion seeds float away"
+    ],
+    [
+      "dented can of beans"
+    ],
+    [
+      "editing a caption for hours"
+    ],
+    [
+      "face recognition failing"
+    ],
+    [
+      "feeling tired after socializing"
+    ],
+    [
+      "finding the right size",
+      "plugs not fitting right"
+    ],
+    [
+      "fish swimming upside down",
+      "goldfish swimming in circles",
+      "hawk circles high"
+    ],
+    [
+      "forgetting each other's names",
+      "forgetting names at gatherings",
+      "forgetting someone's name",
+      "making up a silly nickname",
+      "seeing your name in a comment",
+      "someone forgetting your name"
+    ],
+    [
+      "kettle boiling over",
+      "steam rising from kettle"
+    ],
+    [
+      "knitting needles clicking softly"
+    ],
+    [
+      "laughing at a bad joke",
+      "laughing at inside jokes",
+      "laughing too hard at a joke",
+      "reposting a joke that fell flat"
+    ],
+    [
+      "matching outfits on purpose"
+    ],
+    [
+      "needing space after a fight"
+    ],
+    [
+      "noticing slower reflexes"
+    ],
+    [
+      "old vinyl spinning slowly"
+    ],
+    [
+      "repeating a viral dance challenge"
+    ],
+    [
+      "rewinding a cassette"
+    ],
+    [
+      "ruler used as a pointer"
+    ],
+    [
+      "seeing the same faces at church"
+    ],
+    [
+      "sneaker untied during run"
+    ],
+    [
+      "sneaking into a concert"
+    ],
+    [
+      "someone spilling punch on the rug"
+    ],
+    [
+      "telling stories with action figures"
+    ],
+    [
+      "unmarked test returned"
+    ],
+    [
+      "waking up with stiffness"
+    ]
+  ]
+}

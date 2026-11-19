@@ -1,0 +1,22 @@
+{
+  "mode": "pilot",
+  "model_key": "qwen3-30b-a3b",
+  "model": "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8",
+  "n_candidates": 4,
+  "temperature": 0.9,
+  "top_p": 0.95,
+  "judge_min": 4,
+  "saved": 106,
+  "prompts": 300,
+  "kept": 106,
+  "seconds": 24.784746646881104,
+  "tokens": 87482,
+  "form_pass": 0.1425,
+  "tag_adherence": 0.49020833333333336,
+  "yield_": 0.35333333333333333,
+  "judge_pass": 0.7368421052631579,
+  "judge_mean": 4.005847953216374,
+  "kept_score_mean": 4.5,
+  "est_min_20k": 77.93945486440599,
+  "est_min_50k": 194.848637161015
+}

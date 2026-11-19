@@ -1,0 +1,96 @@
+{
+  "name": "gen_D_1.5b",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "lora": {
+    "r": 16,
+    "alpha": 32,
+    "dropout": 0.05
+  },
+  "lr": 0.0002,
+  "epochs": 3,
+  "batch_size": 16,
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 0.9,
+    "rep_penalty": 1.2
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.777713284482065,
+      "val_loss": 1.5607523326980999,
+      "val_ppl": 4.762402809059877,
+      "lr": 0.00015898837661756406,
+      "seconds": 283.4
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.4636819736536841,
+      "val_loss": 1.4744204138554795,
+      "val_ppl": 4.368503115176133,
+      "lr": 5.4716656824812505e-05,
+      "seconds": 269.8
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.3679931340887337,
+      "val_loss": 1.4625474019787907,
+      "val_ppl": 4.316942521277983,
+      "lr": 0.0,
+      "seconds": 269.7
+    }
+  ],
+  "best_val_loss": 1.4625474019787907,
+  "test_loss": {
+    "seen_traits": 1.4553480361331634,
+    "heldout_traits": 1.7033959883628667
+  },
+  "samples": {
+    "seen": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.94375,
+      "couplets_rhyme": 0.89375,
+      "aabb": 0.80625,
+      "syllables": 0.9828125,
+      "lexical": 0.995873828282423,
+      "trait_mention": 0.7756410256410257,
+      "distinct_2": 0.6616145994432415
+    },
+    "heldout": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 0.940625,
+      "couplets_rhyme": 0.890625,
+      "aabb": 0.79375,
+      "syllables": 0.9953125,
+      "lexical": 0.9946477018609465,
+      "trait_mention": 0.6875,
+      "distinct_2": 0.6239406779661016
+    }
+  },
+  "comparison_A": {
+    "seen": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 1.0,
+      "couplets_rhyme": 1.0,
+      "aabb": 1.0,
+      "syllables": 0.98515625,
+      "lexical": 0.9921457525139301,
+      "trait_mention": 0.6410256410256411,
+      "distinct_2": 0.5546401367946526
+    },
+    "heldout": {
+      "samples": 160,
+      "four_lines": 1.0,
+      "end_word_hit": 1.0,
+      "couplets_rhyme": 1.0,
+      "aabb": 1.0,
+      "syllables": 0.9765625,
+      "lexical": 0.9925916087675922,
+      "trait_mention": 0.0,
+      "distinct_2": 0.5145690312738368
+    }
+  }
+}
