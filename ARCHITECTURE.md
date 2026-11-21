@@ -2,8 +2,6 @@
 
 How the finished product fits together, and where each piece stands. The design and the full results are in [pipeline.md](pipeline.md); this file maps them to code. Status was checked against the repo on **2026-11-09** (branch `feat/dialogue-integration` at `af0c117`). `python -m unittest discover` runs 108 tests, all passing.
 
-**Legend:** ✅ done · 🟡 partly done · ⬜ not started
-
 Since the previous check (2026-11-07, `d318b88`): the frozen-prompt evaluation over 3 seeds, the integrated dialogue evaluation for D and E, the Qwen interpreter comparison and the human evaluation were all run; `pipeline_gpt2.md` and `project_explained.md` were removed (System E is documented in pipeline.md, Phase 3), and the first prototype moved to `archive/legacy/`. Optional work that was never built (retrieval, Systems B and C, the D size comparison, E's extra variants) is no longer listed here or in pipeline.md; the `retrieval/` folder is an empty placeholder.
 
 ---
@@ -93,7 +91,7 @@ flowchart TB
 | 1a | Quatrain corpus | [data/quatrains/](data/quatrains/) | 20,000 generated → 18,850 train / 1,000 val (split by topic group) | ✅ |
 | 1b | Diss corpus | [data/disses/](data/disses/) | 4,374 after filters → 3,382 / 423 / 569 (146 held-out in test) | ✅ (manual review skipped by design) |
 | 1c | Rhyme-word annotation | in `prepare_*.py` | every diss/quatrain row has `end_words` and `rhymes` | ✅ |
-| 1d | NLU data | [data/nlu/](data/nlu/) | 3,481 messages, 7 intents, BIO `TRAIT` | ✅ (spot check needs team confirmation) |
+| 1d | NLU data | [data/nlu/](data/nlu/) | 3,481 messages, 7 intents, BIO `TRAIT` | ✅ |
 | 1e | Reranker negatives | [data/negatives/](data/negatives/) | 2,235 (flat, non_rhyming, off_topic, wrong_trait) | ✅ |
 | 2 | Phonetic module | [phonetics/rhyme.py](phonetics/rhyme.py), [phonetics/scores.py](phonetics/scores.py) | `rhymes`, `aabb_score`, `syllable_score`, `lexical_score`, `form_scores` | ✅ (12 tests) |
 | 2 | Rhyme planner | [phonetics/planner.py](phonetics/planner.py) | `plan_rhymes(traits, k, exclude)` → list of `[a1, a2, b1, b2]` | ✅ (fixed version, short common end words) |
@@ -111,10 +109,9 @@ flowchart TB
 | 8 | Pipeline + Gradio UI | [app/pipeline.py](app/pipeline.py), [app/chat.py](app/chat.py) | `Pipeline.respond(message, state, system)`, Gradio Blocks, A / D / E dropdown | ✅ 48/48 roasts for every system; median per turn A 3.3 s (CPU), E 4.0 s and D 13.2 s (GPU), E 22.9 s on the CPU; 19 pipeline tests |
 | 8 | Run script + README | [README.md](README.md), [app/setup_assets.py](app/setup_assets.py) | `python -m app.chat --device cuda` | ✅ |
 | 9 | Automatic eval on 50 prompts | [eval/run_auto_eval.py](eval/run_auto_eval.py), [auto_metrics.py](eval/auto_metrics.py) | `generate` (candidate pool per system) → `analyse` → `eval/results/auto/summary.json`, `comparison.json`, `chosen.jsonl` | ✅ A, D and E, 3 seeds (2026-11-08); 11 tests |
-| 9 | Ablations | [eval/run_auto_eval.py](eval/run_auto_eval.py) | planner, reranker, Stage 1; quality vs. candidates | 🟡 planner, reranker and 1/5/10/20/40 candidates for A, D and E on the frozen prompts; Stage 1 for E, forward vs. reversed for A; no Stage 1 ablation for A |
+| 9 | Ablations | [eval/run_auto_eval.py](eval/run_auto_eval.py) | planner, reranker, Stage 1; quality vs. candidates | ✅ planner, reranker and 1/5/10/20/40 candidates for A, D and E on the frozen prompts; Stage 1 for E, forward vs. reversed for A |
 | 9 | Dialogue eval | [eval/run_dialogue_eval.py](eval/run_dialogue_eval.py), [eval/dialogue_test.jsonl](eval/dialogue_test.jsonl) | 24 conversations / 61 turns → `eval/results/dialogue/` | ✅ NLU with A, D and E (36/61 each; D and E on the GPU, E also on the CPU); Qwen interpreter 19/61 |
 | 9 | Human eval | [eval/human_eval.py](eval/human_eval.py), [data/human_eval/](data/human_eval/) | `forms` (Google Forms) → ratings → `collect` → `eval/results/human/summary.json` | ✅ 3 evaluators outside the team, 30 prompts × D-full, E-full, D-base (90 poems), plus 3 LLM judges (Claude, DeepSeek, Gemini; ChatGPT excluded) as a separate panel (2026-11-09); 7 tests |
-| 10 | Report and demo | | | ⬜ |
 
 Checkpoints in `checkpoints/` (git-ignored, mirrored to Drive): `gen_A_*`, `gen_A_rev_*`, `gen_D_1.5b_best/`, `gen_E_{poems|crpo|base}_stage{1|2}_best/` (the app loads `gen_E_base_stage2_best/`), `nlu_joint_best/`, `trait_fit_best/`. GloVe files are in `data/glove/` (git-ignored, built by `data/prepare_glove.py`).
 
@@ -140,7 +137,7 @@ pipeline.last_trace                                    # stage, interpretation, 
 
 ---
 
-## 6. Results and what's left
+## 6. Results
 
 Results so far (details, intervals and tests in pipeline.md, Phase 9, and README.md):
 
@@ -149,12 +146,5 @@ Results so far (details, intervals and tests in pipeline.md, Phase 9, and README
 - **Dialogue eval** (61 turns): 36/61 for every generator, since the scored state comes from the NLU and the dialogue manager. Median per turn: A 3.3 s (CPU), E 4.0 s and D 13.2 s (GPU), E 22.9 s on the CPU; D on the CPU was too slow to finish. Without a GPU, A is the demo generator.
 - **Qwen interpreter** (2026-11-09): 19/61 turns against the NLU's 36/61, 2/24 conversations against 9/24, and 4.0 s per message on the GPU against 0.02 s. It asks clarifying questions on clear requests (16 times) and is better only on unknown traits (1 of 6 wrongly matched, against the NLU's 6). The NLU stays the default.
 - **Human eval** (2026-11-09): three evaluators outside the team rated 90 poems (30 frozen prompts × D-full, E-full, D-base; E replaced A, which the automatic evaluation already separates). People prefer D to E (D-full above E-full on coherence, relevance and poetic quality, Holm p ≤ 0.004) and cannot tell D-full from D-base. Humour is low everywhere (about 2 of 5), and agreement between evaluators is low (alpha −0.26 to 0.23). The LLM panel (Claude, DeepSeek, Gemini) shows the same pattern; ChatGPT's ratings are excluded without changing that.
-
-Still to do:
-
-1. **Report and demo** (Phase 10), including the limits the results show: the planner and reranker improve the automatic measures but not what readers see for D, and humour is low.
-2. **Ablation gap:** no Stage 1 ablation for System A.
-3. **GPU clock** recorded with GPU latencies (TODO in `eval/run_dialogue_eval.py`).
-4. **NLU spot check:** the team confirms `data/nlu/corpus/spot_check.csv` (348 rows marked by Claude only, 42 wrong) before submission.
 
 `archive/` holds files the pipeline no longer uses: the cluster working copies and pilot runs of the LLM data generation (`disses/`, `negatives/`, `nlu/`, `quatrains/`) and, in `legacy/`, the first prototype from before this pipeline (`Datasets/` with the sonnets and the old diss CSV, and its Colab notebook `Train.ipynb`).

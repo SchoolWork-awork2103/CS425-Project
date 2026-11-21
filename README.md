@@ -2,7 +2,7 @@
 
 A local chatbot: tell it traits you're proud of, and it roasts you in an AABB quatrain. Each message goes through the NLU (DistilBERT intent and trait tagger), a rule-based dialogue manager, the rhyme planner, a generator (System A, the GRU; System D, Qwen2.5-1.5B + LoRA; or System E, GPT-2 small) and the reranker. Nothing calls an API at run time.
 
-The design and results are in [pipeline.md](pipeline.md) (the evaluation results, also summarised below, in Phase 9); [ARCHITECTURE.md](ARCHITECTURE.md) maps it to the code and lists what is left.
+The design and results are in [pipeline.md](pipeline.md) (the evaluation results, also summarised below, in Phase 9); [ARCHITECTURE.md](ARCHITECTURE.md) maps it to the code.
 
 ## Setup
 
@@ -23,7 +23,7 @@ python -m app.setup_assets --download
 python -m app.setup_assets
 ```
 
-`--download` fetches the trained models from the team's Hugging Face repo (`paths.checkpoints_repo` in `config.yaml`) into `checkpoints/`, skipping any already there, so local copies are never replaced:
+`--download` fetches the trained models from the team's Hugging Face repo ([`SmuCS425-Group7/disschatbot`](https://huggingface.co/SmuCS425-Group7/disschatbot), set as `paths.checkpoints_repo` in `config.yaml`) into `checkpoints/`, skipping any already there, so local copies are never replaced:
 
 ```text
 checkpoints/
@@ -41,7 +41,7 @@ The check exits nonzero if anything is missing, including the checkpoint of any 
 ## Run
 
 ```powershell
-python -m app.chat --device cuda      # or --device cpu
+python -m app.chat --device cuda      # or --device cpu --system A
 ```
 
 System D is the default generator (`--system A` to start on the GRU, `--system E` on GPT-2 small); you can switch in the UI, and switching keeps the conversation's settings. Median time per turn, measured on one laptop, plugged in: System A 3.3 s on the CPU; System E 4.0 s and System D 13.2 s on the GPU. On the CPU alone E takes about 23 s and D is far slower, so without a GPU use A. A conversation to try:
@@ -64,10 +64,28 @@ After changing `data/traits.json` or the diss training split, rebuild the trait 
 python -m dialogue.build_catalogue
 ```
 
+## Data pre-processing
+
+The LLM generation notebooks (`data/*/*_gen.ipynb`) need a 48 GB L40 GPU and vLLM. Each has a `MODE` switch: run `"pilot"` first, then `"full"`. Their raw output is already in the repo (`llm_out/` in each dataset folder, `gen_out/` for the quatrains), so you only need to re-run the cleaning scripts:
+
+```powershell
+python data/quatrains/prepare_quatrains.py
+python data/disses/prepare_disses.py auto
+python data/nlu/prepare_nlu.py
+python data/negatives/prepare_negatives.py
+python generation/train_tokenizer.py
+python data/prepare_glove.py path/to/glove.6B.zip
+python -m dialogue.build_catalogue
+```
+
+## Training
+
+Every model trains on a Colab T4 from its notebook: [generation/train_gru.ipynb](generation/train_gru.ipynb) (System A), [generation/train_qwen.ipynb](generation/train_qwen.ipynb) (System D, about 25 to 40 min), [generation/train_gpt2.ipynb](generation/train_gpt2.ipynb) (System E), [nlu/train_nlu.ipynb](nlu/train_nlu.ipynb) and [reranker/train_trait_fit.ipynb](reranker/train_trait_fit.ipynb). The last two take the zip built by their folder's `make_colab_zip.py`. To tune the reranker weights, run `reranker/rating_pool.py` (`prompts`, `generate`, `sheets`, `collect`), then `reranker/tune_weights.py`.
+
 ## Tests and evaluation
 
 ```powershell
-python -m unittest discover -v                                    # no models needed; planner tests skip without GloVe
+python -m unittest discover -v                                    # 108 tests, no models needed; planner tests skip without GloVe
 python -m eval.run_dialogue_eval --mode policy                    # dialogue manager on the gold turns
 python -m eval.run_dialogue_eval --mode interpreter               # + the real NLU (or --backend qwen --device cuda)
 python -m eval.run_dialogue_eval --mode integrated --system A     # the whole pipeline (or --system D / E --device cuda)
