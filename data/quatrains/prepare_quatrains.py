@@ -27,8 +27,12 @@ def load_tagger():
     try:
         return PerceptronTagger()
     except LookupError:
-        sys.exit("NLTK tagger missing: run  python -c \"import nltk; nltk.download('averaged_perceptron_tagger'); "
-                 "nltk.download('averaged_perceptron_tagger_eng')\"")
+        import nltk
+        print("NLTK tagger missing: downloading averaged_perceptron_tagger_eng")
+        if not nltk.download("averaged_perceptron_tagger_eng", quiet=True):
+            sys.exit("NLTK tagger download failed: run  "
+                     "python -c \"import nltk; nltk.download('averaged_perceptron_tagger_eng')\"")
+        return PerceptronTagger()
 
 
 def topic_nouns(topics):

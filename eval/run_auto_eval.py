@@ -96,7 +96,7 @@ def pool_path(out, system, plans):
     return Path(out) / f"{system}_{plans}_pool.jsonl"
 
 
-def generate(cfg, system, device, plans_mode="planner", seeds=(0, 1, 2), limit=None, out=OUT):
+def generate(cfg, system, device, plans_mode="planner", seeds=(0, 425, 2026), limit=None, out=OUT):
     import torch
     t = cfg["reranker"]["tuning"]
     k, per_plan, batches = t["plans"], t["per_plan"], 1 + cfg["dialogue"]["generation_retries"]
@@ -289,7 +289,7 @@ def main():
     g.add_argument("--system", choices=list(GENERATORS), required=True)
     g.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     g.add_argument("--plans", choices=["planner", "random"], default="planner")
-    g.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
+    g.add_argument("--seeds", type=int, nargs="+", default=[0, 425, 2026])
     g.add_argument("--limit", type=int, default=None, help="first n prompts only (a smoke test)")
     g.add_argument("--out", type=Path, default=OUT)
     a = sub.add_parser("analyse")

@@ -20,6 +20,7 @@ def instructions(catalogue):
 | Roast without traits | *Just give me a generic roast*, *surprise me* |
 | Answer a question from the bot | *yes*, *1* / *2*, or the trait's name |
 | Back out of a question | *cancel* or *no* |
+| Switch the poem generator | pick A, D or E in the **Poem generator** dropdown |
 | Start over | *reset* or **Reset conversation** |
 | Leave | *bye* (your settings stay until you reset) |
 
