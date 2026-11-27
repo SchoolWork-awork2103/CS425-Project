@@ -5,7 +5,8 @@ Run from the project root, in two steps:
   (each reviewer fills in their sheet)
   python data/disses/prepare_disses.py finalize   # reviewed sheets -> data/disses/corpus/{train,val,test}.jsonl
 
-or, with no manual review (every diss that passes the auto filters is kept):
+or, without review sheets (every diss that passes the auto filters is kept; used when the review is done
+outside the sheets, as for this project's disses, where it dropped none):
   python data/disses/prepare_disses.py auto       # auto filters -> data/disses/corpus/{train,val,test}.jsonl
 """
 import argparse, csv, json, random, re, sys
@@ -226,14 +227,14 @@ def cmd_finalize(cfg, args, review=True):
             "by_intensity": dict(Counter(r["intensity"] for r in kept)),
             "drop_reasons": dict(Counter(r["drop_reason"] or "(none given)" for r in dropped))}
     json.dump(meta, open(out / "meta.json", "w", encoding="utf-8"), indent=2)
-    print(f"{'reviewed' if review else 'no manual review, kept all'} {len(reviewed)} | {dict(decisions)} | "
+    print(f"{'reviewed' if review else 'no review sheets, kept all'} {len(reviewed)} | {dict(decisions)} | "
           f"kept {len(kept)}")
     print(f"splits {meta['splits']} (test includes {meta['test_heldout']} held-out-trait disses)")
     print(f"wrote {out}")
 
 
 def cmd_auto(cfg, args):
-    """Filter and split with no manual review: the generation judge (score >= 4) stands in for it."""
+    """Filter and split without review sheets: every diss that passes the filters is kept."""
     cmd_filter(cfg, args, sheets=False)
     cmd_finalize(cfg, args, review=False)
 
